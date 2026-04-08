@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Fragment } from 'react';
 import { getRefineryData } from '../../data/dataStore';
 import './RefineryModule.css';
 
@@ -12,11 +12,9 @@ export default function RefineryModule({ system }) {
     load();
   }, [system]);
 
-  // Get unique ores and stations for the matrix
   const ores = useMemo(() => [...new Set(data.map(d => d.ore))].sort(), [data]);
   const stations = useMemo(() => [...new Set(data.map(d => d.station))].sort(), [data]);
 
-  // Map data into a lookup table [station][ore] = modifier
   const matrix = useMemo(() => {
     const m = {};
     data.forEach(d => {
@@ -25,6 +23,20 @@ export default function RefineryModule({ system }) {
     });
     return m;
   }, [data]);
+
+  // Find the best modifier per ore (for highlighting)
+  const bestPerOre = useMemo(() => {
+    const best = {};
+    ores.forEach(ore => {
+      let max = -Infinity;
+      stations.forEach(station => {
+        const val = matrix[station]?.[ore];
+        if (val !== undefined && val > max) max = val;
+      });
+      best[ore] = max;
+    });
+    return best;
+  }, [ores, stations, matrix]);
 
   if (data.length === 0) {
     return (
@@ -43,55 +55,50 @@ export default function RefineryModule({ system }) {
       <div className="ref-header">
         <div>
           <h1 className="page-title">{system} Refinery Matrix</h1>
-          <p className="page-desc">System-specific location modifiers for {system} sector</p>
+          <p className="page-desc">Yield modifier analysis across {stations.length} terminal{stations.length !== 1 ? 's' : ''} · {ores.length} material{ores.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
-      <div className="matrix-container">
-        <table className="matrix-table">
-          <thead>
-            <tr>
-              <th className="sticky-col header-corner">Station</th>
-              {ores.map(ore => (
-                <th key={ore} className="ore-header">
-                  <span className="ore-header-text">{ore.substring(0, 4).toUpperCase()}</span>
-                  <span className="ore-header-full">{ore}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {stations.map(station => (
-              <tr key={station}>
-                <td className="sticky-col station-cell">{station}</td>
-                {ores.map(ore => {
-                  const mod = matrix[station]?.[ore];
-                  const type = mod > 0 ? 'pos' : mod < 0 ? 'neg' : 'neu';
-                  return (
-                    <td key={ore} className={`mod-cell ${type}`}>
-                      {mod !== undefined ? (
-                        <div className="mod-badge">
-                          <span className="mod-sym">{mod > 0 ? '+' : ''}</span>
-                          <span className="mod-val">{mod}</span>
-                        </div>
-                      ) : (
-                        <span className="mod-empty">—</span>
-                      )}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="matrix-scroll">
+        <div className="matrix-grid" style={{ gridTemplateColumns: `160px repeat(${ores.length}, 1fr)` }}>
+          {/* Header row */}
+          <div className="grid-corner">STATION</div>
+          {ores.map(ore => (
+            <div key={ore} className="grid-ore-header" title={ore}>
+              {ore}
+            </div>
+          ))}
+
+          {/* Data rows */}
+          {stations.map(station => (
+            <Fragment key={station}>
+              <div key={station} className="grid-station">{station}</div>
+              {ores.map(ore => {
+                const mod = matrix[station]?.[ore];
+                const isBest = mod !== undefined && mod === bestPerOre[ore] && mod > 0;
+                const type = mod > 0 ? 'pos' : mod < 0 ? 'neg' : 'neu';
+                return (
+                  <div key={`${station}-${ore}`} className={`grid-cell ${mod !== undefined ? type : 'empty'} ${isBest ? 'best' : ''}`}>
+                    {mod !== undefined ? (
+                      <span className="cell-val">{mod > 0 ? '+' : ''}{mod}</span>
+                    ) : (
+                      <span className="cell-dash">—</span>
+                    )}
+                  </div>
+                );
+              })}
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       <div className="matrix-footer">
         <div className="legend">
           <div className="legend-item"><span className="dot pos" /> Yield Bonus</div>
           <div className="legend-item"><span className="dot neg" /> Yield Penalty</div>
+          <div className="legend-item"><span className="dot best" /> Best in Class</div>
         </div>
-        <p className="matrix-note">Values represent static location modifiers. Final yield depends on the refining method used at the terminal.</p>
+        <p className="matrix-note">Values represent static location modifiers. Final yield depends on the refining method.</p>
       </div>
     </div>
   );

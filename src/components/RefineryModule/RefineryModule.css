@@ -1,148 +1,165 @@
 /* ═══════════════════════════════════════════════════
-   REFINERY MATRIX — High-density industrial grid
+   REFINERY MATRIX — CSS Grid based, auto-sizing
    ═══════════════════════════════════════════════════ */
 
 .refinery-matrix {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--space-lg);
   height: 100%;
 }
 
-.matrix-container {
+.ref-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+/* ── Grid Layout ── */
+.matrix-scroll {
   overflow: auto;
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  background: var(--bg-surface);
-  max-width: 100%;
-  max-height: calc(100vh - 280px);
-  position: relative;
+  max-height: calc(100vh - 260px);
 }
 
-.matrix-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  font-family: var(--font-data);
-  min-width: 1200px; /* Ensure columns have enough breathing room */
+.matrix-grid {
+  display: grid;
 }
 
-/* ── Headers ── */
-.matrix-table th {
-  padding: 12px 16px;
-  text-align: left;
-  background: var(--bg-elevated);
+/* ── Corner ── */
+.grid-corner {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  background: var(--bg-base);
+  padding: 10px 12px;
+  font-family: var(--font-heading);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: var(--accent);
   border-bottom: 2px solid var(--border-medium);
-  border-right: 1px solid var(--border-subtle);
-  white-space: nowrap;
+  border-right: 2px solid var(--border-medium);
+  display: flex;
+  align-items: flex-end;
+}
+
+/* ── Ore Headers ── */
+.grid-ore-header {
   position: sticky;
   top: 0;
   z-index: 20;
-}
-
-.header-corner {
-  z-index: 30 !important;
-  left: 0;
-  color: var(--accent);
-  font-family: var(--font-heading);
-  letter-spacing: 0.1em;
-  font-size: 11px;
-  background: var(--bg-base) !important;
-}
-
-.ore-header {
-  min-width: 100px;
-}
-
-.ore-header-text {
-  font-size: 10px;
-  color: var(--text-dim);
-  letter-spacing: 0.05em;
-  display: block;
-}
-
-.ore-header-full {
-  font-size: 12px;
-  color: var(--text-bright);
+  background: var(--bg-elevated);
+  padding: 8px 4px;
+  font-family: var(--font-data);
+  font-size: 9px;
   font-weight: 600;
-  display: block;
-}
-
-/* ── Cells ── */
-.matrix-table td {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  text-align: center;
+  border-bottom: 2px solid var(--border-medium);
   border-right: 1px solid var(--border-subtle);
-  font-size: 13px;
-  color: var(--text-secondary);
-  background: var(--bg-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-height: 44px;
+  line-height: 1.3;
+  word-break: break-word;
 }
 
-.sticky-col {
+/* ── Station Cell ── */
+.grid-station {
   position: sticky;
   left: 0;
   z-index: 10;
-  border-right: 2px solid var(--border-medium) !important;
-  min-width: 140px;
-}
-
-.station-cell {
-  background: var(--bg-elevated) !important;
-  color: var(--accent-bright);
-  font-size: 12px;
+  background: var(--bg-elevated);
+  padding: 8px 12px;
   font-family: var(--font-heading);
+  font-size: 11px;
   font-weight: 600;
-}
-
-.mod-cell {
-  text-align: center;
-}
-
-.mod-badge {
-  display: inline-flex;
-  justify-content: center;
-  align-items: baseline;
-  gap: 1px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 2px;
-  transition: all var(--duration-fast);
-}
-
-.mod-val { font-size: 13px; }
-.mod-sym { font-size: 11px; opacity: 0.9; }
-
-/* ── Positive (+) ── */
-.mod-cell.pos .mod-badge { 
   color: var(--accent-bright);
-  background: rgba(196, 154, 92, 0.12);
-  box-shadow: 0 0 10px rgba(196, 154, 92, 0.05);
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 2px solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.3;
 }
 
-/* ── Negative (-) ── */
-.mod-cell.neg .mod-badge { 
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.12);
-}
-
-/* ── Neutral ── */
-.mod-cell.neu .mod-badge { 
-  color: var(--text-ghost);
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.mod-empty {
-  color: var(--text-ghost);
-  font-weight: 300;
-}
-
-/* ── Hover ── */
-.matrix-table tr:hover td {
+.grid-station:hover {
   background: var(--bg-hover);
 }
 
-.matrix-table tr:hover .sticky-col {
-  background: var(--bg-hover) !important;
+/* ── Data Cells ── */
+.grid-cell {
+  padding: 8px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface);
+  transition: background 0.1s;
+}
+
+.grid-cell:hover {
+  background: var(--bg-hover);
+}
+
+.cell-val {
+  font-family: var(--font-data);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 3px;
+}
+
+/* Positive */
+.grid-cell.pos .cell-val {
+  color: var(--accent-bright);
+  background: rgba(196, 154, 92, 0.1);
+}
+
+/* Negative */
+.grid-cell.neg .cell-val {
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.1);
+}
+
+/* Neutral */
+.grid-cell.neu .cell-val {
+  color: var(--text-dim);
+}
+
+/* Best in class — highlight ring */
+.grid-cell.best .cell-val {
+  color: #f0d890;
+  background: rgba(240, 216, 144, 0.12);
+  box-shadow: 0 0 0 1px rgba(240, 216, 144, 0.25), 0 0 12px rgba(240, 216, 144, 0.08);
+}
+
+/* Empty cell */
+.cell-dash {
+  color: var(--text-ghost);
+  font-weight: 300;
+  font-size: 14px;
+}
+
+.grid-cell.empty {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* ── Row hover — highlight entire row ── */
+/* Using CSS has() where supported */
+@supports selector(:has(*)) {
+  .matrix-grid:has(.grid-station:hover) .grid-cell {
+    background: var(--bg-surface);
+  }
 }
 
 /* ── Footer ── */
@@ -175,8 +192,9 @@
   border-radius: 50%;
 }
 
-.dot.pos { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.dot.pos { background: var(--accent); box-shadow: 0 0 8px rgba(196, 154, 92, 0.4); }
 .dot.neg { background: var(--danger); }
+.dot.best { background: #f0d890; box-shadow: 0 0 8px rgba(240, 216, 144, 0.5); }
 
 .matrix-note {
   font-size: 11px;
@@ -184,4 +202,41 @@
   font-style: italic;
   max-width: 500px;
   text-align: right;
+}
+
+/* ── Empty State ── */
+.empty-system-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  text-align: center;
+  min-height: 300px;
+}
+
+.empty-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border-medium);
+  border-radius: 50%;
+  color: var(--text-dim);
+  font-size: 20px;
+  margin-bottom: var(--space-lg);
+}
+
+.empty-title {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: var(--space-sm);
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  max-width: 400px;
 }

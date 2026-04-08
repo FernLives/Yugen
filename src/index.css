@@ -90,11 +90,7 @@ html, body, #root, .shell {
   outline: none !important;
 }
 
-/* Radical glow suppression */
-* {
-  box-shadow: none !important;
-  text-shadow: none !important;
-}
+
 
 body {
   font-family: var(--font-body);

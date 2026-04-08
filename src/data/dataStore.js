@@ -3,39 +3,16 @@
 // Persistent SQLite Backend Proxy
 // ═══════════════════════════════════════════════════
 
-import { defaultRefineryData } from './refineryData';
-import { defaultResourceData } from './resourceData';
-
 const BASE_URL = '/api';
 
-// ── Initial Sync ──
-export async function syncLocalStorageToDb() {
-  const refinery = localStorage.getItem('auxnet_refinery_data');
-  const resources = localStorage.getItem('auxnet_resource_data');
-
-  if (refinery) {
-    const data = JSON.parse(refinery);
-    for (const entry of data) {
-      await fetch(`${BASE_URL}/refinery`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry)
-      });
-    }
-    localStorage.removeItem('auxnet_refinery_data');
-  }
-
-  if (resources) {
-    const data = JSON.parse(resources);
-    for (const entry of data) {
-      await fetch(`${BASE_URL}/resources`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(entry)
-      });
-    }
-    localStorage.removeItem('auxnet_resource_data');
-  }
+// ── Legacy Cleanup ──
+// Remove any leftover localStorage keys from the pre-SQLite era.
+// We do NOT push this data into the DB — if the user purged, it should stay purged.
+export function cleanLegacyStorage() {
+  localStorage.removeItem('auxnet_refinery_data');
+  localStorage.removeItem('auxnet_resource_data');
+  localStorage.removeItem('auxnet_stations_data');
+  localStorage.removeItem('auxnet_personnel_data');
 }
 
 // ── Stations Data ──
@@ -131,6 +108,34 @@ export async function deleteResourceEntry(id) {
   await fetch(`${BASE_URL}/resources/${id}`, { method: 'DELETE' });
 }
 
+// ── Update Functions ──
+export async function updateStation(name, data) {
+  const res = await fetch(`${BASE_URL}/stations/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
+export async function updateRefineryEntry(id, data) {
+  const res = await fetch(`${BASE_URL}/refinery/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
+export async function updateResourceEntry(id, data) {
+  const res = await fetch(`${BASE_URL}/resources/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
 // ── Admin PIN ──
 export async function getAdminPin() {
   try {
@@ -151,8 +156,18 @@ export async function setAdminPin(pin) {
 }
 
 export async function verifyAdminPin(input) {
-  const pin = await getAdminPin();
-  return input === pin;
+  try {
+    const res = await fetch(`${BASE_URL}/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: input })
+    });
+    const { authorized } = await res.json();
+    return authorized;
+  } catch (e) {
+    console.error('Auth Uplink Error:', e);
+    return false;
+  }
 }
 
 // ── Quality of Life Data Purge ──

@@ -1,124 +1,154 @@
-/* ── Boot Sequence ── */
-.boot-screen {
+/* ═══════════════════════════════════════════════════
+   BOOT INTRO — Cinematic minimal entrance
+   ═══════════════════════════════════════════════════ */
+
+.boot-intro {
   position: fixed;
   inset: 0;
-  background: #020206;
+  background: #050508;
   z-index: 10000;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  overflow: hidden;
   cursor: pointer;
 }
 
-.boot-screen.boot-fade-out {
+.boot-intro.boot-out {
   opacity: 0;
-  transform: scale(1.02);
+  transform: scale(1.03);
 }
 
-.boot-content {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-secondary);
-  line-height: 1.8;
-  max-width: 620px;
-  width: 100%;
-  padding: 40px;
+/* ── Ambient glow ── */
+.boot-glow {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(196, 154, 92, 0.08) 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: glowPulse 3s ease-in-out infinite;
 }
 
-.boot-line {
-  animation: bootLineIn 0.1s ease both;
-  white-space: pre;
-  overflow: hidden;
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
 }
 
-@keyframes bootLineIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ── Center stack ── */
+.boot-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 2;
 }
 
-.boot-ok {
-  color: var(--accent-tertiary);
+/* ── Diamond symbol ── */
+.boot-symbol {
+  opacity: 0;
+  transform: scale(0.6) rotate(45deg);
+  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.boot-online {
-  color: var(--accent-primary);
-  text-shadow: 0 0 6px var(--accent-primary);
+.boot-symbol.visible {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
 }
 
-.boot-restricted {
-  color: var(--accent-warn);
+.boot-diamond {
+  width: 36px;
+  height: 36px;
 }
 
-.boot-welcome {
-  color: var(--accent-primary);
-  font-size: 14px;
-  text-shadow: var(--glow-text);
-  letter-spacing: 0.1em;
+.boot-diamond path {
+  fill: none;
+  stroke: var(--accent, #c49a5c);
+  stroke-width: 1.5;
+  filter: drop-shadow(0 0 8px rgba(196, 154, 92, 0.4));
 }
 
-.boot-blink {
-  animation: bootBlink 1s step-end infinite;
-  color: var(--text-muted);
+/* ── Wordmark ── */
+.boot-wordmark {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  color: #eaeaef;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  text-indent: 0.35em; /* compensate letter-spacing on last char */
+}
+
+.boot-wordmark.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Expanding line ── */
+.boot-line-expand {
+  width: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent, #c49a5c), transparent);
+  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.boot-line-expand.visible {
+  width: 200px;
+}
+
+/* ── Typed subtitle ── */
+.boot-subtitle {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 11px;
-  margin-top: 8px;
+  letter-spacing: 0.25em;
+  color: #707088;
+  min-height: 18px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  text-indent: 0.25em;
 }
 
-@keyframes bootBlink {
+.boot-subtitle.visible {
+  opacity: 1;
+}
+
+.boot-caret {
+  color: var(--accent, #c49a5c);
+  animation: caretBlink 0.6s step-end infinite;
+  margin-left: 2px;
+}
+
+@keyframes caretBlink {
   0%, 100% { opacity: 1; }
   50% { opacity: 0; }
 }
 
-.boot-cursor {
-  display: inline-block;
-  color: var(--accent-primary);
-  animation: bootBlink 0.6s step-end infinite;
-  font-size: 14px;
-}
-
-.boot-scanline {
+/* ── Skip hint ── */
+.boot-skip {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-  opacity: 0.3;
-  animation: scanDown 3s linear infinite;
-  z-index: 1;
+  bottom: 40px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: #2a2a3a;
+  opacity: 0;
+  transition: opacity 0.5s ease;
 }
 
-@keyframes scanDown {
-  0% { top: -5%; }
-  100% { top: 105%; }
+.boot-skip.visible {
+  opacity: 1;
+  animation: skipPulse 2s ease-in-out infinite;
 }
 
-/* Corner decorations */
-.boot-corner {
-  position: absolute;
-  width: 30px;
-  height: 30px;
-  border-color: var(--accent-primary);
-  opacity: 0.2;
-}
-
-.boot-corner-tl {
-  top: 20px; left: 20px;
-  border-top: 1px solid;
-  border-left: 1px solid;
-}
-.boot-corner-tr {
-  top: 20px; right: 20px;
-  border-top: 1px solid;
-  border-right: 1px solid;
-}
-.boot-corner-bl {
-  bottom: 20px; left: 20px;
-  border-bottom: 1px solid;
-  border-left: 1px solid;
-}
-.boot-corner-br {
-  bottom: 20px; right: 20px;
-  border-bottom: 1px solid;
-  border-right: 1px solid;
+@keyframes skipPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
 }

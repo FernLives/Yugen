@@ -2,12 +2,6 @@ import { useState, useMemo, useEffect } from 'react';
 import { getResourceData } from '../../data/dataStore';
 import './ResourceModule.css';
 
-const RISK = {
-  safe: { label: 'Safe', cls: 'risk-safe' },
-  moderate: { label: 'Moderate', cls: 'risk-moderate' },
-  hazardous: { label: 'Hazardous', cls: 'risk-hazardous' },
-};
-
 const BODY_META = {
   // Stanton
   Hurston: { desc: 'Industrial planet. Harsh conditions, rich deposits.', color: '#b06630' },
@@ -25,7 +19,7 @@ function ResourceItem({ res }) {
     <div className="res-item">
       <div className="res-item-main">
         <span className="res-item-name">{res.name}</span>
-        <span className="res-item-rarity">{res.rarity}</span>
+        <span className="res-item-type">{res.type}</span>
       </div>
       {res.description && <p className="res-item-desc">{res.description}</p>}
     </div>
@@ -130,31 +124,26 @@ export default function ResourceModule({ system }) {
             </div>
 
             <div className="location-grid">
-              {body.locations.map((loc, li) => {
-                const riskLevels = [...new Set(loc.resources.map(r => r.riskLevel || 'safe'))];
-                const highestRisk = riskLevels.includes('hazardous') ? 'hazardous' : riskLevels.includes('moderate') ? 'moderate' : 'safe';
-                return (
-                  <button
-                    key={loc.name}
-                    className="location-card"
-                    onClick={() => setSelectedLocation(loc.name)}
-                    style={{ animationDelay: `${bi * 80 + li * 50}ms` }}
-                  >
-                    <div className="lc-top">
-                      <h3 className="lc-name">{loc.name}</h3>
-                    </div>
-                    <div className="lc-resources">
-                      {[...new Set(loc.resources.map(r => r.name))].slice(0, 3).map(n => (
-                        <span key={n} className="lc-resource-tag">{n}</span>
-                      ))}
-                    </div>
-                    <div className="lc-bottom">
-                      <span className={`lc-risk ${RISK[highestRisk]?.cls}`}>{RISK[highestRisk]?.label}</span>
-                      <span className="lc-count">{loc.resources.length} materials</span>
-                    </div>
-                  </button>
-                );
-              })}
+              {body.locations.map((loc, li) => (
+                <button
+                  key={loc.name}
+                  className="location-card"
+                  onClick={() => setSelectedLocation(loc.name)}
+                  style={{ animationDelay: `${bi * 80 + li * 50}ms` }}
+                >
+                  <div className="lc-top">
+                    <h3 className="lc-name">{loc.name}</h3>
+                  </div>
+                  <div className="lc-resources">
+                    {[...new Set(loc.resources.map(r => r.name))].slice(0, 3).map(n => (
+                      <span key={n} className="lc-resource-tag">{n}</span>
+                    ))}
+                  </div>
+                  <div className="lc-bottom">
+                    <span className="lc-count">{loc.resources.length} materials</span>
+                  </div>
+                </button>
+              ))}
             </div>
           </section>
         ))}
@@ -173,9 +162,9 @@ export default function ResourceModule({ system }) {
 
             <div className="loc-modal-body">
               <div className="res-modal-content-grid">
-                <ResourceCategory title="Ship Mineables" resources={categorized.ship} icon="󰾁" />
-                <ResourceCategory title="Ground Vehicle Mineables" resources={categorized.vehicle} icon="󰙦" />
-                <ResourceCategory title="Hand Mineables" resources={categorized.hand} icon="󰇊" />
+                <ResourceCategory title="Ship Mineables" resources={categorized.ship} icon="⛏" />
+                <ResourceCategory title="Ground Vehicle Mineables" resources={categorized.vehicle} icon="🚜" />
+                <ResourceCategory title="Hand Mineables" resources={categorized.hand} icon="✋" />
               </div>
             </div>
           </div>

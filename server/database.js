@@ -1,7 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import fs from 'fs';
+
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.join(__dirname, 'auxnet.db');
@@ -67,10 +67,15 @@ export function initDb() {
   `);
 
   // ── Seeding logic ──
-  const count = db.prepare('SELECT COUNT(*) as count FROM refinery_data').get().count;
-  if (count === 0) {
-    console.log('🌱 Seeding database with default data...');
+  // Only seed if the 'seeded' flag has NEVER been set.
+  // Once the DB has been seeded or purged, this flag exists and we never auto-populate again.
+  const seedSetting = db.prepare('SELECT value FROM settings WHERE key = ?').get('seeded');
+  if (!seedSetting) {
+    console.log('🌱 First-time initialization — seeding database with default data...');
     seedData();
+    db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('seeded', 'true');
+  } else {
+    console.log('📦 Database already initialized (seeded=' + seedSetting.value + '). Skipping seed.');
   }
 }
 

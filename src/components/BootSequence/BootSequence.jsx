@@ -1,82 +1,93 @@
 import { useState, useEffect, useCallback } from 'react';
 import './BootSequence.css';
 
-const bootLines = [
-  { text: '╔══════════════════════════════════════════════════╗', delay: 0 },
-  { text: '║                                                  ║', delay: 50 },
-  { text: '║     A U X N E T   v3.7.2                        ║', delay: 100 },
-  { text: '║     CIVILIAN DATA NETWORK                        ║', delay: 150 },
-  { text: '║                                                  ║', delay: 200 },
-  { text: '╚══════════════════════════════════════════════════╝', delay: 250 },
-  { text: '', delay: 400 },
-  { text: '[SYS] Initializing secure handshake...', delay: 500 },
-  { text: '[SYS] Verifying node integrity............... OK', delay: 900 },
-  { text: '[SYS] Decrypting relay map................... OK', delay: 1300 },
-  { text: '[NET] Establishing mesh connection........... OK', delay: 1700 },
-  { text: '[DAT] Loading refinery analysis module....... ONLINE', delay: 2100 },
-  { text: '[DAT] Loading resource intelligence.......... ONLINE', delay: 2500 },
-  { text: '[SEC] Org dossier access..................... RESTRICTED', delay: 2800 },
-  { text: '[ADM] Admin subsystem........................ STANDBY', delay: 3000 },
-  { text: '', delay: 3200 },
-  { text: '> SYSTEM READY', delay: 3400 },
-  { text: '> WELCOME, OPERATOR.', delay: 3700 },
-  { text: '', delay: 3900 },
-  { text: '[ PRESS ANY KEY OR CLICK TO CONTINUE ]', delay: 4100, blink: true },
-];
+const SUBTITLE = 'CIVILIAN INTELLIGENCE NETWORK';
 
 export default function BootSequence({ onComplete }) {
-  const [visibleLines, setVisibleLines] = useState([]);
-  const [ready, setReady] = useState(false);
+  const [phase, setPhase] = useState(0); // 0=hidden, 1=symbol, 2=wordmark, 3=line, 4=typing, 5=ready
+  const [typed, setTyped] = useState('');
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
-    const timers = bootLines.map((line, i) =>
-      setTimeout(() => {
-        setVisibleLines(prev => [...prev, line]);
-        if (i === bootLines.length - 1) setReady(true);
-      }, line.delay)
-    );
+    const timers = [
+      setTimeout(() => setPhase(1), 200),   // Symbol fades in
+      setTimeout(() => setPhase(2), 700),   // Wordmark appears
+      setTimeout(() => setPhase(3), 1200),  // Line expands
+      setTimeout(() => setPhase(4), 1600),  // Start typing subtitle
+      setTimeout(() => setPhase(5), 1600 + SUBTITLE.length * 40 + 400), // Ready
+    ];
     return () => timers.forEach(clearTimeout);
   }, []);
 
-  const handleSkip = useCallback(() => {
+  // Typewriter effect for subtitle
+  useEffect(() => {
+    if (phase < 4) return;
+    let i = 0;
+    const interval = setInterval(() => {
+      i++;
+      setTyped(SUBTITLE.slice(0, i));
+      if (i >= SUBTITLE.length) clearInterval(interval);
+    }, 40);
+    return () => clearInterval(interval);
+  }, [phase]);
+
+  const dismiss = useCallback(() => {
     if (fading) return;
     setFading(true);
-    setTimeout(() => onComplete(), 600);
+    setTimeout(() => onComplete(), 500);
   }, [fading, onComplete]);
 
+  // Auto-dismiss after ready
   useEffect(() => {
-    const handler = () => handleSkip();
+    if (phase === 5) {
+      const t = setTimeout(dismiss, 1200);
+      return () => clearTimeout(t);
+    }
+  }, [phase, dismiss]);
+
+  // Click / key to skip
+  useEffect(() => {
+    const handler = () => dismiss();
     window.addEventListener('keydown', handler);
     window.addEventListener('click', handler);
     return () => {
       window.removeEventListener('keydown', handler);
       window.removeEventListener('click', handler);
     };
-  }, [handleSkip]);
+  }, [dismiss]);
 
   return (
-    <div className={`boot-screen ${fading ? 'boot-fade-out' : ''}`}>
-      <div className="boot-scanline" />
-      <div className="boot-content">
-        {visibleLines.map((line, i) => (
-          <div
-            key={i}
-            className={`boot-line ${line.blink ? 'boot-blink' : ''} ${
-              line.text.includes('OK') ? 'boot-ok' : ''
-            } ${line.text.includes('ONLINE') ? 'boot-online' : ''} ${
-              line.text.includes('RESTRICTED') ? 'boot-restricted' : ''
-            } ${line.text.includes('WELCOME') ? 'boot-welcome' : ''}`}
-          >
-            {line.text}
-          </div>
-        ))}
-        {ready && <div className="boot-cursor">█</div>}
+    <div className={`boot-intro ${fading ? 'boot-out' : ''}`}>
+      {/* Ambient glow */}
+      <div className="boot-glow" />
+
+      <div className="boot-center">
+        {/* Diamond symbol */}
+        <div className={`boot-symbol ${phase >= 1 ? 'visible' : ''}`}>
+          <svg viewBox="0 0 40 40" className="boot-diamond">
+            <path d="M20 2 L38 20 L20 38 L2 20 Z" />
+          </svg>
+        </div>
+
+        {/* Wordmark */}
+        <div className={`boot-wordmark ${phase >= 2 ? 'visible' : ''}`}>
+          AUXNET
+        </div>
+
+        {/* Expanding line */}
+        <div className={`boot-line-expand ${phase >= 3 ? 'visible' : ''}`} />
+
+        {/* Typed subtitle */}
+        <div className={`boot-subtitle ${phase >= 4 ? 'visible' : ''}`}>
+          {typed}
+          <span className="boot-caret">|</span>
+        </div>
       </div>
-      <div className="boot-corner boot-corner-tl" />
-      <div className="boot-corner boot-corner-tr" />
-      <div className="boot-corner boot-corner-bl" />
-      <div className="boot-corner boot-corner-br" />
+
+      {/* Skip hint */}
+      <div className={`boot-skip ${phase >= 5 ? 'visible' : ''}`}>
+        PRESS ANY KEY
+      </div>
     </div>
   );
 }

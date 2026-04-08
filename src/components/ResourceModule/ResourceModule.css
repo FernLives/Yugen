@@ -133,23 +133,11 @@
 
 .lc-bottom {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding-top: var(--space-sm);
   border-top: 1px solid var(--border-subtle);
 }
-
-.lc-risk {
-  font-family: var(--font-data);
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.risk-safe { color: var(--success); }
-.risk-moderate { color: var(--warning); }
-.risk-hazardous { color: var(--danger); }
 
 .lc-count {
   font-size: 11px;
@@ -271,10 +259,14 @@
   color: var(--text-primary);
 }
 
-.res-item-rarity {
+.res-item-rarity,
+.res-item-type {
   font-family: var(--font-data);
   font-size: 9px;
   color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 6px;
+  border-radius: 2px;
 }
 
 .res-item-desc {

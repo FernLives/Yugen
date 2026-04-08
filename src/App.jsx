@@ -5,21 +5,23 @@ import RefineryModule from './components/RefineryModule/RefineryModule';
 import ResourceModule from './components/ResourceModule/ResourceModule';
 import OrgFile from './components/OrgFile/OrgFile';
 import AdminModule from './components/AdminModule/AdminModule';
+import BootSequence from './components/BootSequence/BootSequence';
 import Toast from './components/common/Toast';
-import { syncLocalStorageToDb } from './data/dataStore';
+import { cleanLegacyStorage } from './data/dataStore';
 
 export default function App() {
   const [activeSystem, setActiveSystem] = useState('Stanton');
   const [toastMessage, setToastMessage] = useState('');
+  const [booted, setBooted] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    const initData = async () => {
-      await syncLocalStorageToDb();
-      setToastMessage('DATABASE UPLINK ESTABLISHED');
-    };
-    initData();
+    cleanLegacyStorage();
   }, []);
+
+  if (!booted) {
+    return <BootSequence onComplete={() => { setBooted(true); setToastMessage('DATABASE UPLINK ESTABLISHED'); }} />;
+  }
 
   return (
     <>
