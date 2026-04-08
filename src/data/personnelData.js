@@ -1,0 +1,63 @@
+// ═══════════════════════════════════════════════════
+// AUXNET — Personnel Registry (Premium Intelligence)
+// All subjects are identified by unique biometric signatures.
+// ═══════════════════════════════════════════════════
+
+export const defaultPersonnelData = [
+  {
+    id: 'per-001',
+    name: '█████████',
+    realName: 'FernLives',
+    title: 'Founder / Apex Architect',
+    clearance: 'OMEGA',
+    status: 'ACTIVE - ENCRYPTED',
+    location: '██████, Stanton',
+    signal: '98.2%',
+    ping: '12ms',
+    relay: 'RSA-4096-A',
+    signatureSeed: '0x884',
+    notes: 'Primary architect of the AUXNET matrix. Movements restricted to high-security hubs. Signal origin: UNKNOWN.',
+  },
+  {
+    id: 'per-002',
+    name: '█████████',
+    realName: 'Kaelen Thorne',
+    title: 'Operations Director',
+    clearance: 'SIGMA',
+    status: 'SIGNAL LOST',
+    location: 'Long Forest Station',
+    signal: '0.0%',
+    ping: '— ms',
+    relay: 'OFFLINE',
+    signatureSeed: '0x1c9',
+    notes: 'Contact lost during Aaron Halo deep-bench mining trip. Operational status: UNKNOWN.',
+  },
+  {
+    id: 'per-003',
+    name: '█████████',
+    realName: 'Sora Quinn',
+    title: 'Intelligence Analyst',
+    clearance: 'EPSILON',
+    status: 'DEPLOYED - CLASSIFIED',
+    location: '██████, Hurston',
+    signal: '74.5%',
+    ping: '42ms',
+    relay: 'RSA-2048-B',
+    signatureSeed: '0xf42',
+    notes: 'Specializes in refinery yield data scraping. Currently embedded in Hurston civilian network.',
+  },
+  {
+    id: 'per-004',
+    name: '█████████',
+    realName: 'Ruger Jax',
+    title: 'Field Technician',
+    clearance: 'DELTA',
+    status: 'ACTIVE - STANDBY',
+    location: 'Faithful Dream Station',
+    signal: '100%',
+    ping: '8ms',
+    relay: 'DIRECT-C',
+    signatureSeed: '0x3e1',
+    notes: 'Senior refinery specialist. Responsible for terminal matrix maintenance across Stanton.',
+  },
+];

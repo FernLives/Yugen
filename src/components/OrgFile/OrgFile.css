@@ -1,0 +1,167 @@
+/* ═══════════════════════════════════════════════════
+   ORGANIZATION DOSSIER — Classified document viewer
+   ═══════════════════════════════════════════════════ */
+
+.dossier {
+  max-width: 760px;
+}
+
+/* ── Classification Strip ── */
+.dossier-classification {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.classification-marker {
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--danger);
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+
+.classification-id {
+  font-family: var(--font-data);
+  font-size: 10px;
+  color: var(--text-ghost);
+}
+
+/* ── Document ── */
+.dossier-doc {
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-2xl) var(--space-xl);
+  position: relative;
+}
+
+/* ── Title Block ── */
+.dossier-title-block {
+  margin-bottom: var(--space-lg);
+}
+
+.dossier-title {
+  font-family: var(--font-heading);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  position: relative;
+  animation: subtleGlitch 8s infinite;
+}
+
+.dossier-meta {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.meta-sep {
+  color: var(--text-ghost);
+}
+
+/* ── Rule ── */
+.dossier-rule {
+  height: 1px;
+  background: linear-gradient(90deg, var(--accent-dim), var(--border-subtle) 40%, transparent);
+  margin-bottom: var(--space-xl);
+}
+
+/* ── Sections ── */
+.dossier-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.dossier-section {
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity var(--duration-slow) var(--ease-out),
+              transform var(--duration-slow) var(--ease-out);
+}
+
+.dossier-section.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.section-label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.section-num {
+  font-family: var(--font-data);
+  font-size: 10px;
+  color: var(--accent-muted);
+  opacity: 0.5;
+}
+
+.section-heading {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.section-body {
+  padding-left: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.section-paragraph {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.8;
+}
+
+/* ── Section Divider ── */
+.section-divider {
+  width: 40px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: var(--space-xl) 0;
+  margin-left: 36px;
+}
+
+/* ── Redacted ── */
+.redacted-block {
+  color: transparent;
+  background: var(--text-dim);
+  border-radius: 1px;
+  padding: 0 2px;
+  user-select: none;
+  position: relative;
+}
+
+/* ── Subtle Glitch ── */
+.glitch-subtle {
+  position: relative;
+  color: var(--text-bright);
+  font-weight: 500;
+  animation: subtleGlitch 6s infinite;
+}
+
+/* ── End ── */
+.dossier-end {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border-subtle);
+  text-align: center;
+  font-family: var(--font-data);
+  font-size: 10px;
+  color: var(--text-ghost);
+  letter-spacing: 0.3em;
+}

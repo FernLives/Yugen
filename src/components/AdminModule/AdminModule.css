@@ -1,0 +1,285 @@
+/* ═══════════════════════════════════════════════════
+   ADMIN NOC — Network Operations Center
+   ═══════════════════════════════════════════════════ */
+
+.admin-noc {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-base);
+  color: var(--text-primary);
+  overflow: hidden;
+}
+
+/* ── Login Mode ── */
+.admin-noc.login-mode {
+  justify-content: center;
+  align-items: center;
+}
+
+.noc-login-terminal {
+  width: 400px;
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.terminal-header {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 12px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--text-dim);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  text-align: center;
+}
+
+.terminal-body {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.auth-status {
+  font-family: var(--font-data);
+  font-size: 10px;
+  color: var(--accent);
+  text-align: center;
+}
+
+.auth-code {
+  font-size: 24px;
+  letter-spacing: 0.5em;
+  text-align: center;
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.noc-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 12px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.1em;
+}
+
+.noc-btn:hover { background: rgba(255, 255, 255, 0.08); }
+.noc-btn.primary { background: var(--accent); color: #000; border: none; }
+.noc-btn.primary:hover { filter: brightness(1.1); }
+.noc-btn.danger { background: #ff3e3e; color: #fff; border: none; }
+
+.terminal-footer {
+  padding: 10px;
+  font-size: 9px;
+  color: var(--text-ghost);
+  text-align: center;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+/* ── Main Layout ── */
+.noc-header {
+  padding: var(--space-md) var(--space-xl);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.noc-title-area { display: flex; align-items: baseline; gap: 15px; }
+.noc-title { font-family: var(--font-heading); font-size: 16px; letter-spacing: 0.05em; margin: 0; }
+.noc-tag { font-size: 9px; color: var(--success); font-weight: 800; letter-spacing: 0.1em; opacity: 0.6; }
+
+.noc-main {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  overflow: hidden;
+}
+
+.noc-sidebar {
+  border-right: 1px solid var(--border-subtle);
+  background: rgba(0, 0, 0, 0.2);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.nav-group { display: flex; flex-direction: column; gap: 8px; }
+.group-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+
+.nav-item {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  text-align: left;
+  padding: 10px 15px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.nav-item:hover { background: rgba(255, 255, 255, 0.03); color: var(--text-primary); }
+.nav-item.active { background: rgba(196, 154, 92, 0.1); color: var(--accent); }
+
+/* ── Content Area ── */
+.noc-content {
+  padding: var(--space-xl);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.content-tools {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tool-left { display: flex; gap: 20px; }
+.noc-select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 11px;
+  padding: 8px 15px;
+  border-radius: 2px;
+}
+
+.entry-count { font-size: 10px; color: var(--text-ghost); font-family: var(--font-data); }
+
+/* ── Tables ── */
+.noc-table-container {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid var(--border-subtle);
+}
+
+.noc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.noc-table th {
+  text-align: left;
+  padding: 12px 20px;
+  font-size: 10px;
+  color: var(--text-dim);
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.noc-table td {
+  padding: 12px 20px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+  font-family: var(--font-data);
+}
+
+.noc-table tr:hover { background: rgba(255, 255, 255, 0.01); }
+
+.bold { font-weight: 700; color: var(--text-bright); }
+.sys-tag { font-size: 9px; background: rgba(255, 255, 255, 0.05); padding: 2px 6px; border-radius: 2px; color: var(--text-dim); }
+.pos { color: var(--success); font-weight: 700; }
+.neg { color: #ff3e3e; font-weight: 700; }
+
+.act-btn {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  color: var(--text-dim);
+  font-size: 10px;
+  padding: 4px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.act-btn:hover { color: var(--text-primary); border-color: var(--border-medium); }
+.act-btn.del:hover { background: #ff3e3e; color: #fff; border-color: #ff3e3e; }
+
+/* ── Form Overlay ── */
+.noc-form-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(5px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.noc-form {
+  width: 500px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
+}
+
+.form-header {
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.form-header h3 { font-size: 14px; margin: 0; letter-spacing: 0.1em; }
+.close-btn { background: transparent; border: none; color: var(--text-dim); cursor: pointer; }
+
+.form-grid {
+  padding: 30px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.form-actions {
+  padding: 20px 30px;
+  background: rgba(0, 0, 0, 0.2);
+  display: flex;
+  gap: 15px;
+  justify-content: flex-end;
+}
+
+.noc-field { display: flex; flex-direction: column; gap: 8px; }
+.noc-field label { font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; }
+
+.noc-input {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  padding: 10px 15px;
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.noc-input:focus { border-color: var(--accent); outline: none; }
+
+/* ── Toast ── */
+.noc-toast {
+  background: var(--accent);
+  color: #000;
+  padding: 8px 20px;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 2px;
+  animation: slideDownFade 0.3s ease-out;
+}
+
+@keyframes slideDownFade {
+  from { transform: translateY(-20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}

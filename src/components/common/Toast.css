@@ -1,0 +1,45 @@
+.terminal-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: rgba(10, 16, 20, 0.9);
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  z-index: 9999;
+  box-shadow: 0 0 20px rgba(74, 144, 164, 0.1), inset 0 0 10px rgba(74, 144, 164, 0.05);
+  backdrop-filter: blur(4px);
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.terminal-toast::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}
+
+.toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.toast-hidden {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.toast-icon {
+  animation: blink 1s infinite;
+}

@@ -1,0 +1,187 @@
+/* ═══════════════════════════════════════════════════
+   REFINERY MATRIX — High-density industrial grid
+   ═══════════════════════════════════════════════════ */
+
+.refinery-matrix {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  height: 100%;
+}
+
+.matrix-container {
+  overflow: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  max-width: 100%;
+  max-height: calc(100vh - 280px);
+  position: relative;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-family: var(--font-data);
+  min-width: 1200px; /* Ensure columns have enough breathing room */
+}
+
+/* ── Headers ── */
+.matrix-table th {
+  padding: 12px 16px;
+  text-align: left;
+  background: var(--bg-elevated);
+  border-bottom: 2px solid var(--border-medium);
+  border-right: 1px solid var(--border-subtle);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.header-corner {
+  z-index: 30 !important;
+  left: 0;
+  color: var(--accent);
+  font-family: var(--font-heading);
+  letter-spacing: 0.1em;
+  font-size: 11px;
+  background: var(--bg-base) !important;
+}
+
+.ore-header {
+  min-width: 100px;
+}
+
+.ore-header-text {
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.05em;
+  display: block;
+}
+
+.ore-header-full {
+  font-size: 12px;
+  color: var(--text-bright);
+  font-weight: 600;
+  display: block;
+}
+
+/* ── Cells ── */
+.matrix-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  border-right: 1px solid var(--border-subtle);
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-surface);
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  border-right: 2px solid var(--border-medium) !important;
+  min-width: 140px;
+}
+
+.station-cell {
+  background: var(--bg-elevated) !important;
+  color: var(--accent-bright);
+  font-size: 12px;
+  font-family: var(--font-heading);
+  font-weight: 600;
+}
+
+.mod-cell {
+  text-align: center;
+}
+
+.mod-badge {
+  display: inline-flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 1px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 2px;
+  transition: all var(--duration-fast);
+}
+
+.mod-val { font-size: 13px; }
+.mod-sym { font-size: 11px; opacity: 0.9; }
+
+/* ── Positive (+) ── */
+.mod-cell.pos .mod-badge { 
+  color: var(--accent-bright);
+  background: rgba(196, 154, 92, 0.12);
+  box-shadow: 0 0 10px rgba(196, 154, 92, 0.05);
+}
+
+/* ── Negative (-) ── */
+.mod-cell.neg .mod-badge { 
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.12);
+}
+
+/* ── Neutral ── */
+.mod-cell.neu .mod-badge { 
+  color: var(--text-ghost);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mod-empty {
+  color: var(--text-ghost);
+  font-weight: 300;
+}
+
+/* ── Hover ── */
+.matrix-table tr:hover td {
+  background: var(--bg-hover);
+}
+
+.matrix-table tr:hover .sticky-col {
+  background: var(--bg-hover) !important;
+}
+
+/* ── Footer ── */
+.matrix-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.legend {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dot.pos { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.dot.neg { background: var(--danger); }
+
+.matrix-note {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-style: italic;
+  max-width: 500px;
+  text-align: right;
+}

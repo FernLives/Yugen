@@ -1,0 +1,124 @@
+/* ── Boot Sequence ── */
+.boot-screen {
+  position: fixed;
+  inset: 0;
+  background: #020206;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, transform 0.6s ease;
+  cursor: pointer;
+}
+
+.boot-screen.boot-fade-out {
+  opacity: 0;
+  transform: scale(1.02);
+}
+
+.boot-content {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.8;
+  max-width: 620px;
+  width: 100%;
+  padding: 40px;
+}
+
+.boot-line {
+  animation: bootLineIn 0.1s ease both;
+  white-space: pre;
+  overflow: hidden;
+}
+
+@keyframes bootLineIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.boot-ok {
+  color: var(--accent-tertiary);
+}
+
+.boot-online {
+  color: var(--accent-primary);
+  text-shadow: 0 0 6px var(--accent-primary);
+}
+
+.boot-restricted {
+  color: var(--accent-warn);
+}
+
+.boot-welcome {
+  color: var(--accent-primary);
+  font-size: 14px;
+  text-shadow: var(--glow-text);
+  letter-spacing: 0.1em;
+}
+
+.boot-blink {
+  animation: bootBlink 1s step-end infinite;
+  color: var(--text-muted);
+  font-size: 11px;
+  margin-top: 8px;
+}
+
+@keyframes bootBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.boot-cursor {
+  display: inline-block;
+  color: var(--accent-primary);
+  animation: bootBlink 0.6s step-end infinite;
+  font-size: 14px;
+}
+
+.boot-scanline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+  opacity: 0.3;
+  animation: scanDown 3s linear infinite;
+  z-index: 1;
+}
+
+@keyframes scanDown {
+  0% { top: -5%; }
+  100% { top: 105%; }
+}
+
+/* Corner decorations */
+.boot-corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border-color: var(--accent-primary);
+  opacity: 0.2;
+}
+
+.boot-corner-tl {
+  top: 20px; left: 20px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+.boot-corner-tr {
+  top: 20px; right: 20px;
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+.boot-corner-bl {
+  bottom: 20px; left: 20px;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+.boot-corner-br {
+  bottom: 20px; right: 20px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
