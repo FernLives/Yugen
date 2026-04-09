@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// AUXNET — Resource Data organized by LOCATION
+// YŪGEN — Resource Data organized by LOCATION
 // Mining Method Categorization: SHIP | VEHICLE | HAND
 // ═══════════════════════════════════════════════════
 

@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// AUXNET — Data Store
+// YŪGEN — Data Store
 // Persistent SQLite Backend Proxy
 // ═══════════════════════════════════════════════════
 
@@ -9,10 +9,10 @@ const BASE_URL = '/api';
 // Remove any leftover localStorage keys from the pre-SQLite era.
 // We do NOT push this data into the DB — if the user purged, it should stay purged.
 export function cleanLegacyStorage() {
-  localStorage.removeItem('auxnet_refinery_data');
-  localStorage.removeItem('auxnet_resource_data');
-  localStorage.removeItem('auxnet_stations_data');
-  localStorage.removeItem('auxnet_personnel_data');
+  localStorage.removeItem('yugen_refinery_data');
+  localStorage.removeItem('yugen_resource_data');
+  localStorage.removeItem('yugen_stations_data');
+  localStorage.removeItem('yugen_personnel_data');
 }
 
 // ── Stations Data ──
@@ -95,6 +95,36 @@ export async function getResourceData(systemFilter = null) {
   }
 }
 
+// ── Resource Locations ──
+export async function getLocations() {
+  try {
+    const res = await fetch(`${BASE_URL}/locations`);
+    return await res.json();
+  } catch (e) { console.error('Locations fetch error:', e); return []; }
+}
+
+export async function addLocation(data) {
+  const res = await fetch(`${BASE_URL}/locations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
+export async function updateLocation(name, parentBody, data) {
+  const res = await fetch(`${BASE_URL}/locations/${encodeURIComponent(name)}/${encodeURIComponent(parentBody)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  return await res.json();
+}
+
+export async function deleteLocation(name, parentBody) {
+  await fetch(`${BASE_URL}/locations/${encodeURIComponent(name)}/${encodeURIComponent(parentBody)}`, { method: 'DELETE' });
+}
+
 export async function addResourceEntry(entry) {
   const res = await fetch(`${BASE_URL}/resources`, {
     method: 'POST',
@@ -137,43 +167,79 @@ export async function updateResourceEntry(id, data) {
 }
 
 // ── Admin PIN ──
-export async function getAdminPin() {
-  try {
-    const res = await fetch(`${BASE_URL}/settings/admin_pin`);
-    const { value } = await res.json();
-    return value || import.meta.env.VITE_ADMIN_PIN || 'SEC-NODATA-7X29';
-  } catch (e) {
-    return import.meta.env.VITE_ADMIN_PIN || 'SEC-NODATA-7X29';
-  }
-}
-
-export async function setAdminPin(pin) {
-  await fetch(`${BASE_URL}/settings`, {
+// ── User Authentication ──
+export async function registerUser(username, password, callsign) {
+  const res = await fetch(`${BASE_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ key: 'admin_pin', value: pin })
+    body: JSON.stringify({ username, password, callsign })
   });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Registration failed');
+  return data;
 }
 
-export async function verifyAdminPin(input) {
+export async function loginUser(username, password) {
+  const res = await fetch(`${BASE_URL}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Login failed');
+  return data;
+}
+
+export async function getUserProfile(username) {
+  const res = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}`);
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+export async function getAllUsers() {
+  const res = await fetch(`${BASE_URL}/users`);
+  return await res.json();
+}
+
+export async function updateUserProfile(id, data) {
+  const res = await fetch(`${BASE_URL}/users/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  });
+  const result = await res.json();
+  if (!res.ok) throw new Error(result.error || 'Update failed');
+  return result;
+}
+
+export async function updateUserRole(id, role) {
+  const res = await fetch(`${BASE_URL}/users/${id}/role`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role })
+  });
+  return await res.json();
+}
+
+// ── Session helpers ──
+export function getSession() {
   try {
-    const res = await fetch(`${BASE_URL}/auth/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pin: input })
-    });
-    const { authorized } = await res.json();
-    return authorized;
-  } catch (e) {
-    console.error('Auth Uplink Error:', e);
-    return false;
-  }
+    const raw = localStorage.getItem('yugen_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function setSession(user) {
+  localStorage.setItem('yugen_session', JSON.stringify(user));
+}
+
+export function clearSession() {
+  localStorage.removeItem('yugen_session');
 }
 
 // ── Quality of Life Data Purge ──
 export async function resetAllData() {
   await fetch(`${BASE_URL}/purge`, { method: 'DELETE' });
-  // Reloading helps the admin UI reflect the purged state instantly
   window.location.reload();
 }
 

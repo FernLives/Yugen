@@ -71,7 +71,7 @@ export default function BootSequence({ onComplete }) {
 
         {/* Wordmark */}
         <div className={`boot-wordmark ${phase >= 2 ? 'visible' : ''}`}>
-          AUXNET
+          YŪGEN
         </div>
 
         {/* Expanding line */}

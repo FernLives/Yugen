@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// AUXNET — Personnel Registry (Premium Intelligence)
+// YŪGEN — Personnel Registry (Premium Intelligence)
 // All subjects are identified by unique biometric signatures.
 // ═══════════════════════════════════════════════════
 
@@ -16,7 +16,7 @@ export const defaultPersonnelData = [
     ping: '12ms',
     relay: 'RSA-4096-A',
     signatureSeed: '0x884',
-    notes: 'Primary architect of the AUXNET matrix. Movements restricted to high-security hubs. Signal origin: UNKNOWN.',
+    notes: 'Primary architect of the YŪGEN intelligence matrix. Movements restricted to high-security hubs. Signal origin: UNKNOWN.',
   },
   {
     id: 'per-002',

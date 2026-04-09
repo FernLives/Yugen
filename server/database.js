@@ -25,6 +25,13 @@ export function initDb() {
       system TEXT DEFAULT 'Stanton'
     );
 
+    CREATE TABLE IF NOT EXISTS resource_locations (
+      name TEXT,
+      parentBody TEXT,
+      system TEXT DEFAULT 'Stanton',
+      PRIMARY KEY (name, parentBody)
+    );
+
     CREATE TABLE IF NOT EXISTS resource_data (
       id TEXT PRIMARY KEY,
       name TEXT,
@@ -58,12 +65,32 @@ export function initDb() {
       signatureSeed TEXT,
       notes TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      passwordHash TEXT NOT NULL,
+      callsign TEXT NOT NULL,
+      role TEXT DEFAULT 'operator',
+      clearance TEXT DEFAULT 'DELTA',
+      avatarSeed TEXT,
+      status TEXT DEFAULT 'ACTIVE',
+      bio TEXT DEFAULT '',
+      createdAt TEXT,
+      lastSeen TEXT
+    );
   `);
 
   // Migrate existing distinct stations to the new table if not present
   db.exec(`
     INSERT OR IGNORE INTO refinery_stations (name, system)
     SELECT DISTINCT station, system FROM refinery_data WHERE station IS NOT NULL;
+  `);
+
+  // Migrate existing distinct locations to the new table if not present
+  db.exec(`
+    INSERT OR IGNORE INTO resource_locations (name, parentBody, system)
+    SELECT DISTINCT location, parentBody, system FROM resource_data WHERE location IS NOT NULL;
   `);
 
   // ── Seeding logic ──
@@ -121,7 +148,7 @@ async function seedData() {
         id: 'per-001', name: '█████████', realName: 'FernLives', title: 'Founder / Apex Architect',
         clearance: 'OMEGA', status: 'ACTIVE - ENCRYPTED', location: '██████, Stanton',
         signal: '98.2%', ping: '12ms', relay: 'RSA-4096-A', signatureSeed: '0x884',
-        notes: 'Primary architect of the AUXNET matrix.'
+        notes: 'Primary architect of the YŪGEN intelligence matrix.'
       }
     ];
 

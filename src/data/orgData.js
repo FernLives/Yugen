@@ -1,61 +1,61 @@
 // ═══════════════════════════════════════════════════
-// AUXNET — Organization Dossier Data
+// YŪGEN — Organization Dossier Data
 // ═══════════════════════════════════════════════════
 
 export const orgData = {
   classification: 'RESTRICTED — LEVEL 3 CLEARANCE',
-  systemId: 'DOSSIER-AXN-0047',
+  systemId: 'DOSSIER-YGN-0047',
   lastUpdated: '2954.12.07',
   
   sections: [
     {
       title: 'DESIGNATION',
       content: [
-        { type: 'text', value: 'Operating under the designation ██████████, this entity is registered as a civilian collective within the UEE Commerce Authority ledger.' },
-        { type: 'text', value: 'Primary classification: Industrial / Logistics / Intelligence Support.' },
-        { type: 'redacted', value: 'Internal codename: [REDACTED — SEE ANNEX F-12]' },
+        { type: 'text', value: 'Registered under UEE Commerce Authority as a civilian collective. Operating designation: YŪGEN.' },
+        { type: 'text', value: 'Primary classification: Multi-Discipline / Contracts / Extraction / Coordination.' },
+        { type: 'redacted', value: 'Internal routing prefix: [REDACTED — SEE ANNEX Y-04]' },
       ],
     },
     {
-      title: 'OPERATIONAL OVERVIEW',
+      title: 'OPERATIONAL PHILOSOPHY',
       content: [
-        { type: 'text', value: 'This organization operates across the Stanton system with a focus on resource acquisition, refinery optimization, and strategic data aggregation.' },
-        { type: 'text', value: 'Unlike conventional mining collectives, this entity maintains ████████ capabilities and a sophisticated internal data network (ref: AUXNET).' },
-        { type: 'redacted', value: '████████████████████████████████' },
-        { type: 'text', value: 'All operations are conducted within the boundaries of UEE law. Officially.' },
+        { type: 'text', value: 'Yūgen operates without spectacle.' },
+        { type: 'text', value: 'Across contracts, extraction, and coordination, its presence is defined by precision rather than scale.' },
+        { type: 'text', value: 'There is no single specialty — only refinement across all disciplines.' },
+        { type: 'glitch', value: 'Where others expand, Yūgen deepens.' },
       ],
     },
     {
       title: 'STRUCTURE',
       content: [
-        { type: 'text', value: 'The organization operates on a cell-based structure. Members are assigned operational roles based on capability assessment.' },
-        { type: 'glitch', value: 'Command hierarchy is ████ DECENTRALIZED ████' },
-        { type: 'text', value: 'Communication is routed through encrypted relay nodes. Standard protocols apply.' },
-        { type: 'redacted', value: 'Total active personnel: [REDACTED]' },
-        { type: 'redacted', value: 'Current theater of operations: [REDACTED]' },
+        { type: 'text', value: 'The organization maintains a flat operational structure. Roles are fluid — capability determines assignment.' },
+        { type: 'glitch', value: 'Hierarchy is ████ ADAPTIVE ████' },
+        { type: 'text', value: 'Communication is routed through encrypted relay nodes. No single point of failure.' },
+        { type: 'redacted', value: 'Active roster: [REDACTED]' },
+        { type: 'redacted', value: 'Current theaters: [REDACTED]' },
       ],
     },
     {
       title: 'MISSION DIRECTIVE',
       content: [
-        { type: 'text', value: 'To build a self-sustaining civilian network capable of resource independence, intelligence gathering, and mutual protection in the verse.' },
-        { type: 'text', value: 'We do not seek conflict. We prepare for it.' },
-        { type: 'glitch', value: 'We do not ask permission. We create opportunity.' },
-        { type: 'text', value: 'Every member is an asset. Every operation serves the collective.' },
+        { type: 'text', value: 'To operate with purpose across every contract, every extraction, every engagement. No wasted motion.' },
+        { type: 'text', value: 'We don\'t chase scale. We pursue depth.' },
+        { type: 'glitch', value: 'Quiet competence. Consistent results.' },
+        { type: 'text', value: 'Every member refines the whole. Every operation adds to the foundation.' },
       ],
     },
     {
-      title: 'RECRUITMENT PROTOCOL',
+      title: 'RECRUITMENT',
       content: [
-        { type: 'text', value: 'Recruitment is by ████████ only. Prospective operatives undergo a vetting process managed by ████████████.' },
+        { type: 'text', value: 'Recruitment is selective. Prospective operators are assessed on capability, reliability, and disposition.' },
         { type: 'redacted', value: '████████████████████████████████████████' },
-        { type: 'text', value: 'If you are reading this, you have already been noticed.' },
+        { type: 'text', value: 'If you are reading this, you have already been considered.' },
       ],
     },
     {
       title: 'ADDENDUM',
       content: [
-        { type: 'text', value: 'This dossier is maintained by AUXNET automated systems. Unauthorized access is logged and reported.' },
+        { type: 'text', value: 'This dossier is maintained by Yūgen internal systems. Unauthorized access is logged and reported.' },
         { type: 'redacted', value: 'Last security audit: [REDACTED]' },
         { type: 'text', value: 'End of file.' },
       ],

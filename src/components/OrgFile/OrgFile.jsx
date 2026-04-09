@@ -29,7 +29,7 @@ export default function OrgFile() {
             Organization Dossier
           </h1>
           <div className="dossier-meta">
-            <span>Archive Node: AUXNET</span>
+            <span>Archive Node: YŪGEN</span>
             <span className="meta-sep">·</span>
             <span>Modified: {orgData.lastUpdated}</span>
             <span className="meta-sep">·</span>

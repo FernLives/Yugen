@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { getResourceData } from '../../data/dataStore';
+import { getResourceData, getLocations } from '../../data/dataStore';
 import './ResourceModule.css';
 
 const BODY_META = {
@@ -43,32 +43,32 @@ function ResourceCategory({ title, resources, icon }) {
 
 export default function ResourceModule({ system }) {
   const [data, setData] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setData(await getResourceData(system));
+      setLocations(await getLocations());
     };
     load();
   }, [system]);
 
   const grouped = useMemo(() => {
-    const map = {};
-    data.forEach(res => {
-      const body = res.parentBody;
-      if (!map[body]) map[body] = { body, locations: {} };
-      const loc = res.location;
-      if (!map[body].locations[loc]) {
-        map[body].locations[loc] = { name: loc, parentBody: body, resources: [] };
-      }
-      map[body].locations[loc].resources.push(res);
+    // Filter locations by system
+    const sysLocations = locations.filter(l => !system || l.system === system);
+    const bodyMap = {};
+    sysLocations.forEach(loc => {
+      const body = loc.parentBody;
+      if (!bodyMap[body]) bodyMap[body] = { body, locations: [] };
+      const locResources = data.filter(r => r.location === loc.name && r.parentBody === loc.parentBody);
+      bodyMap[body].locations.push({ name: loc.name, parentBody: body, resources: locResources });
     });
-    return Object.values(map).map(b => ({
+    return Object.values(bodyMap).map(b => ({
       ...b,
-      locations: Object.values(b.locations),
-      totalResources: Object.values(b.locations).reduce((sum, l) => sum + l.resources.length, 0),
+      totalResources: b.locations.reduce((sum, l) => sum + l.resources.length, 0),
     }));
-  }, [data]);
+  }, [data, locations, system]);
 
   const locationResources = useMemo(() => {
     if (!selectedLocation) return null;
@@ -84,7 +84,7 @@ export default function ResourceModule({ system }) {
     };
   }, [locationResources]);
 
-  if (data.length === 0) {
+  if (data.length === 0 && locations.length === 0) {
     return (
       <div className="resources fade-in-up">
         <div className="empty-system-state">

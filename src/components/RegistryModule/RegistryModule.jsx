@@ -122,7 +122,7 @@ function DossierCard({ person, index }) {
           <span className="status-text">{person.status}</span>
         </div>
         <div className="stamps">
-          <span className="security-stamp">AUXNET-INTERNAL-SIG</span>
+          <span className="security-stamp">YŪGEN-INTERNAL-SIG</span>
         </div>
       </div>
     </div>

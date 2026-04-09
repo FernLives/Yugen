@@ -1,5 +1,5 @@
 // ═══════════════════════════════════════════════════
-// AUXNET — Refinery Data (Minimal Matrix System)
+// YŪGEN — Refinery Data (Minimal Matrix System)
 // Complete Stanton deployment: 18 Terminals
 // ═══════════════════════════════════════════════════
 

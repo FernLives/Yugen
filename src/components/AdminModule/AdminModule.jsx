@@ -3,25 +3,26 @@ import {
   getRefineryData, addRefineryEntry, deleteRefineryEntry, updateRefineryEntry,
   getResourceData, addResourceEntry, deleteResourceEntry, updateResourceEntry,
   getStations, addStation, deleteStation, updateStation,
-  verifyAdminPin, setAdminPin, resetAllData,
+  getLocations, addLocation, deleteLocation, updateLocation,
+  getAllUsers, updateUserRole, resetAllData,
 } from '../../data/dataStore';
+import { useAuth } from '../../context/AuthContext';
 import './AdminModule.css';
 
 const SYSTEMS = ['Stanton', 'Pyro', 'Nyx'];
 
 export default function AdminModule() {
-  const [authed, setAuthed] = useState(false);
-  const [pin, setPin] = useState('');
-  const [pinErr, setPinErr] = useState('');
+  const { user } = useAuth();
   const [tab, setTab] = useState('stations');
   const [refData, setRefData] = useState([]);
   const [resData, setResData] = useState([]);
   const [stationsData, setStationsData] = useState([]);
+  const [locationsData, setLocationsData] = useState([]);
+  const [usersData, setUsersData] = useState([]);
   const [form, setForm] = useState({});
   const [adding, setAdding] = useState(false);
-  const [editMode, setEditMode] = useState(null); // { type: 'station'|'material'|'resource', id, parentStation? }
+  const [editMode, setEditMode] = useState(null);
   const [status, setStatus] = useState('');
-  const [newPin, setNewPin] = useState('');
   const [expandedStations, setExpandedStations] = useState({});
   const [expandedBodies, setExpandedBodies] = useState({});
 
@@ -34,14 +35,14 @@ export default function AdminModule() {
 
   useEffect(() => {
     const load = async () => {
-      if (authed) {
-        setRefData(await getRefineryData());
-        setResData(await getResourceData());
-        setStationsData(await getStations());
-      }
+      setRefData(await getRefineryData());
+      setResData(await getResourceData());
+      setStationsData(await getStations());
+      setLocationsData(await getLocations());
+      setUsersData(await getAllUsers());
     };
     load();
-  }, [authed]);
+  }, []);
 
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
@@ -49,14 +50,28 @@ export default function AdminModule() {
     setRefData(await getRefineryData());
     setResData(await getResourceData());
     setStationsData(await getStations());
+    setLocationsData(await getLocations());
+    setUsersData(await getAllUsers());
   };
 
-  const login = async () => {
-    if (await verifyAdminPin(pin)) { setAuthed(true); setPinErr(''); }
-    else { setPinErr('UNAUTHORIZED ACCESS DETECTED'); setPin(''); }
+  // ── Location CRUD ──
+  const saveLocation = async () => {
+    if (!form.locationName || !form.parentBody) return flash('Field Error: Location Name & Parent Body required');
+    if (editMode) {
+      await updateLocation(editMode.name, editMode.parentBody, { newName: form.locationName, newParentBody: form.parentBody, system: form.system || 'Stanton' });
+      flash('Location Updated');
+    } else {
+      await addLocation({ name: form.locationName, parentBody: form.parentBody, system: form.system || 'Stanton' });
+      flash('Location Synchronized');
+    }
+    await reload(); closeForm();
   };
 
-  // ── Station CRUD ──
+  const delLoc = async (name, parentBody) => {
+    await deleteLocation(name, parentBody);
+    await reload();
+    flash('Location Purged');
+  };
   const saveStation = async () => {
     if (!form.name) return flash('Field Error: Name required');
     if (editMode) {
@@ -126,11 +141,11 @@ export default function AdminModule() {
       setForm({ ore: '', modifier: 0, station: parentContext || stationsData[0]?.name || '' });
     } else if (type === 'location') {
       setTab('location');
-      setForm({ name: '', type: 'Mineral', location: '', parentBody: '', system: 'Stanton', description: '', methods: ['ship'], tips: '' });
+      setForm({ locationName: '', parentBody: '', system: 'Stanton' });
     } else {
       // 'resource' — sub-item inside an existing location
       setTab('resource');
-      setForm({ name: '', type: 'Mineral', location: parentContext?.location || '', parentBody: parentContext?.parentBody || '', system: parentContext?.system || 'Stanton', description: '', methods: ['ship'], tips: '' });
+      setForm({ name: '', type: 'Ship Mineable', location: parentContext?.location || '', parentBody: parentContext?.parentBody || '', system: parentContext?.system || 'Stanton', description: '', methods: ['ship'], tips: '' });
     }
   };
 
@@ -143,6 +158,10 @@ export default function AdminModule() {
     } else if (type === 'material') {
       setTab('material');
       setForm({ ore: item.ore, modifier: item.modifier, station: item.station });
+    } else if (type === 'location') {
+      setTab('location');
+      setEditMode({ type: 'location', name: item.name, parentBody: item.parentBody });
+      setForm({ locationName: item.name, parentBody: item.parentBody, system: item.system });
     } else {
       setTab('resource');
       setForm({ ...item });
@@ -159,12 +178,11 @@ export default function AdminModule() {
     setExpandedBodies(prev => ({ ...prev, [body]: !prev[body] }));
   };
 
-  const changePin = async () => {
-    if (newPin.length >= 3) {
-      await setAdminPin(newPin);
-      setNewPin('');
-      flash('Security Code Updated');
-    }
+  const toggleUserRole = async (userId, currentRole) => {
+    const newRole = currentRole === 'admin' ? 'operator' : 'admin';
+    await updateUserRole(userId, newRole);
+    await reload();
+    flash(`Role updated to ${newRole.toUpperCase()}`);
   };
 
   const handlePurge = async () => {
@@ -185,55 +203,34 @@ export default function AdminModule() {
     filterSystem === 'All' ? stationsData : stationsData.filter(s => s.system === filterSystem)
   , [stationsData, filterSystem]);
 
+  // Build resource tree from locations table + attach resources
   const filteredResData = useMemo(() =>
     filterSystem === 'All' ? resData : resData.filter(d => d.system === filterSystem)
   , [resData, filterSystem]);
 
-  // Group resources by parentBody -> location
-  const resourceTree = useMemo(() => {
-    const map = {};
-    filteredResData.forEach(r => {
-      const body = r.parentBody || 'Unknown';
-      if (!map[body]) map[body] = { body, system: r.system, locations: {} };
-      const loc = r.location || 'Unknown';
-      if (!map[body].locations[loc]) map[body].locations[loc] = [];
-      map[body].locations[loc].push(r);
-    });
-    return Object.values(map).map(b => ({
-      ...b,
-      locations: Object.entries(b.locations).map(([name, resources]) => ({ name, resources })),
-      total: Object.values(b.locations).reduce((s, arr) => s + arr.length, 0),
-    }));
-  }, [filteredResData]);
+  const filteredLocations = useMemo(() =>
+    filterSystem === 'All' ? locationsData : locationsData.filter(l => l.system === filterSystem)
+  , [locationsData, filterSystem]);
 
-  // ── LOGIN ──
-  if (!authed) {
-    return (
-      <div className="admin-noc login-mode fade-in">
-        <div className="noc-login-terminal">
-          <div className="terminal-header">NETWORK ACCESS HUB</div>
-          <div className="terminal-body">
-            <div className="auth-status">{pinErr || 'PLEASE ENTER AUTHENTICATION CODE'}</div>
-            <input
-              type="password"
-              className="noc-input auth-code"
-              value={pin}
-              onChange={e => setPin(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && login()}
-              placeholder="••••••"
-              autoFocus
-            />
-            <button className="noc-btn primary" onClick={login}>AUTHORIZE</button>
-          </div>
-          <div className="terminal-footer">ENCRYPTION: AES-4096 // STATUS: STANDBY</div>
-        </div>
-      </div>
-    );
-  }
+  const resourceTree = useMemo(() => {
+    // Group locations by parentBody
+    const bodyMap = {};
+    filteredLocations.forEach(loc => {
+      const body = loc.parentBody || 'Unknown';
+      if (!bodyMap[body]) bodyMap[body] = { body, system: loc.system, locations: [] };
+      // Attach resources that belong to this location
+      const locResources = filteredResData.filter(r => r.location === loc.name && r.parentBody === loc.parentBody);
+      bodyMap[body].locations.push({ name: loc.name, parentBody: loc.parentBody, system: loc.system, resources: locResources });
+    });
+    return Object.values(bodyMap).map(b => ({
+      ...b,
+      total: b.locations.reduce((s, l) => s + l.resources.length, 0),
+    }));
+  }, [filteredLocations, filteredResData]);
 
   // ── Determine save handler ──
-  const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'location' || tab === 'resource' ? 'resource' : 'resource') : null;
-  const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : saveResource;
+  const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'location' ? 'location' : 'resource') : null;
+  const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : currentSaveTab === 'location' ? saveLocation : saveResource;
 
   return (
     <div className="admin-noc fade-in">
@@ -258,8 +255,8 @@ export default function AdminModule() {
           </div>
           <div className="nav-group">
             <div className="group-label">System</div>
-            <button className={`nav-item ${tab === 'settings' ? 'active' : ''}`} onClick={() => setTab('settings')}>
-              <span className="nav-icon">⚙</span> Configuration
+            <button className={`nav-item ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
+              <span className="nav-icon">◉</span> Users
             </button>
           </div>
         </aside>
@@ -314,16 +311,13 @@ export default function AdminModule() {
                   ) : tab === 'location' ? (
                     <>
                       <Inp label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} />
-                      <Inp label="Location Name" val={form.location} set={v => setForm({...form, location: v})} />
+                      <Inp label="Location Name" val={form.locationName} set={v => setForm({...form, locationName: v})} />
                       <Sel label="System" val={form.system} set={v => setForm({...form, system: v})} opts={SYSTEMS} />
-                      <Inp label="First Resource" val={form.name} set={v => setForm({...form, name: v})} />
-                      <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Mineral', 'Gas', 'Organic', 'Metal']} />
-                      <Inp label="Description" val={form.description} set={v => setForm({...form, description: v})} />
                     </>
                   ) : (
                     <>
                       <Inp label="Name" val={form.name} set={v => setForm({...form, name: v})} />
-                      <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Mineral', 'Gas', 'Organic', 'Metal']} />
+                      <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
                       <Inp label="Description" val={form.description} set={v => setForm({...form, description: v})} />
                     </>
                   )}
@@ -432,8 +426,15 @@ export default function AdminModule() {
                           <div key={loc.name} className="res-loc-group">
                             <div className="res-loc-header">
                               <span className="res-loc-name">{loc.name}</span>
-                              <button className="act-btn add-sub" onClick={() => startAdd('resource', { location: loc.name, parentBody: body.body, system: body.system })}>+ ADD</button>
+                              <div className="res-loc-actions">
+                                <button className="act-btn add-sub" onClick={() => startAdd('resource', { location: loc.name, parentBody: body.body, system: body.system })}>+ ADD</button>
+                                <button className="act-btn edit" onClick={() => startEdit('location', loc)}>EDIT</button>
+                                <button className="act-btn del" onClick={() => delLoc(loc.name, loc.parentBody)}>DEL</button>
+                              </div>
                             </div>
+                            {loc.resources.length === 0 ? (
+                              <div className="materials-empty">No resources registered at this location.</div>
+                            ) : (
                             <table className="materials-table">
                               <thead>
                                 <tr>
@@ -455,6 +456,7 @@ export default function AdminModule() {
                                 ))}
                               </tbody>
                             </table>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -465,18 +467,48 @@ export default function AdminModule() {
             </div>
           )}
 
-          {/* ══ SETTINGS TAB ══ */}
-          {tab === 'settings' && (
+          {/* ══ USERS TAB ══ */}
+          {tab === 'users' && (
             <div className="noc-settings fade-in">
               <div className="settings-card">
-                <h3>Authorization Management</h3>
-                <div className="setting-row">
-                  <input type="password" className="noc-input" value={newPin} onChange={e => setNewPin(e.target.value)} placeholder="NEW ACCESS CODE" />
-                  <button className="noc-btn primary" onClick={changePin}>UPDATE</button>
-                </div>
+                <h3>Registered Operators ({usersData.length})</h3>
+                <table className="materials-table">
+                  <thead>
+                    <tr>
+                      <th>CALLSIGN</th>
+                      <th>USERNAME</th>
+                      <th>ROLE</th>
+                      <th>STATUS</th>
+                      <th>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {usersData.map(u => (
+                      <tr key={u.id}>
+                        <td className="bold">{u.callsign}</td>
+                        <td>@{u.username}</td>
+                        <td>
+                          <span className={`role-tag ${u.role}`}>{u.role.toUpperCase()}</span>
+                        </td>
+                        <td>{u.status}</td>
+                        <td className="actions">
+                          {u.id !== user?.id && (
+                            <button
+                              className={`act-btn ${u.role === 'admin' ? 'del' : 'edit'}`}
+                              onClick={() => toggleUserRole(u.id, u.role)}
+                            >
+                              {u.role === 'admin' ? 'DEMOTE' : 'PROMOTE'}
+                            </button>
+                          )}
+                          {u.id === user?.id && <span style={{color: 'var(--text-dim)', fontSize: '10px'}}>YOU</span>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
               <div className="settings-card danger">
-                <h3>Panic Mode</h3>
+                <h3>Danger Zone</h3>
                 <p>Immediate purge of all localized intelligence data.</p>
                 <button className="noc-btn danger" onClick={() => { setPurgeConfirm(true); setPurgeInput(''); }}>PURGE ALL DATA</button>
               </div>
