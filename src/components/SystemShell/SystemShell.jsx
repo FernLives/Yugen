@@ -26,7 +26,6 @@ export default function SystemShell({
   const modules = [
     { id: 'refinery', label: 'Refinery', shortcut: '/refinery' },
     { id: 'resources', label: 'Resources', shortcut: '/resources' },
-    { id: 'org', label: 'Dossier', shortcut: '/org' },
     ...(isAdmin ? [{ id: 'admin', label: 'Admin', shortcut: '/admin' }] : []),
   ];
 

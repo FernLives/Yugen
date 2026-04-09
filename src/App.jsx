@@ -4,7 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import SystemShell from './components/SystemShell/SystemShell';
 import RefineryModule from './components/RefineryModule/RefineryModule';
 import ResourceModule from './components/ResourceModule/ResourceModule';
-import OrgFile from './components/OrgFile/OrgFile';
+
 import AdminModule from './components/AdminModule/AdminModule';
 import ProfilePage from './components/ProfilePage/ProfilePage';
 import BootSequence from './components/BootSequence/BootSequence';
@@ -45,7 +45,7 @@ function AppContent() {
         <Routes>
           <Route path="/refinery" element={<RefineryModule system={activeSystem} />} />
           <Route path="/resources" element={<ResourceModule system={activeSystem} />} />
-          <Route path="/org" element={<OrgFile />} />
+
           <Route path="/admin" element={<AdminGuard />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/" element={<Navigate to="/refinery" replace />} />
