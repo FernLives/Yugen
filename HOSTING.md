@@ -27,10 +27,12 @@ The system is now configured for **Unified Hosting**, meaning the backend serves
 ### Example: Deploying to Railway.app
 1. Go to [Railway](https://railway.app/).
 2. Create a "New Project" > "Deploy from GitHub repo".
-3. **Important**: Add a "Volume" in Railway settings and mount it to `/app/server` to persist `auxnet.db`.
+3. **Important**: Add a "Volume" in Railway settings and mount it to **`/app/data`**. (Do NOT mount to `/app/server` or your code will disappear!).
 4. Start Command: `npm start`.
 5. Environment Variables:
    * **Key**: `PORT` (Railway provides this automatically).
+   * **Key**: `DB_PATH`
+   * **Value**: `/app/data/auxnet.db`
    * **Key**: `VITE_ADMIN_PIN` 
    * **Value**: *[Your Custom Pin]*
 
