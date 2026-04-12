@@ -10,27 +10,27 @@ When you host this online, **do not** upload your `.env` file to a public reposi
 
 ---
 
-## 1. Local Network / Self-Hosting (Recommended for Immersion)
-If you just want this running on a secondary tablet or laptop next to your main rig (the true "Admin Console" experience):
+## 1. Local Network / Self-Hosting
 1. In your project folder, run `npm install`.
-2. Find your local IP address (e.g., `192.168.1.50`).
-3. Boot the system:
-   ```powershell
-   npm start
-   ```
-4. On your tablet, go to `http://192.168.1.50:5173`. 
-*(Note: You may need to update `vite.config.js` with `server: { host: '0.0.0.0' }` to allow network access).*
+2. Build the UI: `npm run build`.
+3. Boot the system: `npm start`.
+4. Access via your local IP at port **3001** (e.g., `http://192.168.1.50:3001`).
+
+*(For development with hot-reloading, still use `npm run dev:full` and access `5173`).*
+
+---
 
 ## 2. Server-based Hosting Platforms (Railway, Render, Fly.io)
 **Best for**: Global access with persistent file storage.
-Because SQLite requires a persistent disk file to save data, platforms that offer "Persistent Volumes" are required.
+The system is now configured for **Unified Hosting**, meaning the backend serves the frontend on a single port.
 
 ### Example: Deploying to Railway.app
 1. Go to [Railway](https://railway.app/).
 2. Create a "New Project" > "Deploy from GitHub repo".
-3. **Important**: Add a "Volume" to your deployment in Railway settings, and set its mount path to `/app/server` so your `auxnet.db` doesn't reset every deploy.
-4. Set your Start Command to `npm run start` or `npm run server` (if you build the UI separately).
-5. Add your Environment Variable:
+3. **Important**: Add a "Volume" in Railway settings and mount it to `/app/server` to persist `auxnet.db`.
+4. Start Command: `npm start`.
+5. Environment Variables:
+   * **Key**: `PORT` (Railway provides this automatically).
    * **Key**: `VITE_ADMIN_PIN` 
    * **Value**: *[Your Custom Pin]*
 

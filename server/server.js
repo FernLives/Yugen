@@ -2,8 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import db, { initDb } from './database.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 dotenv.config();
 
@@ -286,6 +290,15 @@ app.put('/api/users/:id/role', (req, res) => {
   db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
   const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
   res.json(sanitizeUser(updated));
+});
+
+// Serve static files from the React app dist folder
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// The "catchall" handler: for any request that doesn't
+// match one above, send back React's index.html file.
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
 app.listen(PORT, () => {
