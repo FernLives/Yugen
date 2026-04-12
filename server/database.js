@@ -8,17 +8,41 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const internalDbPath = path.join(__dirname, 'auxnet.db');
 const dbPath = process.env.DB_PATH || internalDbPath;
 
-// 🚀 AUTO-MIGRATION: If we are on Railway with a volume (DB_PATH set), 
-// but the volume is empty, copy the database we pushed via Git into it.
-if (process.env.DB_PATH && !fs.existsSync(dbPath) && fs.existsSync(internalDbPath)) {
-  console.log('🚚 Moving pushed database to persistent volume...');
+// 🚀 ROBUST MIGRATION: Ensure rich local data is moved to the persistent volume
+if (process.env.DB_PATH && fs.existsSync(internalDbPath)) {
+  console.log('🔍 Checking database sync status...');
+  
   try {
-    // Ensure the directory exists (e.g., /app/data)
-    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
-    fs.copyFileSync(internalDbPath, dbPath);
-    console.log('✅ Database migrated to volume.');
+    let shouldMigrate = false;
+    
+    if (!fs.existsSync(dbPath)) {
+      console.log('📂 Volume database missing. Initializing migration...');
+      shouldMigrate = true;
+    } else {
+      // Both exist. Compare them to see if the volume is a "empty/default" one.
+      const internalSize = fs.statSync(internalDbPath).size;
+      const volumeSize = fs.statSync(dbPath).size;
+      
+      console.log(`📊 DB Sizes — Image: ${internalSize} bytes, Volume: ${volumeSize} bytes`);
+      
+      // If the pushed database is significantly larger (has more data) than the volume one,
+      // it means the volume was likely initialized with defaults and we should overwrite it.
+      if (internalSize > volumeSize + 1024) { // 1KB buffer
+        console.log('⚠️  Detected rich data in deployment image not present in Volume. Forcing Migration...');
+        shouldMigrate = true;
+      }
+    }
+
+    if (shouldMigrate) {
+      console.log('🚚 Migrating data to persistent volume...');
+      fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+      fs.copyFileSync(internalDbPath, dbPath);
+      console.log('✅ Database successfully moved to Volume.');
+    } else {
+      console.log('⏭️  Volume already contains up-to-date or existing data. Skipping migration.');
+    }
   } catch (err) {
-    console.error('❌ Migration failed:', err);
+    console.error('❌ Migration logic error:', err);
   }
 }
 
