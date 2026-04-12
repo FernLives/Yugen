@@ -26,5 +26,5 @@ dist-ssr
 # Security and Database
 .env
 .env.*
-server/auxnet.db
+# server/auxnet.db
 backups/
