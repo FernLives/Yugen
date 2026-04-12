@@ -1,10 +1,26 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import fs from 'fs';
 
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = process.env.DB_PATH || path.join(__dirname, 'auxnet.db');
+const internalDbPath = path.join(__dirname, 'auxnet.db');
+const dbPath = process.env.DB_PATH || internalDbPath;
+
+// 🚀 AUTO-MIGRATION: If we are on Railway with a volume (DB_PATH set), 
+// but the volume is empty, copy the database we pushed via Git into it.
+if (process.env.DB_PATH && !fs.existsSync(dbPath) && fs.existsSync(internalDbPath)) {
+  console.log('🚚 Moving pushed database to persistent volume...');
+  try {
+    // Ensure the directory exists (e.g., /app/data)
+    fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+    fs.copyFileSync(internalDbPath, dbPath);
+    console.log('✅ Database migrated to volume.');
+  } catch (err) {
+    console.error('❌ Migration failed:', err);
+  }
+}
 
 const db = new Database(dbPath);
 db.pragma('foreign_keys = ON');
