@@ -277,6 +277,13 @@ export default function AdminModule() {
           {/* ── Top toolbar ── */}
           <div className="content-tools">
             <div className="tool-left">
+              <button 
+                className="noc-btn diagnostic" 
+                onClick={() => window.open('/api/admin/download-db', '_blank')}
+                title="Download the live database file (SQLite)"
+              >
+                DATABASE BACKUP
+              </button>
               {tab === 'stations' && (
                 <button className="noc-btn add" onClick={() => startAdd('station')}>+ ADD STATION</button>
               )}

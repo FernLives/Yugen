@@ -6,7 +6,7 @@ import fs from 'fs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const internalDbPath = path.join(__dirname, 'auxnet.db');
-const dbPath = process.env.DB_PATH || internalDbPath;
+export const dbPath = process.env.DB_PATH || internalDbPath;
 
 // 🚀 ROBUST MIGRATION: Ensure rich local data is moved to the persistent volume
 if (process.env.DB_PATH && fs.existsSync(internalDbPath)) {

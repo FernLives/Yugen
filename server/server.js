@@ -4,7 +4,8 @@ import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import db, { initDb } from './database.js';
+import db, { initDb, dbPath } from './database.js';
+import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -39,6 +40,11 @@ function sanitizeUser(user) {
 }
 
 // ── API Endpoints ──
+
+// Admin: Download DB
+app.get('/api/admin/download-db', (req, res) => {
+  res.download(dbPath, 'database.sqlite');
+});
 
 // 1. Stations Data
 app.get('/api/stations', (req, res) => {
