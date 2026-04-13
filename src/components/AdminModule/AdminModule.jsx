@@ -225,6 +225,12 @@ export default function AdminModule() {
     });
   }, [filteredBodies, filteredResData]);
 
+  const knownMaterials = useMemo(() => {
+    const ores = refData.map(m => m.ore || m.name);
+    const resources = resData.map(r => r.name);
+    return [...new Set([...ores, ...resources])].sort();
+  }, [refData, resData]);
+
   // ── Determine save handler ──
   const saveFn = addingType === 'station' ? saveStation : addingType === 'material' ? saveMaterial : addingType === 'body' ? saveBody : saveResource;
 
@@ -263,6 +269,9 @@ export default function AdminModule() {
             </button>
             <button className={`nav-item ${['resources', 'location', 'resource'].includes(tab) ? 'active' : ''}`} onClick={() => setTab('resources')}>
               <span className="nav-icon">◈</span> Resources
+            </button>
+            <button className={`nav-item ${tab === 'materials_bank' ? 'active' : ''}`} onClick={() => setTab('materials_bank')}>
+              <span className="nav-icon">✧</span> Materials
             </button>
           </div>
           <div className="nav-group">
@@ -325,7 +334,7 @@ export default function AdminModule() {
                   {addingType === 'material' && (
                     <>
                       <Sel label="Parent Station" val={form.station} set={v => setForm({...form, station: v})} opts={stationsData.map(s => s.name)} />
-                      <Inp label="Material (Ore)" val={form.ore} set={v => setForm({...form, ore: v})} />
+                      <Inp label="Material (Ore)" val={form.ore} set={v => setForm({...form, ore: v})} suggestions={knownMaterials} />
                       <Inp label="Yield Modifier" val={form.modifier} set={v => setForm({...form, modifier: v})} type="number" />
                     </>
                   )}
@@ -338,7 +347,7 @@ export default function AdminModule() {
                   {addingType === 'resource' && (
                     <>
                       <Sel label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} opts={bodiesData.map(b => b.name)} />
-                      <Inp label="Resource Name" val={form.name} set={v => setForm({...form, name: v})} />
+                      <Inp label="Resource Name" val={form.name} set={v => setForm({...form, name: v})} suggestions={knownMaterials} />
                       <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
                     </>
                   )}
@@ -482,6 +491,33 @@ export default function AdminModule() {
             </div>
           )}
 
+          {/* ══ MATERIALS BANK TAB ══ */}
+          {tab === 'materials_bank' && (
+            <div className="bank-grid fade-in">
+              <div className="bank-card full-width">
+                <div className="card-header">
+                  <h3>Central Intelligence: Materials Bank</h3>
+                  <span className="entry-tag">{knownMaterials.length} UNIQUE SIGNATURES</span>
+                </div>
+                <div className="materials-dictionary">
+                  {knownMaterials.length === 0 ? (
+                    <div className="noc-empty">No materials registered in the system library.</div>
+                  ) : (
+                    knownMaterials.map(m => (
+                      <div key={m} className="dict-item">
+                        <span className="dict-pip">◇</span>
+                        <span className="dict-name">{m}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <div className="card-hint">
+                  Materials are automatically harvested from Refinery and Survey logs to ensure data integrity across all modules.
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* ══ USERS TAB ══ */}
           {tab === 'users' && (
             <div className="noc-settings fade-in">
@@ -571,11 +607,24 @@ export default function AdminModule() {
 }
 
 // ── Reusable form components ──
-function Inp({ label, val, set, type = 'text' }) {
+function Inp({ label, val, set, type = 'text', suggestions = [] }) {
+  const listId = `list-${label.replace(/\s+/g, '-').toLowerCase()}`;
   return (
     <div className="noc-field">
       <label>{label}</label>
-      <input type={type} className="noc-input" value={val || ''} onChange={e => set(e.target.value)} spellCheck={false} />
+      <input 
+        type={type} 
+        className="noc-input" 
+        value={val || ''} 
+        onChange={e => set(e.target.value)} 
+        spellCheck={false} 
+        list={suggestions.length > 0 ? listId : undefined}
+      />
+      {suggestions.length > 0 && (
+        <datalist id={listId}>
+          {suggestions.map(s => <option key={s} value={s} />)}
+        </datalist>
+      )}
     </div>
   );
 }
