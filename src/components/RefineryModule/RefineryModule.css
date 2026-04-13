@@ -19,128 +19,186 @@
 .matrix-scroll {
   overflow: auto;
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  max-height: calc(100vh - 260px);
+  border-radius: var(--radius-sm);
+  max-height: calc(100vh - 280px);
+  background: rgba(0, 0, 0, 0.4);
+  position: relative;
 }
 
 .matrix-grid {
   display: grid;
+  padding-top: 130px; /* Space for angled headers */
+  position: relative;
 }
 
 /* ── Corner ── */
 .grid-corner {
   position: sticky;
   left: 0;
-  top: 0;
-  z-index: 30;
+  top: -130px; /* Offset to stay at top of cell grid */
+  z-index: 100;
+  height: 48px;
   background: var(--bg-base);
-  padding: 10px 12px;
+  padding: 12px;
   font-family: var(--font-heading);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
   color: var(--accent);
-  border-bottom: 2px solid var(--border-medium);
-  border-right: 2px solid var(--border-medium);
+  border-bottom: 2px solid var(--accent-muted);
+  border-right: 2px solid var(--accent-muted);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
+  text-transform: uppercase;
+  cursor: pointer;
 }
 
-/* ── Ore Headers ── */
+/* ── Ore Headers Area ── */
 .grid-ore-header {
   position: sticky;
-  top: 0;
-  z-index: 20;
-  background: var(--bg-elevated);
-  padding: 8px 4px;
+  top: -130px;
+  z-index: 40;
+  height: 0; /* Let column width handle it */
+  border-right: 1px solid rgba(196, 154, 92, 0.1);
+  background: transparent;
+  pointer-events: none;
+}
+
+.ore-header-content {
+  position: absolute;
+  bottom: 12px;
+  left: 20px;
+  width: 180px;
+  transform: rotate(-45deg);
+  transform-origin: bottom left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(13, 13, 18, 0.85);
+  backdrop-filter: blur(8px);
+  border-left: 2px solid var(--accent-dim);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: all 0.2s var(--ease-out);
+}
+
+.grid-ore-header:hover .ore-header-content,
+.grid-ore-header.focused .ore-header-content {
+  background: rgba(196, 154, 92, 0.15);
+  border-left-color: var(--accent-bright);
+  box-shadow: -10px 10px 20px rgba(0,0,0,0.5);
+  z-index: 50;
+}
+
+.ore-num {
   font-family: var(--font-data);
   font-size: 9px;
-  font-weight: 600;
+  color: var(--accent-dim);
+  opacity: 0.6;
+}
+
+.ore-label {
+  font-family: var(--font-data);
+  font-size: 11px;
+  font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: 0.01em;
-  text-align: center;
-  border-bottom: 2px solid var(--border-medium);
-  border-right: 1px solid var(--border-subtle);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  min-height: 44px;
-  line-height: 1.3;
-  word-break: break-word;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ── Station Cell ── */
 .grid-station {
   position: sticky;
   left: 0;
-  z-index: 10;
-  background: var(--bg-elevated);
-  padding: 8px 12px;
+  z-index: 30;
+  background: rgba(18, 18, 24, 0.95);
+  backdrop-filter: blur(8px);
+  padding: 12px 16px;
   font-family: var(--font-heading);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--accent-bright);
   border-bottom: 1px solid var(--border-subtle);
-  border-right: 2px solid var(--border-medium);
+  border-right: 2px solid var(--accent-muted);
   display: flex;
   align-items: center;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
-
-.grid-station:hover {
-  background: var(--bg-hover);
+  white-space: nowrap;
+  letter-spacing: 0.05em;
 }
 
 /* ── Data Cells ── */
 .grid-cell {
-  padding: 8px 6px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-bottom: 1px solid var(--border-subtle);
-  border-right: 1px solid rgba(255, 255, 255, 0.02);
-  background: var(--bg-surface);
-  transition: background 0.1s;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  background: rgba(255,255,255,0.01);
+  transition: all 0.2s;
+  position: relative;
 }
 
-.grid-cell:hover {
-  background: var(--bg-hover);
+.grid-cell.dimmed {
+  opacity: 0.15;
+  filter: grayscale(1);
+}
+
+.grid-cell.focused {
+  background: rgba(196, 154, 92, 0.04);
+  border-right-color: rgba(196, 154, 92, 0.1);
+}
+
+.grid-cell.focused:before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0; bottom: 0;
+  border-left: 1px solid rgba(196, 154, 92, 0.1);
+  border-right: 1px solid rgba(196, 154, 92, 0.1);
+  pointer-events: none;
+}
+
+.cell-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
 .cell-val {
   font-family: var(--font-data);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 3px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
 }
 
-/* Positive */
-.grid-cell.pos .cell-val {
+.best-tag {
+  font-size: 7px;
   color: var(--accent-bright);
-  background: rgba(196, 154, 92, 0.1);
+  background: rgba(196, 154, 92, 0.2);
+  padding: 1px 4px;
+  border: 1px solid var(--accent-muted);
+  border-radius: 1px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  animation: pulseRECOMMENDED 2s infinite;
 }
 
-/* Negative */
-.grid-cell.neg .cell-val {
-  color: #ff6b6b;
-  background: rgba(255, 107, 107, 0.1);
+@keyframes pulseRECOMMENDED {
+  0% { opacity: 0.7; }
+  50% { opacity: 1; box-shadow: 0 0 10px rgba(196, 154, 92, 0.2); }
+  100% { opacity: 0.7; }
 }
 
-/* Neutral */
-.grid-cell.neu .cell-val {
-  color: var(--text-dim);
-}
+.grid-cell.pos .cell-val { color: var(--accent-bright); }
+.grid-cell.neg .cell-val { color: #ff5555; }
+.grid-cell.neu .cell-val { color: var(--text-ghost); }
 
-/* Best in class — highlight ring */
-.grid-cell.best .cell-val {
-  color: #f0d890;
-  background: rgba(240, 216, 144, 0.12);
-  box-shadow: 0 0 0 1px rgba(240, 216, 144, 0.25), 0 0 12px rgba(240, 216, 144, 0.08);
+.grid-cell.best {
+  background: rgba(196, 154, 92, 0.08);
 }
 
 /* Empty cell */
