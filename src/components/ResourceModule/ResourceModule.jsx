@@ -32,6 +32,7 @@ export default function ResourceModule({ system }) {
   const [resData, setResData] = useState([]);
   const [bodies, setBodies] = useState([]);
   const [selectedBody, setSelectedBody] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -61,9 +62,28 @@ export default function ResourceModule({ system }) {
       ship: items.filter(i => i.type.toLowerCase().includes('ship')),
       vehicle: items.filter(i => i.type.toLowerCase().includes('vehicle') || i.type.toLowerCase().includes('ground')),
       hand: items.filter(i => i.type.toLowerCase().includes('hand')),
-      all: items
+      all: items.map(i => ({
+        ...i,
+        isMatch: searchQuery && i.name.toLowerCase().includes(searchQuery.toLowerCase())
+      }))
     };
-  }, [resData, selectedBody]);
+  }, [resData, selectedBody, searchQuery]);
+
+  const filteredBodies = useMemo(() => {
+    if (!searchQuery) return bodies;
+    const q = searchQuery.toLowerCase();
+    return bodies.filter(body => {
+      return resData.some(r => r.parentBody === body.name && r.name.toLowerCase().includes(q));
+    });
+  }, [bodies, resData, searchQuery]);
+
+  // Handle auto-selection when filtering
+  useEffect(() => {
+    if (searchQuery && filteredBodies.length > 0) {
+      const alreadyVisible = filteredBodies.some(b => b.name === selectedBody);
+      if (!alreadyVisible) setSelectedBody(filteredBodies[0].name);
+    }
+  }, [searchQuery, filteredBodies, selectedBody]);
 
   if (isLoading) {
     return <LoadingState message="Establishing Planetary Link" />;
@@ -87,21 +107,36 @@ export default function ResourceModule({ system }) {
       <div className="survey-sidebar">
         <div className="sidebar-header">
           <span className="sidebar-id">TERM-09 // SECTORS</span>
+          <div className="sidebar-search">
+            <input 
+              type="text" 
+              placeholder="DEEP SCAN SEARCH..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="terminal-search-input"
+            />
+            {searchQuery && (
+              <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>
+            )}
+          </div>
         </div>
         <div className="body-list">
-          {bodies.map(body => (
-            <button 
-              key={body.name} 
-              className={`body-slot ${selectedBody === body.name ? 'active' : ''}`}
-              onClick={() => setSelectedBody(body.name)}
-            >
+          {filteredBodies.length === 0 ? (
+            <div className="no-matches">NO SIGNATURES DETECTED</div>
+          ) : (
+            filteredBodies.map(body => (
+              <button 
+                key={body.name} 
+                className={`body-slot ${selectedBody === body.name ? 'active' : ''}`}
+                onClick={() => setSelectedBody(body.name)}
+              >
               <div className="slot-indicator" />
               <div className="slot-info">
                 <span className="slot-name">{body.name}</span>
                 <span className="slot-status">LINK ESTABLISHED</span>
               </div>
             </button>
-          ))}
+          )))}
         </div>
         <div className="sidebar-footer">
           <div className="uptime-pips">
@@ -167,9 +202,12 @@ export default function ResourceModule({ system }) {
                       </tr>
                     ) : (
                       bodyIntelligence.all.map((item, idx) => (
-                        <tr key={item.id}>
+                        <tr key={item.id} className={item.isMatch ? 'row-match' : ''}>
                           <td className="data-id">SRV-0{idx + 1}</td>
-                          <td className="resource-name">{item.name}</td>
+                          <td className="resource-name">
+                            {item.name}
+                            {item.isMatch && <span className="match-tag">SIGNAL MATCH</span>}
+                          </td>
                           <td className="vector-type">
                             <span className="vector-chip">{item.type.toUpperCase()}</span>
                           </td>
