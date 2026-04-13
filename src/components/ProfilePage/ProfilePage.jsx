@@ -45,15 +45,9 @@ function drawAvatar(canvas, seed, size = 200) {
       const lightness = 40 + (val % 30);
       ctx.fillStyle = `hsla(${hue + (val % 40) - 20}, ${sat + 10}%, ${lightness}%, ${alpha})`;
 
-      // Draw hexagon
+      // Draw organic circle
       ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (Math.PI / 3) * i - Math.PI / 6;
-        const px = x + (cellSize * 0.4) * Math.cos(angle);
-        const py = y + (cellSize * 0.4) * Math.sin(angle);
-        i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-      }
-      ctx.closePath();
+      ctx.arc(x, y, cellSize * 0.35, 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -75,7 +69,7 @@ function drawAvatar(canvas, seed, size = 200) {
   ctx.stroke();
 }
 
-const CLEARANCE_LEVELS = ['DELTA', 'GAMMA', 'BETA', 'ALPHA', 'OMEGA'];
+const CLEARANCE_LEVELS = ['ASSOCIATE', 'DIRECTOR', 'PRINCIPAL'];
 
 function formatDate(iso) {
   if (!iso) return 'UNKNOWN';
@@ -147,7 +141,7 @@ export default function ProfilePage() {
       <div className="profile-page">
         <div className="profile-loading">
           <div className="loading-pulse" />
-          <span>RESOLVING IDENTITY...</span>
+          <span>OPENING PROFILE...</span>
         </div>
       </div>
     );
@@ -160,7 +154,7 @@ export default function ProfilePage() {
           <div className="pnf-icon">?</div>
           <h2>IDENTITY NOT FOUND</h2>
           <p>No operator registered under handle "{username}"</p>
-          <button className="pnf-back" onClick={() => navigate('/refinery')}>RETURN TO BASE</button>
+          <button className="pnf-back" onClick={() => navigate('/refinery')}>RETURN HOME</button>
         </div>
       </div>
     );
@@ -195,7 +189,7 @@ export default function ProfilePage() {
 
             {/* Role badge */}
             <div className={`profile-role-badge ${profile.role}`}>
-              {profile.role === 'admin' ? 'ADMINISTRATOR' : 'OPERATOR'}
+              {profile.role === 'admin' ? 'PRINCIPAL' : 'MEMBER'}
             </div>
           </div>
 
@@ -219,7 +213,7 @@ export default function ProfilePage() {
             </div>
             <div className="stat-divider" />
             <div className="stat-block">
-              <span className="stat-label">LAST UPLINK</span>
+              <span className="stat-label">LAST SEEN</span>
               <span className="stat-value">{timeAgo(profile.lastSeen)}</span>
             </div>
             <div className="stat-divider" />
@@ -231,7 +225,7 @@ export default function ProfilePage() {
 
           {/* Bio */}
           <div className="profile-bio-section">
-            <span className="bio-label">OPERATOR BRIEF</span>
+            <span className="bio-label">NARRATIVE</span>
             {editing ? (
               <textarea
                 className="profile-bio-edit"

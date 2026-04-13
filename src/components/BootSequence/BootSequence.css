@@ -21,23 +21,18 @@
   transform: scale(1.01) translateY(-4px);
 }
 
-/* ── Ambient glow ── */
+/* Elegant studio atmosphere */
 .boot-glow {
   position: absolute;
-  width: 400px;
-  height: 400px;
+  width: 600px;
+  height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-bg) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-bg) 0%, transparent 60%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: glowPulse 5s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+  opacity: 0.4;
 }
 
 /* ── Center stack ── */
@@ -77,15 +72,12 @@
 /* ── Wordmark ── */
 .boot-wordmark {
   font-family: var(--font-heading);
-  font-size: 42px;
+  font-size: 56px;
   font-weight: 500;
-  letter-spacing: 0.15em;
   color: var(--text-bright);
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 1s var(--ease-out), transform 1.2s var(--ease-out);
-  text-indent: 0.15em;
-  text-transform: uppercase;
+  transform: translateY(20px);
+  transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
 }
 
 .boot-wordmark.visible {
@@ -109,51 +101,34 @@
 /* ── Typed subtitle ── */
 .boot-subtitle {
   font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 300;
-  font-style: italic;
-  letter-spacing: 0.12em;
+  font-size: 15px;
+  font-weight: 400;
   color: var(--text-secondary);
-  min-height: 20px;
+  min-height: 24px;
   opacity: 0;
-  transition: opacity 0.6s var(--ease-out);
-  text-indent: 0.12em;
+  transition: opacity 0.8s var(--ease-out);
 }
 
 .boot-subtitle.visible {
   opacity: 1;
 }
 
-.boot-caret {
-  color: var(--accent, #c49a5c);
-  animation: caretBlink 0.6s step-end infinite;
-  margin-left: 2px;
-}
-
-@keyframes caretBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-}
+/* Caret removed for cleaner architecture */
 
 /* ── Skip hint ── */
 .boot-skip {
   position: absolute;
   bottom: 80px;
   font-family: var(--font-body);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  letter-spacing: 0.15em;
   color: var(--text-ghost);
   opacity: 0;
-  transition: opacity 1s var(--ease-out);
+  transition: opacity 1.5s var(--ease-out);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .boot-skip.visible {
-  opacity: 1;
-  animation: skipPulse 3s ease-in-out infinite;
-}
-
-@keyframes skipPulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 0.8; }
+  opacity: 0.6;
 }

@@ -5,11 +5,11 @@ export default function InfoPage() {
   const navigate = useNavigate();
 
   const specs = [
-    { label: 'NETWORK STATUS', value: 'OPERATIONAL', status: 'pos' },
-    { label: 'UPLINK NODES', value: '7 ACTIVE', status: 'neu' },
-    { label: 'ENCRYPTION', value: 'RSA-4096', status: 'neu' },
-    { label: 'LATENCY', value: '42ms', status: 'pos' },
-    { label: 'DATA PARITY', value: '100%', status: 'pos' },
+    { label: 'STUDIO STATUS', value: 'OPERATIONAL', status: 'pos' },
+    { label: 'ARCHITECTS ONLINE', value: '7 ACTIVE', status: 'neu' },
+    { label: 'SELECTION', value: 'PREMIUM', status: 'neu' },
+    { label: 'PULSE', value: '42ms', status: 'pos' },
+    { label: 'INTEGRITY', value: '100%', status: 'pos' },
   ];
 
   const modules = [
@@ -62,10 +62,10 @@ export default function InfoPage() {
       <header className="dash-header fade-in">
         <div className="dash-header-left">
           <div className="dash-tag">
-            <span className="blink-dot"></span> DECENTRALIZED CIVILIAN UTILITY
+            <span className="blink-dot"></span> THE ARCHITECTURAL STUDIO
           </div>
           <h1 className="dash-title">
-            YŪGEN NETWORK <span className="dash-version">v2.4.0</span>
+            YŪGEN STUDIO <span className="dash-version">v2.4.0</span>
           </h1>
         </div>
         <div className="dash-header-decor">
@@ -85,17 +85,17 @@ export default function InfoPage() {
             <div className="panel-edge-tracer"></div>
             <div className="panel-header">
               <span className="panel-idx">01</span>
-              <h2 className="panel-title">THE PHILOSOPHY</h2>
+              <h2 className="panel-title">OUR APPROACH</h2>
               <span className="panel-hash">#SYS_MANIFESTO</span>
             </div>
             <div className="panel-content">
               <p className="terminal-text">
-                &gt; THE BLACK IS COLD.<br/>
-                &gt; NO MEGA-CORP IS COMING TO SAVE US.<br/><br/>
-                YŪGEN was forged in the void for one simple reason: to ensure that no civilian operator—miner, hauler, or salvager—has to fly blind. 
+                &gt; DESIGN MATTERS.<br/>
+                &gt; EVERY DETAIL IS INTENTIONAL.<br/><br/>
+                YŪGEN was forged in the void for one simple reason: to clearly present intelligence to civilian operators without the noise. 
               </p>
               <p className="terminal-text">
-                We are a collective built on grit and mutual survival. We share our yields, our intelligence, and our safe routes. When you uplink to this network, you are no longer just a lone worker scraping by; you are supported by a community that believes <strong>shared knowledge is the strongest armor we have</strong>.
+                We are a collective built on mutual curation. We share our yields, our insights, and our premium routes. When you access this studio, you are no longer just a lone worker scraping by; you are supported by an intelligence group that believes <strong>clarity is the ultimate luxury</strong>.
               </p>
             </div>
           </div>
@@ -103,7 +103,7 @@ export default function InfoPage() {
           <div className="data-panel founder-panel">
             <div className="panel-header">
               <span className="panel-idx">02</span>
-              <h2 className="panel-title">NETWORK FOUNDER</h2>
+              <h2 className="panel-title">PRINCIPAL ARCHITECT</h2>
               <span className="panel-hash">#USR_LEAD</span>
             </div>
             
@@ -116,7 +116,7 @@ export default function InfoPage() {
                 <h3 className="founder-name">FERN-LIVES</h3>
                 <div className="founder-role">Lead Architect & Community Founder</div>
                 <div className="founder-status">
-                  <span className="pulse-beacon"></span> UPLINK ACTIVE [STATIONARY]
+                  <span className="pulse-beacon"></span> AVAILABLE [IN STUDIO]
                 </div>
               </div>
               <div className="blade-action">›</div>
@@ -131,7 +131,7 @@ export default function InfoPage() {
           <div className="data-panel modules-panel">
             <div className="panel-header">
               <span className="panel-idx">03</span>
-              <h2 className="panel-title">UTILITY MODULES</h2>
+              <h2 className="panel-title">STUDIO SPACES</h2>
               <span className="panel-hash">#SYS_MODULES</span>
             </div>
             
@@ -155,7 +155,7 @@ export default function InfoPage() {
           <div className="data-panel specs-panel">
             <div className="panel-header">
               <span className="panel-idx">04</span>
-              <h2 className="panel-title">SYSTEM DIAGNOSTICS</h2>
+              <h2 className="panel-title">STUDIO DIAGNOSTICS</h2>
               <span className="panel-hash">#SYS_HEALTH</span>
             </div>
             
@@ -175,8 +175,8 @@ export default function InfoPage() {
 
       {/* ── Footer ── */}
       <footer className="dash-footer fade-in-up" style={{ animationDelay: '0.3s' }}>
-        <div className="footer-code block">THROUGH THE BLACK, TOGETHER.</div>
-        <div className="footer-copyright">YŪGEN INDUSTRIAL SUITE © 2954-2955</div>
+        <div className="footer-code block">CRAFTED WITH PRECISION.</div>
+        <div className="footer-copyright">YŪGEN ARCHITECTURAL STUDIO © 2954-2955</div>
       </footer>
 
     </div>

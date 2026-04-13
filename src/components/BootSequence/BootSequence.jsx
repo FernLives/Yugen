@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './BootSequence.css';
 
-const SUBTITLE = 'PREPARING ACCESS...';
+const SUBTITLE = 'ESTABLISHING CONNECTION...';
 
 export default function BootSequence({ onComplete }) {
   const [phase, setPhase] = useState(0); // 0=hidden, 1=symbol, 2=wordmark, 3=line, 4=typing, 5=ready

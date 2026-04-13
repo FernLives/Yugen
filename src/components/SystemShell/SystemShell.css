@@ -12,29 +12,30 @@
   position: relative;
 }
 
-/* Organic atmosphere layer */
+/* Minimalist studio atmosphere */
 .shell::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% -20%, var(--accent-bg), transparent 70%);
+  background: radial-gradient(circle at 10% 10%, var(--accent-bg), transparent 60%);
   pointer-events: none;
+  opacity: 0.5;
   z-index: 1;
 }
 
 /* ── TOP NAVIGATION ── */
 .shell-nav {
-  height: 64px; /* Slightly taller for luxury spacing */
-  min-height: 64px;
+  height: 80px; 
+  min-height: 80px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-xl);
-  background: rgba(16, 18, 26, 0.8);
-  backdrop-filter: blur(16px) saturate(180%);
+  background: var(--bg-base);
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
   z-index: 100;
+  box-shadow: var(--shadow-sm);
 }
 
 .nav-left {
@@ -52,17 +53,14 @@
 
 .wordmark-symbol {
   color: var(--accent);
-  font-size: 14px;
-  opacity: 0.8;
+  font-size: 16px;
 }
 
 .wordmark-text {
   font-family: var(--font-heading);
-  font-size: 18px;
-  font-weight: 400;
+  font-size: 24px;
+  font-weight: 500;
   color: var(--text-bright);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .nav-divider {
@@ -125,34 +123,28 @@
   position: relative;
   background: none;
   border: none;
-  padding: 14px 20px;
+  padding: 10px 24px;
   font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-secondary);
   cursor: pointer;
-  letter-spacing: 0.04em;
-  transition: color var(--duration-fast) var(--ease-out);
+  border-radius: 40px;
+  transition: all var(--duration-normal) var(--ease-out);
 }
 
 .nav-module:hover {
   color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .nav-module.active {
-  color: var(--text-bright);
+  color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .nav-module-indicator {
-  position: absolute;
-  bottom: 0;
-  top: auto;
-  left: 20px;
-  right: 20px;
-  height: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 10px var(--accent-bg);
-  border-radius: 4px;
+  display: none;
 }
 
 /* ── Right side ── */
@@ -320,24 +312,24 @@
 .cmd-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(25, 26, 32, 0.2);
+  backdrop-filter: blur(12px);
   z-index: 1000;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 20vh;
-  animation: fadeIn 150ms ease;
+  padding-top: 15vh;
+  animation: fadeIn 300ms ease;
 }
 
 .cmd-palette {
-  width: 500px;
-  background: var(--bg-surface);
+  width: 600px;
+  background: var(--bg-base);
   border: 1px solid var(--border-medium);
-  border-radius: 20px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
-  animation: fadeInDown 300ms var(--ease-out);
+  animation: fadeInUp 450ms var(--ease-out);
 }
 
 .cmd-input-wrapper {

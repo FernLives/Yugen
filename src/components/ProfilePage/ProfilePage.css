@@ -23,12 +23,12 @@
 }
 
 .loading-pulse {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  border: 2px solid var(--accent-dim);
+  border: 1px solid var(--accent-muted);
   border-top-color: var(--accent);
-  animation: spin 0.8s linear infinite;
+  animation: spin 1s var(--ease-out) infinite;
 }
 
 @keyframes spin {
@@ -82,23 +82,19 @@
 /* ── Card ── */
 .profile-card {
   position: relative;
-  width: 520px;
+  width: 580px;
   max-width: 100%;
-  border-radius: 16px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
-  border: 1px solid var(--border-medium);
-  box-shadow:
-    0 32px 100px rgba(0, 0, 0, 0.5),
-    0 0 80px rgba(196, 154, 92, 0.03),
-    inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  background: var(--bg-base);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
 }
 
 .profile-card-bg {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 0%, rgba(196, 154, 92, 0.06) 0%, transparent 60%),
-    linear-gradient(180deg, var(--bg-elevated) 0%, var(--bg-surface) 40%, var(--bg-base) 100%);
+  background: radial-gradient(circle at 50% -20%, var(--accent-bg), transparent 70%);
   z-index: 0;
 }
 
@@ -118,48 +114,32 @@
 }
 
 .profile-avatar {
-  width: 140px;
-  height: 140px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
-  border: 3px solid var(--border-medium);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 40px rgba(196, 154, 92, 0.06);
-  transition: border-color 0.3s;
+  border: 1px solid var(--border-medium);
+  box-shadow: var(--shadow-md);
+  transition: all var(--duration-normal);
 }
 
 .profile-avatar:hover {
-  border-color: var(--accent-dim);
+  transform: scale(1.02);
+  border-color: var(--accent);
 }
 
 .profile-status-dot {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  width: 16px;
-  height: 16px;
+  bottom: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
-  border: 3px solid var(--bg-elevated);
-  background: var(--text-dim);
+  border: 4px solid var(--bg-base);
+  background: var(--text-ghost);
 }
 
 .profile-status-dot.active {
   background: var(--success);
-  box-shadow: 0 0 12px rgba(74, 138, 90, 0.5);
-  animation: statusPulse 2s ease infinite;
-}
-
-.profile-status-dot.standby {
-  background: var(--warning);
-  box-shadow: 0 0 12px rgba(184, 144, 64, 0.5);
-}
-
-.profile-status-dot.encrypted {
-  background: var(--cold);
-  box-shadow: 0 0 12px rgba(122, 153, 178, 0.5);
-}
-
-@keyframes statusPulse {
-  0%, 100% { box-shadow: 0 0 12px rgba(74, 138, 90, 0.5); }
-  50% { box-shadow: 0 0 20px rgba(74, 138, 90, 0.8); }
 }
 
 /* ── Identity ── */
@@ -173,12 +153,10 @@
 
 .profile-callsign {
   font-family: var(--font-heading);
-  font-size: 28px;
-  font-weight: 700;
+  font-size: 40px;
+  font-weight: 500;
   color: var(--text-bright);
-  letter-spacing: 0.04em;
   margin: 0;
-  text-shadow: 0 0 30px rgba(196, 154, 92, 0.1);
 }
 
 .profile-callsign-edit {
@@ -205,32 +183,25 @@
 
 .profile-role-badge {
   display: inline-block;
-  padding: 4px 14px;
-  border-radius: 4px;
-  font-family: var(--font-heading);
-  font-size: 10px;
+  padding: 6px 16px;
+  border-radius: 40px;
+  font-family: var(--font-body);
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.15em;
-  margin-top: 4px;
+  letter-spacing: 0.05em;
+  margin-top: 8px;
 }
 
-.profile-role-badge.operator {
-  background: rgba(122, 153, 178, 0.1);
-  color: var(--cold);
-  border: 1px solid rgba(122, 153, 178, 0.2);
+.profile-role-badge.member {
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
 }
 
 .profile-role-badge.admin {
-  background: rgba(196, 154, 92, 0.1);
+  background: var(--accent-bg);
   color: var(--accent);
-  border: 1px solid rgba(196, 154, 92, 0.25);
-  box-shadow: 0 0 20px rgba(196, 154, 92, 0.08);
-  animation: badgeShimmer 3s ease infinite;
-}
-
-@keyframes badgeShimmer {
-  0%, 100% { box-shadow: 0 0 20px rgba(196, 154, 92, 0.08); }
-  50% { box-shadow: 0 0 30px rgba(196, 154, 92, 0.15); }
+  border: 1px solid var(--accent-muted);
 }
 
 /* ── Clearance Strip ── */
@@ -265,11 +236,10 @@
 .profile-stats {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 16px 24px;
-  background: var(--bg-deep);
-  border-radius: 8px;
-  border: 1px solid var(--border-subtle);
+  gap: 24px;
+  padding: 24px;
+  background: var(--bg-surface);
+  border-radius: var(--radius-md);
   width: 100%;
 }
 
