@@ -16,106 +16,151 @@ export default function InfoPage() {
     {
       id: 'refinery',
       title: 'REFINERY LOGISTICS',
-      desc: 'Real-time yield modifier tracking across civilian refinery terminals. optimized for efficient mineral processing and profit maximization.',
-      icon: '⚙️'
+      desc: 'Real-time yield modifier tracking across civilian refinery terminals. Optimized for efficient mineral processing and profit maximization.',
+      icon: '⚙️',
+      code: 'MDL-REF-01'
     },
     {
       id: 'resources',
       title: 'RESOURCE DATABASE',
-      desc: 'Collaborative survey data for raw materials and minerals. community-driven coordinate sharing for all civilian miners.',
-      icon: '💎'
+      desc: 'Collaborative survey data for raw materials and minerals. Community-driven coordinate sharing for all civilian miners.',
+      icon: '💎',
+      code: 'MDL-RES-02'
     },
     {
       id: 'admin',
       title: 'NETWORK OPERATIONS',
-      desc: 'Restricted access for station registry and material signature management. providing the structural data that powers the YŪGEN network.',
-      icon: '🛂'
+      desc: 'Restricted access for station registry and material signature management. Providing the structural data that powers the YŪGEN network.',
+      icon: '🛂',
+      code: 'MDL-NOC-03'
     }
   ];
 
   return (
-    <div className="info-page fade-in">
+    <div className="info-dashboard">
+      <div className="dashboard-scanlines"></div>
+      
       {/* ── Header ── */}
-      <header className="info-header">
-        <div className="info-title-group">
-          <div className="info-tag">DECENTRALIZED CIVILIAN UTILITY</div>
-          <h1 className="info-main-title">YŪGEN NETWORK <span className="title-version">v2.4.0</span></h1>
+      <header className="dash-header fade-in">
+        <div className="dash-header-left">
+          <div className="dash-tag">
+            <span className="blink-dot"></span> DECENTRALIZED CIVILIAN UTILITY
+          </div>
+          <h1 className="dash-title">
+            YŪGEN NETWORK <span className="dash-version">v2.4.0</span>
+          </h1>
         </div>
-        <div className="info-header-pips">
-          <span className="pip">✧</span>
-          <span className="pip">✧</span>
-          <span className="pip">✧</span>
+        <div className="dash-header-decor">
+          <svg width="120" height="20" viewBox="0 0 120 20">
+            <line x1="0" y1="10" x2="100" y2="10" stroke="var(--accent-muted)" strokeWidth="1" />
+            <circle cx="110" cy="10" r="2" fill="var(--accent)" />
+            <circle cx="118" cy="10" r="2" fill="var(--accent)" />
+          </svg>
         </div>
       </header>
 
-      <div className="info-content-grid">
-        {/* ── Column Left: Philosophy & Founder ── */}
-        <div className="info-col main-info">
-          <section className="info-section">
-            <h2 className="section-heading">01 // THE PHILOSOPHY</h2>
-            <p className="philosophy-text">
-              YŪGEN is not a corporation. We are not a military organization. 
-              We are a collective of civilian operators, miners, and haulers dedicated to 
-              democratizing industrial intelligence. 
-            </p>
-            <p className="philosophy-text">
-              Our mission is to provide the community with the high-fidelity data needed 
-              to thrive in the deep black. By sharing yields and signatures, we elevate 
-              every pilot from a lone worker to a synchronized part of a greater industrial node.
-            </p>
-          </section>
+      <div className="dash-grid">
+        {/* ── Left Column: Manifesto & Founder ── */}
+        <div className="dash-col col-left fade-in-up" style={{ animationDelay: '0.1s' }}>
+          
+          <div className="data-panel manifesto-panel">
+            <div className="panel-edge-tracer"></div>
+            <div className="panel-header">
+              <span className="panel-idx">01</span>
+              <h2 className="panel-title">THE PHILOSOPHY</h2>
+              <span className="panel-hash">#SYS_MANIFESTO</span>
+            </div>
+            <div className="panel-content">
+              <p className="terminal-text">
+                &gt; YŪGEN IS NOT A CORPORATION.<br/>
+                &gt; WE ARE NOT A MILITARY ORGANIZATION.<br/><br/>
+                We are a collective of civilian operators, miners, and haulers dedicated to democratizing industrial intelligence. 
+              </p>
+              <p className="terminal-text">
+                Our mission is to provide the community with the high-fidelity data needed to thrive in the deep black. By sharing yields and signatures, we elevate every pilot from a lone worker to a synchronized part of a greater industrial node.
+              </p>
+            </div>
+          </div>
 
-          <section className="info-section founder-section">
-            <h2 className="section-heading">02 // NETWORK FOUNDER</h2>
-            <div className="founder-card" onClick={() => navigate('/profile/fernlives')}>
-              <div className="founder-avatar-placeholder">
+          <div className="data-panel founder-panel">
+            <div className="panel-header">
+              <span className="panel-idx">02</span>
+              <h2 className="panel-title">NETWORK FOUNDER</h2>
+              <span className="panel-hash">#USR_LEAD</span>
+            </div>
+            
+            <div className="hardware-blade interactive" onClick={() => navigate('/profile/fernlives')}>
+              <div className="blade-accent"></div>
+              <div className="founder-avatar-ring">
                 <span className="founder-symbol">◆</span>
               </div>
-              <div className="founder-info">
-                <div className="founder-name">FERN-LIVES</div>
+              <div className="blade-content">
+                <h3 className="founder-name">FERN-LIVES</h3>
                 <div className="founder-role">Lead Architect & Community Founder</div>
-                <div className="founder-status">UPLINK ACTIVE [STATIONARY]</div>
+                <div className="founder-status">
+                  <span className="pulse-beacon"></span> UPLINK ACTIVE [STATIONARY]
+                </div>
               </div>
-              <div className="founder-link-arrow">›</div>
+              <div className="blade-action">›</div>
             </div>
-          </section>
+          </div>
+          
         </div>
 
-        {/* ── Column Right: Capabilities & Specs ── */}
-        <div className="info-col meta-info">
-          <section className="info-section">
-            <h2 className="section-heading">03 // UTILITY MODULES</h2>
-            <div className="module-deck">
+        {/* ── Right Column: Modules & Specs ── */}
+        <div className="dash-col col-right fade-in-up" style={{ animationDelay: '0.2s' }}>
+          
+          <div className="data-panel modules-panel">
+            <div className="panel-header">
+              <span className="panel-idx">03</span>
+              <h2 className="panel-title">UTILITY MODULES</h2>
+              <span className="panel-hash">#SYS_MODULES</span>
+            </div>
+            
+            <div className="module-rack">
               {modules.map(m => (
-                <div key={m.id} className="info-module-card">
-                  <div className="mod-card-header">
-                    <span className="mod-icon">{m.icon}</span>
-                    <h3 className="mod-title">{m.title}</h3>
+                <div key={m.id} className="hardware-blade module-blade">
+                  <div className="blade-accent"></div>
+                  <div className="blade-graphic">{m.icon}</div>
+                  <div className="blade-content">
+                    <div className="mod-meta">
+                      <h3 className="mod-title">{m.title}</h3>
+                      <span className="mod-code">{m.code}</span>
+                    </div>
+                    <p className="mod-desc">{m.desc}</p>
                   </div>
-                  <p className="mod-desc">{m.desc}</p>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
 
-          <section className="info-section specs-section">
-            <h2 className="section-heading">04 // SYSTEM DIAGNOSTICS</h2>
-            <div className="specs-table">
+          <div className="data-panel specs-panel">
+            <div className="panel-header">
+              <span className="panel-idx">04</span>
+              <h2 className="panel-title">SYSTEM DIAGNOSTICS</h2>
+              <span className="panel-hash">#SYS_HEALTH</span>
+            </div>
+            
+            <div className="diagnostics-grid">
               {specs.map(s => (
-                <div key={s.label} className="spec-row">
-                  <span className="spec-label">{s.label}</span>
-                  <span className={`spec-value ${s.status}`}>{s.value}</span>
+                <div key={s.label} className="diag-row">
+                  <span className="diag-label">{s.label}</span>
+                  <div className="diag-line"></div>
+                  <span className={`diag-value ${s.status}`}>{s.value}</span>
                 </div>
               ))}
             </div>
-          </section>
+          </div>
+
         </div>
       </div>
 
-      <footer className="info-footer">
-        <div className="footer-line">FOR THE COMMUNITY, BY THE COMMUNITY.</div>
-        <div className="footer-credits">YŪGEN INDUSTRIAL SUITE © 2954-2955</div>
+      {/* ── Footer ── */}
+      <footer className="dash-footer fade-in-up" style={{ animationDelay: '0.3s' }}>
+        <div className="footer-code block">FOR THE COMMUNITY, BY THE COMMUNITY.</div>
+        <div className="footer-copyright">YŪGEN INDUSTRIAL SUITE © 2954-2955</div>
       </footer>
+
     </div>
   );
 }
