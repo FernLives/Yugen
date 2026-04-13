@@ -90,12 +90,12 @@ export default function InfoPage() {
             </div>
             <div className="panel-content">
               <p className="terminal-text">
-                &gt; DESIGN MATTERS.<br/>
-                &gt; EVERY DETAIL IS INTENTIONAL.<br/><br/>
-                YŪGEN was forged in the void for one simple reason: to clearly present intelligence to civilian operators without the noise. 
+                &gt; FORM FOLLOWS FUNCTION.<br/>
+                &gt; INTELLIGENCE REDEFINED.<br/><br/>
+                YŪGEN operates on a single architectural truth: raw data is worthless without exceptional design. In an era where information is buried under chaos, we extract, refine, and present the system's most lucrative intelligence with absolute clarity.
               </p>
               <p className="terminal-text">
-                We are a collective built on mutual curation. We share our yields, our insights, and our premium routes. When you access this studio, you are no longer just a lone worker scraping by; you are supported by an intelligence group that believes <strong>clarity is the ultimate luxury</strong>.
+                This studio operates strictly by invitation and mutual elevation. Our architects map the most premium trade routes, index pristine material yields, and engineer wealth through unparalleled curation. When you operate within these walls, you leave the noise behind. You are supported by a syndicate that knows <strong>elegance is power, and clarity is the ultimate luxury.</strong>
               </p>
             </div>
           </div>
