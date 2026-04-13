@@ -2,7 +2,10 @@
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 600px;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .guard-overlay {
@@ -199,22 +202,46 @@
   line-height: 1.5;
 }
 
-/* ── Background Dim ── */
-.guard-background-dim {
-  position: absolute;
-  inset: 0;
-  filter: blur(10px) grayscale(0.5);
-  opacity: 0.15;
-  pointer-events: none;
-}
-
 /* ── Status-Specific Glows ── */
 .network-guard-container.maintenance::after {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0; height: 10px;
+  top: 0; left: 0; right: 0; height: 6px;
   background: repeating-linear-gradient(45deg, #ffaa00, #ffaa00 10px, #000 10px, #000 20px);
   animation: hazardStrip 2s linear infinite;
+  z-index: 1100;
+}
+
+.network-guard-container.collecting::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(68, 170, 255, 0.05) 0%, transparent 70%);
+  pointer-events: none;
+  animation: radarPulse 4s ease-in-out infinite;
+  z-index: 5;
+}
+
+.network-guard-container.collecting .guard-overlay::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: conic-gradient(from 0deg, transparent, rgba(68, 170, 255, 0.1), transparent 30%);
+  animation: radarSweep 8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes radarSweep {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes radarPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.6; }
 }
 
 @keyframes hazardStrip {
