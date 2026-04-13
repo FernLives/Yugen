@@ -7,6 +7,7 @@
   flex-direction: column;
   gap: var(--space-xl);
   height: 100%;
+  background: var(--bg-deep);
 }
 
 /* ── Grid ── */
@@ -17,16 +18,17 @@
 }
 
 .premium-dossier {
-  background: rgba(255, 255, 255, 0.01);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
   padding: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   transition: all var(--duration-slow);
   overflow: hidden;
-  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.5);
+  box-shadow: var(--shadow-md);
 }
 
 .premium-dossier:hover {
@@ -39,22 +41,13 @@
 .glass-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
+  background: linear-gradient(135deg, var(--accent-bg) 0%, transparent 100%);
   z-index: 1;
   pointer-events: none;
+  opacity: 0.5;
 }
 
-.scan-line {
-  position: absolute;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: 0.15;
-  top: 0;
-  z-index: 5;
-  animation: scanVertical 4s linear infinite;
-  pointer-events: none;
-}
+/* Scan line removed for civilian aesthetic */
 
 /* ── Top Header ── */
 .dossier-top {
@@ -74,15 +67,16 @@
 }
 
 .dm-clearance {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
-.dm-clearance[data-level="omega"] { color: #ff3e3e; text-shadow: 0 0 10px rgba(255, 62, 62, 0.3); }
+.dm-clearance[data-level="omega"] { color: var(--danger); }
 .dm-clearance[data-level="sigma"] { color: var(--accent); }
-.dm-clearance[data-level="epsilon"] { color: #4dabf7; }
+.dm-clearance[data-level="epsilon"] { color: var(--cold); }
 
 .dm-id {
   font-family: var(--font-data);
@@ -149,10 +143,9 @@
 
 .profile-title {
   font-family: var(--font-heading);
-  font-size: 15px;
-  text-transform: uppercase;
+  font-size: 20px;
+  font-weight: 500;
   color: var(--text-bright);
-  letter-spacing: 0.05em;
 }
 
 .intelligence-grid {
@@ -174,10 +167,10 @@
 }
 
 .cf-value {
-  font-family: var(--font-data);
+  font-family: var(--font-body);
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
-  letter-spacing: 0.05em;
   transition: color 0.2s;
 }
 

@@ -5,39 +5,39 @@
 .boot-intro {
   position: fixed;
   inset: 0;
-  background: #050508;
+  background: var(--bg-deep);
   z-index: 10000;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
   overflow: hidden;
   cursor: pointer;
 }
 
 .boot-intro.boot-out {
   opacity: 0;
-  transform: scale(1.03);
+  transform: scale(1.01) translateY(-4px);
 }
 
 /* ── Ambient glow ── */
 .boot-glow {
   position: absolute;
-  width: 300px;
-  height: 300px;
+  width: 400px;
+  height: 400px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(196, 154, 92, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, var(--accent-bg) 0%, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-  animation: glowPulse 3s ease-in-out infinite;
+  animation: glowPulse 5s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
-  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
-  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
 }
 
 /* ── Center stack ── */
@@ -50,41 +50,42 @@
   z-index: 2;
 }
 
-/* ── Diamond symbol ── */
 .boot-symbol {
   opacity: 0;
-  transform: scale(0.6) rotate(45deg);
-  transition: opacity 0.6s ease, transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  transform: scale(0.9) translateY(10px);
+  transition: opacity 1.2s var(--ease-out), transform 1.5s var(--ease-out);
 }
 
 .boot-symbol.visible {
   opacity: 1;
-  transform: scale(1) rotate(0deg);
+  transform: scale(1) translateY(0);
 }
 
 .boot-diamond {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
 }
 
-.boot-diamond path {
+.boot-diamond circle {
   fill: none;
-  stroke: var(--accent, #c49a5c);
-  stroke-width: 1.5;
-  filter: drop-shadow(0 0 8px rgba(196, 154, 92, 0.4));
+  stroke: var(--accent);
+  stroke-width: 1.2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 0;
 }
 
 /* ── Wordmark ── */
 .boot-wordmark {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: 0.35em;
-  color: #eaeaef;
+  font-family: var(--font-heading);
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: var(--text-bright);
   opacity: 0;
-  transform: translateY(8px);
-  transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
-  text-indent: 0.35em; /* compensate letter-spacing on last char */
+  transform: translateY(10px);
+  transition: opacity 1s var(--ease-out), transform 1.2s var(--ease-out);
+  text-indent: 0.15em;
+  text-transform: uppercase;
 }
 
 .boot-wordmark.visible {
@@ -96,24 +97,27 @@
 .boot-line-expand {
   width: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent, #c49a5c), transparent);
-  transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  transition: width 1.5s var(--ease-out);
+  opacity: 0.4;
 }
 
 .boot-line-expand.visible {
-  width: 200px;
+  width: 300px;
 }
 
 /* ── Typed subtitle ── */
 .boot-subtitle {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.25em;
-  color: #707088;
-  min-height: 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 300;
+  font-style: italic;
+  letter-spacing: 0.12em;
+  color: var(--text-secondary);
+  min-height: 20px;
   opacity: 0;
-  transition: opacity 0.3s ease;
-  text-indent: 0.25em;
+  transition: opacity 0.6s var(--ease-out);
+  text-indent: 0.12em;
 }
 
 .boot-subtitle.visible {
@@ -134,18 +138,19 @@
 /* ── Skip hint ── */
 .boot-skip {
   position: absolute;
-  bottom: 40px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: #2a2a3a;
+  bottom: 80px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: var(--text-ghost);
   opacity: 0;
-  transition: opacity 0.5s ease;
+  transition: opacity 1s var(--ease-out);
 }
 
 .boot-skip.visible {
   opacity: 1;
-  animation: skipPulse 2s ease-in-out infinite;
+  animation: skipPulse 3s ease-in-out infinite;
 }
 
 @keyframes skipPulse {

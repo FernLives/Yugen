@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './BootSequence.css';
 
-const SUBTITLE = 'CIVILIAN INTELLIGENCE NETWORK';
+const SUBTITLE = 'PREPARING ACCESS...';
 
 export default function BootSequence({ onComplete }) {
   const [phase, setPhase] = useState(0); // 0=hidden, 1=symbol, 2=wordmark, 3=line, 4=typing, 5=ready
@@ -67,7 +67,8 @@ export default function BootSequence({ onComplete }) {
         {/* Diamond symbol */}
         <div className={`boot-symbol ${phase >= 1 ? 'visible' : ''}`}>
           <svg viewBox="0 0 40 40" className="boot-diamond">
-            <path d="M20 2 L38 20 L20 38 L2 20 Z" />
+            <circle cx="20" cy="20" r="16" />
+            <circle cx="20" cy="20" r="8" opacity="0.5" />
           </svg>
         </div>
 
@@ -88,7 +89,7 @@ export default function BootSequence({ onComplete }) {
 
       {/* Skip hint */}
       <div className={`boot-skip ${phase >= 5 ? 'visible' : ''}`}>
-        PRESS ANY KEY
+        CLICK TO ENTER
       </div>
     </div>
   );
