@@ -3,197 +3,142 @@ import { getResourceData, getBodies } from '../../data/dataStore';
 import LoadingState from '../common/LoadingState';
 import './ResourceModule.css';
 
-const BODY_META = {
-  // Stanton
-  Hurston: { desc: 'Industrial planet. Harsh conditions, rich deposits.', color: '#b06630' },
-  Crusader: { desc: 'Gas giant. Mining operations on its moons.', color: '#4a90a4' },
-  ArcCorp: { desc: 'Fully urbanized. Moon-based mining only.', color: '#7a6ab0' },
-  microTech: { desc: 'Cold climate. Sub-zero surface operations.', color: '#5a8aaa' },
-  'Asteroid Belt': { desc: 'Aaron Halo. High-value volatile ores.', color: '#aa7a40' },
-  // Pyro
-  Monadnock: { desc: 'Volcanic activity. High risk, high reward.', color: '#ff4400' },
-  Bloom: { desc: 'Post-organic life. Rare minerals in fossil beds.', color: '#44aa44' },
-};
+// ── Technical SVG Icons ──
+const ShipIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon ship">
+    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+  </svg>
+);
 
-function ResourceItem({ res }) {
-  return (
-    <div className="res-item">
-      <div className="res-item-main">
-        <span className="res-item-name">{res.name}</span>
-        <span className="res-item-type">{res.type}</span>
-      </div>
-      {res.description && <p className="res-item-desc">{res.description}</p>}
-    </div>
-  );
-}
+const VehicleIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon vehicle">
+    <rect x="2" y="14" width="20" height="8" rx="2" />
+    <path d="M7 14V8l5-5 5 5v6" />
+    <circle cx="7" cy="18" r="2" />
+    <circle cx="17" cy="18" r="2" />
+  </svg>
+);
 
-function ResourceCategory({ title, resources, icon }) {
-  if (resources.length === 0) return null;
-  return (
-    <div className="res-category">
-      <div className="res-category-header">
-        <span className="res-category-icon">{icon}</span>
-        <h4 className="res-category-title">{title}</h4>
-      </div>
-      <div className="res-category-list">
-        {resources.map(res => <ResourceItem key={res.id} res={res} />)}
-      </div>
-    </div>
-  );
-}
+const HandIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon hand">
+    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+    <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+    <path d="M10 10.5V3a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
+    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+  </svg>
+);
 
 export default function ResourceModule({ system }) {
-  const [data, setData] = useState([]);
+  const [resData, setResData] = useState([]);
   const [bodies, setBodies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedBody, setSelectedBody] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [resData, bodyData] = await Promise.all([
+      const [res, bods] = await Promise.all([
         getResourceData(system),
         getBodies()
       ]);
-      setData(resData);
-      setBodies(bodyData);
+      setResData(res);
+      setBodies(bods.filter(b => b.system === system));
       setIsLoading(false);
     };
     load();
   }, [system]);
 
-  const grouped = useMemo(() => {
-    // Filter bodies by system
-    const sysBodies = bodies.filter(b => !system || b.system === system);
-    return sysBodies.map(body => {
-      const bodyResources = data.filter(r => r.parentBody === body.name);
-      return {
-        ...body,
-        resources: bodyResources,
-        totalResources: bodyResources.length
-      };
+  // Calculate unique materials across all bodies in this system
+  const materials = useMemo(() => {
+    const unique = [...new Set(resData.map(r => r.name))].sort();
+    return unique;
+  }, [resData]);
+
+  // Build matrix: matrix[bodyName][materialName] = { ship, vehicle, hand }
+  const matrix = useMemo(() => {
+    const m = {};
+    resData.forEach(r => {
+      if (!m[r.parentBody]) m[r.parentBody] = {};
+      if (!m[r.parentBody][r.name]) m[r.parentBody][r.name] = { ship: false, vehicle: false, hand: false };
+      
+      const type = r.type?.toLowerCase() || '';
+      if (type.includes('ship')) m[r.parentBody][r.name].ship = true;
+      if (type.includes('vehicle') || type.includes('ground')) m[r.parentBody][r.name].vehicle = true;
+      if (type.includes('hand')) m[r.parentBody][r.name].hand = true;
     });
-  }, [data, bodies, system]);
-
-  const bodyResources = useMemo(() => {
-    if (!selectedBody) return null;
-    return data.filter(d => d.parentBody === selectedBody);
-  }, [data, selectedBody]);
-
-  const categorized = useMemo(() => {
-    if (!bodyResources) return null;
-    return {
-      ship: bodyResources.filter(d => d.methods?.includes('ship')),
-      vehicle: bodyResources.filter(d => d.methods?.includes('vehicle')),
-      hand: bodyResources.filter(d => d.methods?.includes('hand')),
-    };
-  }, [bodyResources]);
+    return m;
+  }, [resData]);
 
   if (isLoading) {
-    return <LoadingState message="Scanning Regional Intelligence" />;
+    return <LoadingState message="Synchronizing Survey Network" />;
   }
 
-  if (data.length === 0 && bodies.length === 0) {
+  if (resData.length === 0) {
     return (
-      <div className="resources fade-in-up">
+      <div className="resource-matrix fade-in">
         <div className="empty-system-state">
-          <div className="empty-icon">?</div>
-          <h2 className="empty-title">Uncharted Space: {system}</h2>
-          <p className="empty-desc">No survey data found for this system. Field intelligence required.</p>
+          <div className="empty-icon">!</div>
+          <h2 className="empty-title">Deep Space Survey: {system}</h2>
+          <p className="empty-desc">No planetary survey data detected in this sector. Deploy survey teams via Admin Console.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="resources fade-in-up">
-      <div className="resources-header">
+    <div className="resource-matrix fade-in">
+      <div className="res-header">
         <div>
-          <h1 className="page-title">{system} Intelligence</h1>
-          <p className="page-desc">Mining and extraction survey for {system} sector</p>
-        </div>
-        <div className="resources-stats">
-          <span className="stat-pill">{data.length} resources</span>
-          <span className="stat-pill">{grouped.length} bodies</span>
+          <h1 className="page-title">{system} Survey Intelligence</h1>
+          <p className="page-desc">Extraction vector analysis across {bodies.length} bodies · {materials.length} unique resources identified</p>
         </div>
       </div>
 
-      <div className="body-grid">
-        {grouped.map((body, bi) => (
-          <button
-            key={body.name}
-            className="body-card"
-            onClick={() => setSelectedBody(body.name)}
-            style={{ animationDelay: `${bi * 50}ms` }}
-          >
-            <div className="body-node-header">
-              <div className="node-pips">
-                <span className="pip"></span>
-                <span className="pip"></span>
-                <span className="pip"></span>
-              </div>
-              <span className="node-id">DEPLOYMENT-0{bi + 1}</span>
+      <div className="matrix-scroll scroll-industrial">
+        <div className="matrix-grid" style={{ gridTemplateColumns: `180px repeat(${materials.length}, minmax(100px, 1fr))` }}>
+          {/* Header Row */}
+          <div className="grid-corner">PLANETARY BODY</div>
+          {materials.map(mat => (
+            <div key={mat} className="grid-ore-header" title={mat}>
+              <span className="ore-label">{mat}</span>
             </div>
-            
-            <div className="body-indicator" style={{ background: BODY_META[body.name]?.color || 'var(--accent)' }} />
-            <div className="scanner-line" />
-            
-            <div className="body-info">
-              <h2 className="body-name">{body.name}</h2>
-              <p className="body-desc">{BODY_META[body.name]?.desc || 'ANALYTICAL SURVEY ACTIVE'}</p>
-            </div>
-            
-            <div className="body-meta">
-              <div className="meta-left">
-                <span className="res-count">{body.totalResources} MATERIALS</span>
+          ))}
+
+          {/* Data Rows */}
+          {bodies.map(body => (
+            <div key={body.name} className="matrix-row-wrap">
+              <div className="grid-station">
+                <span className="station-name">{body.name}</span>
+                <span className="station-id">BOD-0{body.id || 'X'}</span>
               </div>
-              <div className="res-preview">
-                {[...new Set(body.resources.map(r => r.name))].slice(0, 3).map(n => (
-                  <span key={n} className="res-tag">{n}</span>
-                ))}
-              </div>
+              {materials.map(mat => {
+                const data = matrix[body.name]?.[mat];
+                return (
+                  <div key={`${body.name}-${mat}`} className={`grid-cell ${data ? 'active' : 'empty'}`}>
+                    {data ? (
+                      <div className="vector-group">
+                        {data.ship && <ShipIcon />}
+                        {data.vehicle && <VehicleIcon />}
+                        {data.hand && <HandIcon />}
+                      </div>
+                    ) : (
+                      <span className="cell-dash">—</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            
-            <div className="node-corner top-left"></div>
-            <div className="node-corner top-right"></div>
-            <div className="node-corner bottom-left"></div>
-            <div className="node-corner bottom-right"></div>
-          </button>
-        ))}
+          ))}
+        </div>
       </div>
 
-      {selectedBody && categorized && (
-        <div className="loc-overlay" onClick={() => setSelectedBody(null)}>
-          <div className="loc-modal industrial" onClick={e => e.stopPropagation()}>
-            <div className="loc-modal-header">
-              <div className="modal-title-wrap">
-                <div className="status-indicator">
-                  <div className="pulse"></div>
-                  <span>UPLINK ACTIVE</span>
-                </div>
-                <span className="loc-modal-parent">{system} INTEL // SCANNING: {selectedBody.toUpperCase()}</span>
-                <h2 className="loc-modal-name">{selectedBody} DEPLOYMENT</h2>
-              </div>
-              <button className="loc-modal-close" onClick={() => setSelectedBody(null)}>
-                <span className="close-label">ABORT</span> ✕
-              </button>
-            </div>
-
-            <div className="loc-modal-body">
-              <div className="res-modal-content-grid">
-                <ResourceCategory title="SHIP EXTRACTION" resources={categorized.ship} icon="⚒" />
-                <ResourceCategory title="VEHICLE EXTRACTION" resources={categorized.vehicle} icon="🚜" />
-                <ResourceCategory title="HAND EXTRACTION" resources={categorized.hand} icon="✋" />
-                {bodyResources.length === 0 && (
-                  <div className="noc-empty">NO SURVEY DATA FOUND FOR THIS BODY.</div>
-                )}
-              </div>
-            </div>
-            
-            <div className="modal-branding">YŪGEN // FIELD INTELLIGENCE TERM-09</div>
-          </div>
+      <div className="matrix-footer">
+        <div className="legend">
+          <div className="legend-item"><ShipIcon /> Ship Mineable</div>
+          <div className="legend-item"><VehicleIcon /> Ground Mineable</div>
+          <div className="legend-item"><HandIcon /> Hand Mineable</div>
         </div>
-      )}
+        <p className="matrix-note">Vectors indicate confirmed extraction feasibility based on recent planetary survey data.</p>
+      </div>
     </div>
   );
 }
