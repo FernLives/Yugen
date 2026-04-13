@@ -37,9 +37,9 @@ export default function NetworkGuard({ moduleId, children }) {
         <div className="guard-content">
           <div className="guard-header">
             <div className="guard-icon">
-              {isRestricted && <span className="icon-alert">🔒</span>}
-              {isMaintenance && <span className="icon-alert">⚙️</span>}
-              {isCollecting && <span className="icon-alert">📡</span>}
+              {isRestricted && <span className="icon-alert">≀ⴵ≀</span>}
+              {isMaintenance && <span className="icon-alert">⎔</span>}
+              {isCollecting && <span className="icon-alert">◬</span>}
             </div>
             <div className="guard-title-group">
               <h1 className="guard-title">

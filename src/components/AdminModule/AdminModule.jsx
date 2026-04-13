@@ -296,7 +296,7 @@ export default function AdminModule() {
               <span className="nav-icon">◉</span> Users
             </button>
             <button className={`nav-item ${tab === 'network' ? 'active' : ''}`} onClick={() => setTab('network')}>
-              <span className="nav-icon">⚡</span> Network
+              <span className="nav-icon">⎔</span> Network
             </button>
           </div>
         </aside>
