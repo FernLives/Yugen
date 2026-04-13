@@ -6,6 +6,7 @@ import RefineryModule from './components/RefineryModule/RefineryModule';
 import ResourceModule from './components/ResourceModule/ResourceModule';
 
 import AdminModule from './components/AdminModule/AdminModule';
+import ProfilePage from './components/ProfilePage/ProfilePage';
 import BootSequence from './components/BootSequence/BootSequence';
 import InfoPage from './components/InfoPage/InfoPage';
 import Toast from './components/common/Toast';
