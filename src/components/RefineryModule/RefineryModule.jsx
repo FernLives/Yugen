@@ -6,7 +6,6 @@ import './RefineryModule.css';
 export default function RefineryModule({ system }) {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [focusedOre, setFocusedOre] = useState(null);
 
   useEffect(() => {
     const load = async () => {
@@ -69,21 +68,13 @@ export default function RefineryModule({ system }) {
         </div>
       </div>
 
-      <div className="matrix-scroll scroll-industrial">
-        <div className="matrix-grid" style={{ gridTemplateColumns: `180px repeat(${ores.length}, 60px)` }}>
+      <div className="matrix-scroll">
+        <div className="matrix-grid" style={{ gridTemplateColumns: `160px repeat(${ores.length}, 1fr)` }}>
           {/* Header row */}
-          <div className="grid-corner" onClick={() => setFocusedOre(null)}>STATION</div>
+          <div className="grid-corner">STATION</div>
           {ores.map(ore => (
-            <div 
-              key={ore} 
-              className={`grid-ore-header ${focusedOre === ore ? 'focused' : ''}`}
-              title={ore}
-              onClick={() => setFocusedOre(focusedOre === ore ? null : ore)}
-            >
-              <div className="ore-header-content">
-                <span className="ore-num">{(ores.indexOf(ore) + 1).toString().padStart(2, '0')}</span>
-                <span className="ore-label">{ore}</span>
-              </div>
+            <div key={ore} className="grid-ore-header" title={ore}>
+              {ore}
             </div>
           ))}
 
@@ -95,18 +86,10 @@ export default function RefineryModule({ system }) {
                 const mod = matrix[station]?.[ore];
                 const isBest = mod !== undefined && mod === bestPerOre[ore] && mod > 0;
                 const type = mod > 0 ? 'pos' : mod < 0 ? 'neg' : 'neu';
-                const isDimmed = focusedOre && focusedOre !== ore;
-
                 return (
-                  <div 
-                    key={`${station}-${ore}`} 
-                    className={`grid-cell ${mod !== undefined ? type : 'empty'} ${isBest ? 'best' : ''} ${focusedOre === ore ? 'focused' : ''} ${isDimmed ? 'dimmed' : ''}`}
-                  >
+                  <div key={`${station}-${ore}`} className={`grid-cell ${mod !== undefined ? type : 'empty'} ${isBest ? 'best' : ''}`}>
                     {mod !== undefined ? (
-                      <div className="cell-content">
-                        <span className="cell-val">{mod > 0 ? '+' : ''}{mod}</span>
-                        {focusedOre === ore && isBest && <span className="best-tag">RECOMMENDED</span>}
-                      </div>
+                      <span className="cell-val">{mod > 0 ? '+' : ''}{mod}</span>
                     ) : (
                       <span className="cell-dash">—</span>
                     )}
