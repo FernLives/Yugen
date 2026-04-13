@@ -9,6 +9,7 @@ import AdminModule from './components/AdminModule/AdminModule';
 import ProfilePage from './components/ProfilePage/ProfilePage';
 import BootSequence from './components/BootSequence/BootSequence';
 import InfoPage from './components/InfoPage/InfoPage';
+import NetworkGuard from './components/common/NetworkGuard';
 import Toast from './components/common/Toast';
 import { cleanLegacyStorage } from './data/dataStore';
 
@@ -44,10 +45,10 @@ function AppContent() {
         onSystemChange={setActiveSystem}
       >
         <Routes>
-          <Route path="/refinery" element={<RefineryModule system={activeSystem} />} />
-          <Route path="/resources" element={<ResourceModule system={activeSystem} />} />
+          <Route path="/refinery" element={<NetworkGuard moduleId="refinery"><RefineryModule system={activeSystem} /></NetworkGuard>} />
+          <Route path="/resources" element={<NetworkGuard moduleId="resources"><ResourceModule system={activeSystem} /></NetworkGuard>} />
 
-          <Route path="/info" element={<InfoPage />} />
+          <Route path="/info" element={<NetworkGuard moduleId="info"><InfoPage /></NetworkGuard>} />
           <Route path="/admin" element={<AdminGuard />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
           <Route path="/" element={<Navigate to="/info" replace />} />

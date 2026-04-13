@@ -5,6 +5,7 @@ import {
   getStations, addStation, deleteStation, updateStation,
   getBodies, addBody, deleteBody, updateBody,
   getAllUsers, updateUserRole, resetAllData,
+  getNetworkStatus, updateNetworkStatus
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
 import LoadingState from '../common/LoadingState';
@@ -35,6 +36,10 @@ export default function AdminModule() {
   const [purgeConfirm, setPurgeConfirm] = useState(false);
   const [purgeInput, setPurgeInput] = useState('');
 
+  // NAC
+  const [networkStatus, setNetworkStatus] = useState({ info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' });
+  const [statusSaving, setStatusSaving] = useState(false);
+
   // Filtering
   const [filterSystem, setFilterSystem] = useState('All');
 
@@ -50,18 +55,20 @@ export default function AdminModule() {
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
   const reload = async () => {
-    const [refs, res, stats, bodies, users] = await Promise.all([
+    const [refs, res, stats, bodies, users, net] = await Promise.all([
       getRefineryData(),
       getResourceData(),
       getStations(),
       getBodies(),
-      getAllUsers()
+      getAllUsers(),
+      getNetworkStatus()
     ]);
     setRefData(refs);
     setResData(res);
     setStationsData(stats);
     setBodiesData(bodies);
     setUsersData(users);
+    setNetworkStatus(net);
   };
 
   // ── Body CRUD ──
@@ -194,6 +201,13 @@ export default function AdminModule() {
     await resetAllData();
   };
 
+  const handleUpdateNAC = async () => {
+    setStatusSaving(true);
+    await updateNetworkStatus(networkStatus);
+    setStatusSaving(false);
+    flash('Network Access Controls Synchronized');
+  };
+
   // ── Derived data ──
   const stationMaterials = useMemo(() => {
     const map = {};
@@ -280,6 +294,9 @@ export default function AdminModule() {
             <div className="group-label">System</div>
             <button className={`nav-item ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
               <span className="nav-icon">◉</span> Users
+            </button>
+            <button className={`nav-item ${tab === 'network' ? 'active' : ''}`} onClick={() => setTab('network')}>
+              <span className="nav-icon">⚡</span> Network
             </button>
           </div>
         </aside>
@@ -567,6 +584,50 @@ export default function AdminModule() {
                 <h3>Danger Zone</h3>
                 <p>Immediate purge of all localized intelligence data.</p>
                 <button className="noc-btn danger" onClick={() => { setPurgeConfirm(true); setPurgeInput(''); }}>PURGE ALL DATA</button>
+              </div>
+            </div>
+          )}
+
+          {/* ══ NETWORK TAB ══ */}
+          {tab === 'network' && (
+            <div className="noc-settings fade-in">
+              <div className="settings-card">
+                <h3>Network Access Control (NAC)</h3>
+                <p className="card-desc">Centrally manage the availability and access protocols for each core module.</p>
+                
+                <div className="nac-grid">
+                  {[
+                    { id: 'info', label: 'INFO HUB' },
+                    { id: 'refinery', label: 'REFINERY MATRIX' },
+                    { id: 'resources', label: 'RESOURCE DATABASE' }
+                  ].map(m => (
+                    <div key={m.id} className="nac-module-row">
+                      <div className="nac-label-side">
+                        <span className="nac-module-name">{m.label}</span>
+                        <span className="nac-status-current">{networkStatus[m.id]}</span>
+                      </div>
+                      <div className="nac-control-side">
+                        <Sel 
+                          label="Target Protocol" 
+                          val={networkStatus[m.id]} 
+                          set={v => setNetworkStatus({...networkStatus, [m.id]: v})} 
+                          opts={['ACTIVE', 'MAINTENANCE', 'RESTRICTED', 'COLLECTING']} 
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="nac-footer">
+                  <button className="noc-btn primary" onClick={handleUpdateNAC} disabled={statusSaving}>
+                    {statusSaving ? 'SYNCHRONIZING...' : 'UPDATE ACCESS CONTROLS'}
+                  </button>
+                </div>
+              </div>
+
+              <div className="settings-card stats">
+                <h3>Global Traffic Isolation</h3>
+                <p>When a module is not 'ACTIVE', all non-admin traffic will be intercepted by the YŪGEN Security Layer. Admins maintain bypass capabilities via a Secure Terminal Override.</p>
               </div>
             </div>
           )}

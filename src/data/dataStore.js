@@ -167,6 +167,25 @@ export async function updateResourceEntry(id, data) {
 }
 
 // ── Admin PIN ──
+// ── Network Status (NAC) ──
+export async function getNetworkStatus() {
+  const res = await fetch(`${BASE_URL}/settings/network_status`);
+  const data = await res.json();
+  try {
+    return data.value ? JSON.parse(data.value) : { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
+  } catch {
+    return { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
+  }
+}
+
+export async function updateNetworkStatus(statusObj) {
+  await fetch(`${BASE_URL}/settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ key: 'network_status', value: JSON.stringify(statusObj) })
+  });
+}
+
 // ── User Authentication ──
 export async function registerUser(username, password, callsign) {
   const res = await fetch(`${BASE_URL}/auth/register`, {
