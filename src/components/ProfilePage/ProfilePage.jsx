@@ -228,7 +228,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Bio & Credentials */}
+          {/* Bio Narrative */}
           <div className="profile-bio-section">
             <span className="bio-label">NARRATIVE</span>
             {editing ? (
@@ -242,22 +242,23 @@ export default function ProfilePage() {
             ) : (
               <p className="profile-bio">{profile.bio || 'No brief filed.'}</p>
             )}
-
-            {editing && (
-              <>
-                <span className="bio-label" style={{ marginTop: '24px' }}>CREDENTIALS</span>
-                <input
-                  type="password"
-                  className="profile-callsign-edit"
-                  style={{ fontSize: '14px', letterSpacing: '0.1em' }}
-                  value={editForm.newPassword}
-                  onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
-                  placeholder="Enter new password to change..."
-                  spellCheck={false}
-                />
-              </>
-            )}
           </div>
+
+          {/* Credentials Editor */}
+          {editing && (
+            <div className="profile-bio-section" style={{ marginTop: '0' }}>
+              <span className="bio-label">CREDENTIALS</span>
+              <input
+                type="password"
+                className="profile-callsign-edit"
+                style={{ fontSize: '12px', letterSpacing: '0.1em', textAlign: 'left', fontWeight: '400', color: 'var(--text-bright)' }}
+                value={editForm.newPassword || ''}
+                onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
+                placeholder="Enter a new password to change..."
+                spellCheck={false}
+              />
+            </div>
+          )}
 
           {/* Actions */}
           {isOwnProfile && (

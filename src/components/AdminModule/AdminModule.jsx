@@ -571,20 +571,16 @@ export default function AdminModule() {
                           <span className={`role-tag ${u.role}`}>{u.role.toUpperCase()}</span>
                         </td>
                         <td>
-                          {u.id !== user?.id ? (
-                            <select 
-                              className="noc-input compact" 
-                              value={u.clearance || 'ASSOCIATE'} 
-                              onChange={(e) => changeUserClearance(u.id, e.target.value)}
-                              style={{ width: '120px', padding: '4px', fontSize: '12px' }}
-                            >
-                              <option value="ASSOCIATE">ASSOCIATE</option>
-                              <option value="DIRECTOR">DIRECTOR</option>
-                              <option value="PRINCIPAL">PRINCIPAL</option>
-                            </select>
-                          ) : (
-                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{u.clearance || 'ASSOCIATE'}</span>
-                          )}
+                          <select 
+                            className="noc-input compact" 
+                            value={u.clearance || 'ASSOCIATE'} 
+                            onChange={(e) => changeUserClearance(u.id, e.target.value)}
+                            style={{ width: '120px', padding: '4px', fontSize: '12px' }}
+                          >
+                            <option value="ASSOCIATE">ASSOCIATE</option>
+                            <option value="DIRECTOR">DIRECTOR</option>
+                            <option value="PRINCIPAL">PRINCIPAL</option>
+                          </select>
                         </td>
                         <td>{u.status}</td>
                         <td className="actions">
