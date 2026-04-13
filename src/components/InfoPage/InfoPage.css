@@ -306,13 +306,28 @@
 .blade-graphic {
   font-size: 24px;
   width: 40px;
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-muted);
   opacity: 0.8;
+  transition: all 0.3s;
+}
+
+.blade-graphic svg {
+  width: 24px;
+  height: 24px;
+  transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .module-blade:hover .blade-graphic {
   opacity: 1;
-  filter: drop-shadow(0 0 8px rgba(196, 154, 92, 0.4));
+  color: var(--accent-bright);
+}
+
+.module-blade:hover .blade-graphic svg {
+  transform: scale(1.1);
+  filter: drop-shadow(0 0 8px rgba(196, 154, 92, 0.6));
 }
 
 .mod-meta {

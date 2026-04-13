@@ -16,22 +16,40 @@ export default function InfoPage() {
     {
       id: 'refinery',
       title: 'REFINERY LOGISTICS',
-      desc: 'Real-time yield modifier tracking across civilian refinery terminals. Optimized for efficient mineral processing and profit maximization.',
-      icon: '⚙️',
+      desc: 'Real-time yield modifier tracking across civilian refinery terminals. Ensure you are getting the absolute maximum payout for your hard-earned hauls.',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+          <path d="M4 12V4h16v8" strokeDasharray="4 4"/>
+        </svg>
+      ),
       code: 'MDL-REF-01'
     },
     {
       id: 'resources',
       title: 'RESOURCE DATABASE',
-      desc: 'Collaborative survey data for raw materials and minerals. Community-driven coordinate sharing for all civilian miners.',
-      icon: '💎',
+      desc: 'Collaborative survey data for raw materials and minerals. A shared community ledger mapping the most lucrative coordinates in the system.',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+          <polygon points="12 2 2 7 12 12 22 7 12 2" />
+          <polyline points="2 17 12 22 22 17" />
+          <polyline points="2 12 12 17 22 12" />
+          <line x1="12" y1="2" x2="12" y2="22" />
+        </svg>
+      ),
       code: 'MDL-RES-02'
     },
     {
       id: 'admin',
       title: 'NETWORK OPERATIONS',
-      desc: 'Restricted access for station registry and material signature management. Providing the structural data that powers the YŪGEN network.',
-      icon: '🛂',
+      desc: 'Restricted registry for station administration and material signature integrity. Maintaining the core data that keeps our community connected.',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="square" strokeLinejoin="miter">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+          <line x1="12" y1="8" x2="12" y2="16" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+        </svg>
+      ),
       code: 'MDL-NOC-03'
     }
   ];
@@ -72,12 +90,12 @@ export default function InfoPage() {
             </div>
             <div className="panel-content">
               <p className="terminal-text">
-                &gt; YŪGEN IS NOT A CORPORATION.<br/>
-                &gt; WE ARE NOT A MILITARY ORGANIZATION.<br/><br/>
-                We are a collective of civilian operators, miners, and haulers dedicated to democratizing industrial intelligence. 
+                &gt; THE BLACK IS COLD.<br/>
+                &gt; NO MEGA-CORP IS COMING TO SAVE US.<br/><br/>
+                YŪGEN was forged in the void for one simple reason: to ensure that no civilian operator—miner, hauler, or salvager—has to fly blind. 
               </p>
               <p className="terminal-text">
-                Our mission is to provide the community with the high-fidelity data needed to thrive in the deep black. By sharing yields and signatures, we elevate every pilot from a lone worker to a synchronized part of a greater industrial node.
+                We are a collective built on grit and mutual survival. We share our yields, our intelligence, and our safe routes. When you uplink to this network, you are no longer just a lone worker scraping by; you are supported by a community that believes <strong>shared knowledge is the strongest armor we have</strong>.
               </p>
             </div>
           </div>
@@ -157,7 +175,7 @@ export default function InfoPage() {
 
       {/* ── Footer ── */}
       <footer className="dash-footer fade-in-up" style={{ animationDelay: '0.3s' }}>
-        <div className="footer-code block">FOR THE COMMUNITY, BY THE COMMUNITY.</div>
+        <div className="footer-code block">THROUGH THE BLACK, TOGETHER.</div>
         <div className="footer-copyright">YŪGEN INDUSTRIAL SUITE © 2954-2955</div>
       </footer>
 
