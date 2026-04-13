@@ -23,125 +23,110 @@
   border-radius: var(--radius-sm);
 }
 
-/* ── Body Groups ── */
-.body-groups {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2xl);
-}
-
-.body-group {
-  animation: fadeInUp var(--duration-slow) var(--ease-out) both;
-}
-
-.body-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: var(--space-lg);
-}
-
-.body-title-area {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-md);
-}
-
-.body-indicator {
-  width: 3px;
-  height: 36px;
-  border-radius: 2px;
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.body-name {
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-bright);
-}
-
-.body-desc {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-.body-count {
-  font-size: 11px;
-  color: var(--text-dim);
-  white-space: nowrap;
-  margin-top: 4px;
-}
-
-/* ── Location Cards ── */
-.location-grid {
+/* ── Body Grid & Cards ── */
+.body-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-sm);
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
 }
 
-.location-card {
+.body-card {
   background: var(--bg-surface);
-  border: 1px solid transparent;
+  border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: var(--space-lg);
+  padding: var(--space-xl);
   text-align: left;
   cursor: pointer;
   transition: all var(--duration-fast) var(--ease-out);
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
-  min-height: 130px;
+  gap: var(--space-xl);
+  min-height: 180px;
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp var(--duration-slow) var(--ease-out) both;
 }
 
-.location-card:hover {
+.body-card:hover {
   background: var(--bg-elevated);
-  border-color: var(--border-medium);
-  box-shadow: var(--shadow-sm);
-  transform: translateY(-2px);
+  border-color: var(--accent);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
-.lc-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.body-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, transparent 50%, rgba(255,255,255,0.02) 50%);
 }
 
-.lc-name {
-  font-family: var(--font-heading);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-bright);
+.body-indicator {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.3);
 }
 
-.lc-resources {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+.body-info {
   flex: 1;
 }
 
-.lc-resource-tag {
+.body-name {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-bright);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.body-desc {
   font-size: 11px;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.03);
-  padding: 2px 8px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.body-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: var(--space-lg);
+}
+
+.res-count {
+  font-family: var(--font-data);
+  font-size: 11px;
+  color: var(--accent);
+  background: rgba(var(--accent-rgb), 0.1);
+  padding: 4px 10px;
   border-radius: var(--radius-sm);
 }
 
-.lc-bottom {
+.res-preview {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  padding-top: var(--space-sm);
-  border-top: 1px solid var(--border-subtle);
+  gap: 4px;
 }
 
-.lc-count {
-  font-size: 11px;
-  color: var(--text-dim);
+.res-tag {
+  font-size: 9px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.03);
+  padding: 2px 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+/* ── Cleanup Legacy ── */
+.location-grid, .location-card, .lc-top, .lc-name, .lc-resources, .lc-resource-tag, .lc-bottom, .lc-count {
+  display: none;
 }
 
 /* ── Location Modal (Rebuilt for Categories) ── */
