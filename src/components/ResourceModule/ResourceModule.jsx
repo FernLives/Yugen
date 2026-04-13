@@ -126,44 +126,71 @@ export default function ResourceModule({ system }) {
             onClick={() => setSelectedBody(body.name)}
             style={{ animationDelay: `${bi * 50}ms` }}
           >
+            <div className="body-node-header">
+              <div className="node-pips">
+                <span className="pip"></span>
+                <span className="pip"></span>
+                <span className="pip"></span>
+              </div>
+              <span className="node-id">DEPLOYMENT-0{bi + 1}</span>
+            </div>
+            
             <div className="body-indicator" style={{ background: BODY_META[body.name]?.color || 'var(--accent)' }} />
+            <div className="scanner-line" />
+            
             <div className="body-info">
               <h2 className="body-name">{body.name}</h2>
-              <p className="body-desc">{BODY_META[body.name]?.desc || 'Planetary survey active'}</p>
+              <p className="body-desc">{BODY_META[body.name]?.desc || 'ANALYTICAL SURVEY ACTIVE'}</p>
             </div>
+            
             <div className="body-meta">
-              <span className="res-count">{body.totalResources} materials</span>
+              <div className="meta-left">
+                <span className="res-count">{body.totalResources} MATERIALS</span>
+              </div>
               <div className="res-preview">
                 {[...new Set(body.resources.map(r => r.name))].slice(0, 3).map(n => (
                   <span key={n} className="res-tag">{n}</span>
                 ))}
               </div>
             </div>
+            
+            <div className="node-corner top-left"></div>
+            <div className="node-corner top-right"></div>
+            <div className="node-corner bottom-left"></div>
+            <div className="node-corner bottom-right"></div>
           </button>
         ))}
       </div>
 
       {selectedBody && categorized && (
         <div className="loc-overlay" onClick={() => setSelectedBody(null)}>
-          <div className="loc-modal" onClick={e => e.stopPropagation()}>
+          <div className="loc-modal industrial" onClick={e => e.stopPropagation()}>
             <div className="loc-modal-header">
-              <div>
-                <span className="loc-modal-parent">{system} Intelligence</span>
-                <h2 className="loc-modal-name">{selectedBody} Deployment</h2>
+              <div className="modal-title-wrap">
+                <div className="status-indicator">
+                  <div className="pulse"></div>
+                  <span>UPLINK ACTIVE</span>
+                </div>
+                <span className="loc-modal-parent">{system} INTEL // SCANNING: {selectedBody.toUpperCase()}</span>
+                <h2 className="loc-modal-name">{selectedBody} DEPLOYMENT</h2>
               </div>
-              <button className="loc-modal-close" onClick={() => setSelectedBody(null)}>✕</button>
+              <button className="loc-modal-close" onClick={() => setSelectedBody(null)}>
+                <span className="close-label">ABORT</span> ✕
+              </button>
             </div>
 
             <div className="loc-modal-body">
               <div className="res-modal-content-grid">
-                <ResourceCategory title="Ship Mineables" resources={categorized.ship} icon="⛏" />
-                <ResourceCategory title="Ground Vehicle Mineables" resources={categorized.vehicle} icon="🚜" />
-                <ResourceCategory title="Hand Mineables" resources={categorized.hand} icon="✋" />
+                <ResourceCategory title="SHIP EXTRACTION" resources={categorized.ship} icon="⚒" />
+                <ResourceCategory title="VEHICLE EXTRACTION" resources={categorized.vehicle} icon="🚜" />
+                <ResourceCategory title="HAND EXTRACTION" resources={categorized.hand} icon="✋" />
                 {bodyResources.length === 0 && (
-                  <div className="noc-empty">No survey data found for this body.</div>
+                  <div className="noc-empty">NO SURVEY DATA FOUND FOR THIS BODY.</div>
                 )}
               </div>
             </div>
+            
+            <div className="modal-branding">YŪGEN // FIELD INTELLIGENCE TERM-09</div>
           </div>
         </div>
       )}
