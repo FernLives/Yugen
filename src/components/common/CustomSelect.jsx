@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import './CustomSelect.css';
 
-export default function CustomSelect({ label, value, onChange, options = [] }) {
+export default function CustomSelect({ label, value, onChange, options = [], compact = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -21,12 +21,13 @@ export default function CustomSelect({ label, value, onChange, options = [] }) {
   };
 
   return (
-    <div className="custom-sel-field" ref={dropdownRef}>
-      <label className="sel-label">{label}</label>
+    <div className={`custom-sel-field ${compact ? 'compact' : ''}`} ref={dropdownRef}>
+      {!compact && <label className="sel-label">{label}</label>}
       <div 
         className={`sel-trigger ${isOpen ? 'active' : ''}`} 
         onClick={() => setIsOpen(!isOpen)}
       >
+        {compact && <span className="compact-label">{label}: </span>}
         <span className="current-val">{value || 'SELECT OPTION'}</span>
         <span className="sel-chevron">⌃</span>
       </div>

@@ -306,6 +306,7 @@ export default function AdminModule() {
                 value={filterSystem} 
                 onChange={setFilterSystem} 
                 options={['All', ...SYSTEMS]} 
+                compact={true}
               />
             </div>
             <div className="tool-right">

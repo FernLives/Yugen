@@ -146,3 +146,31 @@
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Compact Variant ── */
+.custom-sel-field.compact {
+  gap: 0;
+  width: auto;
+  min-width: 140px;
+}
+
+.custom-sel-field.compact .sel-trigger {
+  padding: 8px 14px;
+  height: 40px; /* Match standard button height */
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.compact-label {
+  font-family: var(--font-data);
+  font-size: 9px;
+  color: var(--accent-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 8px;
+  opacity: 0.7;
+}
+
+.custom-sel-field.compact .sel-dropdown {
+  width: 200px; /* Non-relative width for compact mode */
+  right: auto;
+}
