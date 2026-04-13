@@ -7,6 +7,7 @@ import {
   getAllUsers, updateUserRole, resetAllData,
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
+import LoadingState from '../common/LoadingState';
 import './AdminModule.css';
 
 const SYSTEMS = ['Stanton', 'Pyro', 'Nyx'];
@@ -19,6 +20,7 @@ export default function AdminModule() {
   const [stationsData, setStationsData] = useState([]);
   const [locationsData, setLocationsData] = useState([]);
   const [usersData, setUsersData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({});
   const [adding, setAdding] = useState(false);
   const [editMode, setEditMode] = useState(null);
@@ -35,11 +37,9 @@ export default function AdminModule() {
 
   useEffect(() => {
     const load = async () => {
-      setRefData(await getRefineryData());
-      setResData(await getResourceData());
-      setStationsData(await getStations());
-      setLocationsData(await getLocations());
-      setUsersData(await getAllUsers());
+      setIsLoading(true);
+      await reload();
+      setIsLoading(false);
     };
     load();
   }, []);
@@ -47,11 +47,18 @@ export default function AdminModule() {
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
   const reload = async () => {
-    setRefData(await getRefineryData());
-    setResData(await getResourceData());
-    setStationsData(await getStations());
-    setLocationsData(await getLocations());
-    setUsersData(await getAllUsers());
+    const [refs, res, stats, locs, users] = await Promise.all([
+      getRefineryData(),
+      getResourceData(),
+      getStations(),
+      getLocations(),
+      getAllUsers()
+    ]);
+    setRefData(refs);
+    setResData(res);
+    setStationsData(stats);
+    setLocationsData(locs);
+    setUsersData(users);
   };
 
   // ── Location CRUD ──
@@ -137,7 +144,8 @@ export default function AdminModule() {
       setTab('stations');
       setForm({ name: '', system: 'Stanton' });
     } else if (type === 'material') {
-      setTab('material');
+      // Keep tab on 'stations' since materials are managed within station nodes
+      setTab('stations');
       setForm({ ore: '', modifier: 0, station: parentContext || stationsData[0]?.name || '' });
     } else if (type === 'location') {
       setTab('location');
@@ -156,7 +164,7 @@ export default function AdminModule() {
       setTab('stations');
       setForm({ name: item.name, system: item.system });
     } else if (type === 'material') {
-      setTab('material');
+      setTab('stations');
       setForm({ ore: item.ore, modifier: item.modifier, station: item.station });
     } else if (type === 'location') {
       setTab('location');
@@ -231,6 +239,22 @@ export default function AdminModule() {
   // ── Determine save handler ──
   const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'location' ? 'location' : 'resource') : null;
   const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : currentSaveTab === 'location' ? saveLocation : saveResource;
+
+  if (isLoading) {
+    return (
+      <div className="admin-noc">
+        <header className="noc-header">
+          <div className="noc-title-area">
+            <h1 className="noc-title">Network Operations Center</h1>
+            <span className="noc-tag">ESTABLISHING CONNECTION</span>
+          </div>
+        </header>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <LoadingState message="Synchronizing NOC Databases" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="admin-noc fade-in">
