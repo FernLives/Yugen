@@ -22,7 +22,7 @@ When you host this online, **do not** upload your `.env` file to a public reposi
 
 ## 2. Server-based Hosting Platforms (Railway, Render, Fly.io)
 **Best for**: Global access with persistent file storage.
-The system is now configured for **Unified Hosting**, meaning the backend serves the frontend on a single port.
+The system is now configured for **Unified Hosting**, meaning the backend serves the frontend on a single port..
 
 ### Example: Deploying to Railway.app
 1. Go to [Railway](https://railway.app/).
