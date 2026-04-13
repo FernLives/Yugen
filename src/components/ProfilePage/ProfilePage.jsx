@@ -121,12 +121,17 @@ export default function ProfilePage() {
 
   const startEdit = () => {
     setEditing(true);
-    setEditForm({ callsign: profile.callsign, bio: profile.bio || '' });
+    setEditForm({ callsign: profile.callsign, bio: profile.bio || '', newPassword: '' });
   };
 
   const saveEdit = async () => {
     try {
-      const updated = await updateProfile(editForm);
+      const payload = { callsign: editForm.callsign, bio: editForm.bio };
+      if (editForm.newPassword) {
+        if (editForm.newPassword.length < 4) throw new Error('Password too short');
+        payload.password = editForm.newPassword;
+      }
+      const updated = await updateProfile(payload);
       setProfile(updated);
       setEditing(false);
       setSaveStatus('Profile updated');
@@ -198,7 +203,7 @@ export default function ProfilePage() {
             {CLEARANCE_LEVELS.map(level => (
               <span
                 key={level}
-                className={`clearance-tier ${profile.clearance === level ? 'active' : ''}`}
+                className={`clearance-tier ${(profile.clearance || 'ASSOCIATE') === level ? 'active' : ''}`}
               >
                 {level}
               </span>
@@ -223,7 +228,7 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Bio */}
+          {/* Bio & Credentials */}
           <div className="profile-bio-section">
             <span className="bio-label">NARRATIVE</span>
             {editing ? (
@@ -236,6 +241,21 @@ export default function ProfilePage() {
               />
             ) : (
               <p className="profile-bio">{profile.bio || 'No brief filed.'}</p>
+            )}
+
+            {editing && (
+              <>
+                <span className="bio-label" style={{ marginTop: '24px' }}>CREDENTIALS</span>
+                <input
+                  type="password"
+                  className="profile-callsign-edit"
+                  style={{ fontSize: '14px', letterSpacing: '0.1em' }}
+                  value={editForm.newPassword}
+                  onChange={e => setEditForm({ ...editForm, newPassword: e.target.value })}
+                  placeholder="Enter new password to change..."
+                  spellCheck={false}
+                />
+              </>
             )}
           </div>
 

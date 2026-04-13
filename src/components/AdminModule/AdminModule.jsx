@@ -4,7 +4,7 @@ import {
   getResourceData, addResourceEntry, deleteResourceEntry, updateResourceEntry,
   getStations, addStation, deleteStation, updateStation,
   getBodies, addBody, deleteBody, updateBody,
-  getAllUsers, updateUserRole, resetAllData,
+  getAllUsers, updateUserAdmin, resetAllData,
   getNetworkStatus, updateNetworkStatus
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
@@ -192,9 +192,15 @@ export default function AdminModule() {
 
   const toggleUserRole = async (userId, currentRole) => {
     const newRole = currentRole === 'admin' ? 'operator' : 'admin';
-    await updateUserRole(userId, newRole);
+    await updateUserAdmin(userId, { role: newRole });
     await reload();
     flash(`Role updated to ${newRole.toUpperCase()}`);
+  };
+
+  const changeUserClearance = async (userId, clearance) => {
+    await updateUserAdmin(userId, { clearance });
+    await reload();
+    flash(`Tier updated to ${clearance}`);
   };
 
   const handlePurge = async () => {
@@ -551,6 +557,7 @@ export default function AdminModule() {
                       <th>CALLSIGN</th>
                       <th>USERNAME</th>
                       <th>ROLE</th>
+                      <th>TIER</th>
                       <th>STATUS</th>
                       <th>ACTIONS</th>
                     </tr>
@@ -562,6 +569,22 @@ export default function AdminModule() {
                         <td>@{u.username}</td>
                         <td>
                           <span className={`role-tag ${u.role}`}>{u.role.toUpperCase()}</span>
+                        </td>
+                        <td>
+                          {u.id !== user?.id ? (
+                            <select 
+                              className="noc-input compact" 
+                              value={u.clearance || 'ASSOCIATE'} 
+                              onChange={(e) => changeUserClearance(u.id, e.target.value)}
+                              style={{ width: '120px', padding: '4px', fontSize: '12px' }}
+                            >
+                              <option value="ASSOCIATE">ASSOCIATE</option>
+                              <option value="DIRECTOR">DIRECTOR</option>
+                              <option value="PRINCIPAL">PRINCIPAL</option>
+                            </select>
+                          ) : (
+                            <span style={{ fontSize: '12px', fontWeight: 'bold' }}>{u.clearance || 'ASSOCIATE'}</span>
+                          )}
                         </td>
                         <td>{u.status}</td>
                         <td className="actions">

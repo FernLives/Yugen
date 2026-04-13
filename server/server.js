@@ -235,7 +235,7 @@ app.post('/api/auth/register', (req, res) => {
 
   db.prepare(`INSERT INTO users (id, username, passwordHash, callsign, role, clearance, avatarSeed, status, bio, createdAt, lastSeen)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-    .run(id, username.toLowerCase(), passwordHash, callsign, role, 'DELTA', avatarSeed, 'ACTIVE', '', now, now);
+    .run(id, username.toLowerCase(), passwordHash, callsign, role, 'ASSOCIATE', avatarSeed, 'ACTIVE', '', now, now);
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
   console.log(`👤 New user registered: ${username} (${role})`);
@@ -288,10 +288,13 @@ app.put('/api/users/:id', (req, res) => {
   res.json(sanitizeUser(updated));
 });
 
-app.put('/api/users/:id/role', (req, res) => {
-  const { role } = req.body;
-  if (!['operator', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
-  db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
+app.put('/api/users/:id/admin', (req, res) => {
+  const { role, clearance } = req.body;
+  if (role && !['operator', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
+  
+  if (role) db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
+  if (clearance) db.prepare('UPDATE users SET clearance = ? WHERE id = ?').run(clearance, req.params.id);
+  
   const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
   res.json(sanitizeUser(updated));
 });

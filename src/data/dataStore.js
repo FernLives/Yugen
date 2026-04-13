@@ -231,11 +231,11 @@ export async function updateUserProfile(id, data) {
   return result;
 }
 
-export async function updateUserRole(id, role) {
-  const res = await fetch(`${BASE_URL}/users/${id}/role`, {
+export async function updateUserAdmin(id, data) {
+  const res = await fetch(`${BASE_URL}/users/${id}/admin`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ role })
+    body: JSON.stringify(data)
   });
   return await res.json();
 }
