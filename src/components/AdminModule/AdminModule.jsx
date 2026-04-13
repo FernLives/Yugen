@@ -22,6 +22,7 @@ export default function AdminModule() {
   const [usersData, setUsersData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({});
+  const [addingType, setAddingType] = useState(null); // 'station', 'material', 'body', 'resource'
   const [adding, setAdding] = useState(false);
   const [editMode, setEditMode] = useState(null);
   const [status, setStatus] = useState('');
@@ -139,44 +140,38 @@ export default function AdminModule() {
 
   const startAdd = (type, parentContext) => {
     setEditMode(null);
+    setAddingType(type);
     setAdding(true);
+
     if (type === 'station') {
-      setTab('stations');
       setForm({ name: '', system: 'Stanton' });
     } else if (type === 'material') {
-      // Keep tab on 'stations' since materials are managed within station nodes
-      setTab('stations');
       setForm({ ore: '', modifier: 0, station: parentContext || stationsData[0]?.name || '' });
     } else if (type === 'body') {
-      setTab('resources');
       setForm({ name: '', system: 'Stanton' });
     } else {
-      // 'resource' — sub-item inside an existing body
-      setTab('resources');
-      setForm({ name: '', type: 'Ship Mineable', parentBody: parentContext || bodiesData[0]?.name || '', system: 'Stanton', description: '', methods: ['ship'], tips: '' });
+      // 'resource'
+      setForm({ name: '', type: 'Ship Mineable', parentBody: parentContext || (bodiesData.length > 0 ? bodiesData[0].name : ''), system: 'Stanton', methods: ['ship'] });
     }
   };
 
   const startEdit = (type, item) => {
-    setEditMode({ type, id: type === 'station' ? item.name : item.id });
+    setAddingType(type);
+    setEditMode({ type, id: type === 'station' ? item.name : type === 'body' ? item.name : item.id });
     setAdding(true);
+    
     if (type === 'station') {
-      setTab('stations');
       setForm({ name: item.name, system: item.system });
     } else if (type === 'material') {
-      setTab('stations');
       setForm({ ore: item.ore, modifier: item.modifier, station: item.station });
     } else if (type === 'body') {
-      setTab('resources');
-      setEditMode({ type: 'body', name: item.name });
       setForm({ name: item.name, system: item.system });
     } else {
-      setTab('resources');
       setForm({ ...item });
     }
   };
 
-  const closeForm = () => { setAdding(false); setEditMode(null); setForm({}); };
+  const closeForm = () => { setAdding(false); setAddingType(null); setEditMode(null); setForm({}); };
 
   const toggleStation = (name) => {
     setExpandedStations(prev => ({ ...prev, [name]: !prev[name] }));
@@ -231,8 +226,7 @@ export default function AdminModule() {
   }, [filteredBodies, filteredResData]);
 
   // ── Determine save handler ──
-  const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'resources' && !editMode?.type ? 'resource' : editMode?.type || 'resource') : null;
-  const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : (currentSaveTab === 'body' || tab === 'bodies') ? saveBody : saveResource;
+  const saveFn = addingType === 'station' ? saveStation : addingType === 'material' ? saveMaterial : addingType === 'body' ? saveBody : saveResource;
 
   if (isLoading) {
     return (
@@ -311,30 +305,33 @@ export default function AdminModule() {
             <div className="noc-form-overlay" onClick={closeForm}>
               <div className="noc-form fade-in" onClick={e => e.stopPropagation()}>
                 <div className="form-header">
-                  <h3>{editMode ? 'Edit' : 'New'} {currentSaveTab === 'station' ? 'Station' : currentSaveTab === 'material' ? 'Material' : currentSaveTab === 'body' ? 'Body' : 'Resource'}</h3>
+                  <h3>{editMode ? 'Edit' : 'New'} {addingType === 'station' ? 'Station' : addingType === 'material' ? 'Material' : addingType === 'body' ? 'Body' : 'Resource'}</h3>
                   <button className="close-btn" onClick={closeForm}>✕</button>
                 </div>
                 <div className="form-grid">
-                  {currentSaveTab === 'station' ? (
+                  {addingType === 'station' && (
                     <>
                       <Inp label="Station Name" val={form.name} set={v => setForm({...form, name: v})} />
                       <Sel label="System" val={form.system} set={v => setForm({...form, system: v})} opts={SYSTEMS} />
                     </>
-                  ) : currentSaveTab === 'material' ? (
+                  )}
+                  {addingType === 'material' && (
                     <>
                       <Sel label="Parent Station" val={form.station} set={v => setForm({...form, station: v})} opts={stationsData.map(s => s.name)} />
                       <Inp label="Material (Ore)" val={form.ore} set={v => setForm({...form, ore: v})} />
                       <Inp label="Yield Modifier" val={form.modifier} set={v => setForm({...form, modifier: v})} type="number" />
                     </>
-                  ) : currentSaveTab === 'body' ? (
+                  )}
+                  {addingType === 'body' && (
                     <>
                       <Inp label="Body Name" val={form.name} set={v => setForm({...form, name: v})} />
                       <Sel label="System" val={form.system} set={v => setForm({...form, system: v})} opts={SYSTEMS} />
                     </>
-                  ) : (
+                  )}
+                  {addingType === 'resource' && (
                     <>
                       <Sel label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} opts={bodiesData.map(b => b.name)} />
-                      <Inp label="Name" val={form.name} set={v => setForm({...form, name: v})} />
+                      <Inp label="Resource Name" val={form.name} set={v => setForm({...form, name: v})} />
                       <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
                     </>
                   )}
