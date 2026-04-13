@@ -301,10 +301,12 @@ export default function AdminModule() {
               {tab === 'resources' && (
                 <button className="noc-btn add" onClick={() => startAdd('body')}>+ ADD BODY</button>
               )}
-              <select className="noc-select system-filter" value={filterSystem} onChange={e => setFilterSystem(e.target.value)}>
-                <option value="All">ALL SYSTEMS</option>
-                {SYSTEMS.map(s => <option key={s} value={s}>{s.toUpperCase()}</option>)}
-              </select>
+              <CustomSelect 
+                label="System Filter" 
+                value={filterSystem} 
+                onChange={setFilterSystem} 
+                options={['All', ...SYSTEMS]} 
+              />
             </div>
             <div className="tool-right">
               <span className="entry-count">
