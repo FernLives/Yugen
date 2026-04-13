@@ -69,8 +69,8 @@ export default function RefineryModule({ system }) {
         </div>
       </div>
 
-      <div className="matrix-scroll">
-        <div className="matrix-grid" style={{ gridTemplateColumns: `160px repeat(${ores.length}, 1fr)` }}>
+      <div className="matrix-scroll scroll-industrial">
+        <div className="matrix-grid" style={{ gridTemplateColumns: `180px repeat(${ores.length}, 60px)` }}>
           {/* Header row */}
           <div className="grid-corner" onClick={() => setFocusedOre(null)}>STATION</div>
           {ores.map(ore => (
