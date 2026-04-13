@@ -203,15 +203,21 @@ export default function ResourceModule({ system }) {
                     ) : (
                       bodyIntelligence.all.map((item, idx) => (
                         <tr key={item.id} className={item.isMatch ? 'row-match' : ''}>
-                          <td className="data-id">SRV-0{idx + 1}</td>
+                          <td className="data-id">
+                            {item.isMatch && <div className="match-bracket top-left"></div>}
+                            SRV-0{idx + 1}
+                          </td>
                           <td className="resource-name">
                             {item.name}
-                            {item.isMatch && <span className="match-tag">SIGNAL MATCH</span>}
+                            {item.isMatch && <span className="match-tag">SIGNAL SYNC</span>}
                           </td>
                           <td className="vector-type">
                             <span className="vector-chip">{item.type.toUpperCase()}</span>
                           </td>
-                          <td className="survey-desc">{item.description || 'Biological/Mineral signature confirmed.'}</td>
+                          <td className="survey-desc">
+                            {item.description || 'Biological/Mineral signature confirmed.'}
+                            {item.isMatch && <div className="match-bracket bottom-right"></div>}
+                          </td>
                         </tr>
                       ))
                     )}
