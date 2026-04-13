@@ -8,6 +8,8 @@ import {
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
 import LoadingState from '../common/LoadingState';
+import CustomSelect from '../common/CustomSelect';
+import CustomAutocomplete from '../common/CustomAutocomplete';
 import './AdminModule.css';
 
 const SYSTEMS = ['Stanton', 'Pyro', 'Nyx'];
@@ -608,7 +610,16 @@ export default function AdminModule() {
 
 // ── Reusable form components ──
 function Inp({ label, val, set, type = 'text', suggestions = [] }) {
-  const listId = `list-${label.replace(/\s+/g, '-').toLowerCase()}`;
+  if (suggestions.length > 0) {
+    return (
+      <CustomAutocomplete 
+        label={label} 
+        value={val} 
+        onChange={set} 
+        suggestions={suggestions} 
+      />
+    );
+  }
   return (
     <div className="noc-field">
       <label>{label}</label>
@@ -618,24 +629,18 @@ function Inp({ label, val, set, type = 'text', suggestions = [] }) {
         value={val || ''} 
         onChange={e => set(e.target.value)} 
         spellCheck={false} 
-        list={suggestions.length > 0 ? listId : undefined}
       />
-      {suggestions.length > 0 && (
-        <datalist id={listId}>
-          {suggestions.map(s => <option key={s} value={s} />)}
-        </datalist>
-      )}
     </div>
   );
 }
 
 function Sel({ label, val, set, opts }) {
   return (
-    <div className="noc-field">
-      <label>{label}</label>
-      <select className="noc-select" value={val} onChange={e => set(e.target.value)}>
-        {opts.map(o => <option key={o} value={o}>{o.toUpperCase ? o.toUpperCase() : o}</option>)}
-      </select>
-    </div>
+    <CustomSelect 
+      label={label} 
+      value={val} 
+      onChange={set} 
+      options={opts} 
+    />
   );
 }
