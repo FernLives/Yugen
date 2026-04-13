@@ -27,9 +27,9 @@
 
 .matrix-grid {
   display: grid;
-  padding-top: 140px; /* Space for angled headers */
   position: relative;
   width: fit-content;
+  grid-template-rows: 160px auto;
 }
 
 /* ── Corner ── */
@@ -38,7 +38,7 @@
   left: 0;
   top: 0;
   z-index: 100;
-  height: 48px;
+  height: 160px;
   background: var(--bg-base);
   padding: 12px;
   font-family: var(--font-heading);
@@ -49,10 +49,9 @@
   border-bottom: 2px solid var(--accent-muted);
   border-right: 2px solid var(--accent-muted);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   text-transform: uppercase;
   cursor: pointer;
-  margin-top: -140px; /* Pull into the padded area */
 }
 
 /* ── Ore Headers Area ── */
@@ -60,17 +59,16 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  height: 0; /* Let column width handle it */
+  height: 160px;
   border-right: 1px solid rgba(196, 154, 92, 0.15);
   background: transparent;
   pointer-events: none;
-  margin-top: -140px;
 }
 
 .ore-header-content {
   position: absolute;
-  bottom: 0;
-  left: 30px; /* Exact center of 60px column */
+  bottom: 12px;
+  left: 30px; /* Center of 60px column */
   width: 200px;
   transform: rotate(-45deg);
   transform-origin: bottom left;
