@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { getResourceData, getLocations } from '../../data/dataStore';
+import LoadingState from '../common/LoadingState';
 import './ResourceModule.css';
 
 const BODY_META = {
@@ -44,12 +45,19 @@ function ResourceCategory({ title, resources, icon }) {
 export default function ResourceModule({ system }) {
   const [data, setData] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState(null);
 
   useEffect(() => {
     const load = async () => {
-      setData(await getResourceData(system));
-      setLocations(await getLocations());
+      setIsLoading(true);
+      const [resData, locData] = await Promise.all([
+        getResourceData(system),
+        getLocations()
+      ]);
+      setData(resData);
+      setLocations(locData);
+      setIsLoading(false);
     };
     load();
   }, [system]);
@@ -83,6 +91,10 @@ export default function ResourceModule({ system }) {
       hand: locationResources.filter(d => d.methods?.includes('hand')),
     };
   }, [locationResources]);
+
+  if (isLoading) {
+    return <LoadingState message="Scanning Regional Intelligence" />;
+  }
 
   if (data.length === 0 && locations.length === 0) {
     return (

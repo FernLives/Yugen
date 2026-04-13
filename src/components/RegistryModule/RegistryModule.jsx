@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { getPersonnelData } from '../../data/dataStore';
+import LoadingState from '../common/LoadingState';
 import './RegistryModule.css';
 
 // ── Cipher Scramble Component ──
@@ -131,13 +132,21 @@ function DossierCard({ person, index }) {
 
 export default function RegistryModule() {
   const [personnel, setPersonnel] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      setPersonnel(await getPersonnelData());
+      setIsLoading(true);
+      const data = await getPersonnelData();
+      setPersonnel(data);
+      setIsLoading(false);
     };
     load();
   }, []);
+
+  if (isLoading) {
+    return <LoadingState message="Decrypting Biometric Signatures" />;
+  }
 
   return (
     <div className="registry-premium fade-in">

@@ -1,13 +1,18 @@
 import { useState, useMemo, useEffect, Fragment } from 'react';
 import { getRefineryData } from '../../data/dataStore';
+import LoadingState from '../common/LoadingState';
 import './RefineryModule.css';
 
 export default function RefineryModule({ system }) {
   const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
-      setData(await getRefineryData(system));
+      setIsLoading(true);
+      const result = await getRefineryData(system);
+      setData(result);
+      setIsLoading(false);
     };
     load();
   }, [system]);
@@ -37,6 +42,10 @@ export default function RefineryModule({ system }) {
     });
     return best;
   }, [ores, stations, matrix]);
+
+  if (isLoading) {
+    return <LoadingState message="Connecting to Refinery Network" />;
+  }
 
   if (data.length === 0) {
     return (
