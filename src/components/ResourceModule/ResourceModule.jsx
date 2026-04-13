@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { getResourceData, getLocations } from '../../data/dataStore';
+import { getResourceData, getBodies } from '../../data/dataStore';
 import LoadingState from '../common/LoadingState';
 import './ResourceModule.css';
 
@@ -44,59 +44,56 @@ function ResourceCategory({ title, resources, icon }) {
 
 export default function ResourceModule({ system }) {
   const [data, setData] = useState([]);
-  const [locations, setLocations] = useState([]);
+  const [bodies, setBodies] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [selectedBody, setSelectedBody] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const [resData, locData] = await Promise.all([
+      const [resData, bodyData] = await Promise.all([
         getResourceData(system),
-        getLocations()
+        getBodies()
       ]);
       setData(resData);
-      setLocations(locData);
+      setBodies(bodyData);
       setIsLoading(false);
     };
     load();
   }, [system]);
 
   const grouped = useMemo(() => {
-    // Filter locations by system
-    const sysLocations = locations.filter(l => !system || l.system === system);
-    const bodyMap = {};
-    sysLocations.forEach(loc => {
-      const body = loc.parentBody;
-      if (!bodyMap[body]) bodyMap[body] = { body, locations: [] };
-      const locResources = data.filter(r => r.location === loc.name && r.parentBody === loc.parentBody);
-      bodyMap[body].locations.push({ name: loc.name, parentBody: body, resources: locResources });
+    // Filter bodies by system
+    const sysBodies = bodies.filter(b => !system || b.system === system);
+    return sysBodies.map(body => {
+      const bodyResources = data.filter(r => r.parentBody === body.name);
+      return {
+        ...body,
+        resources: bodyResources,
+        totalResources: bodyResources.length
+      };
     });
-    return Object.values(bodyMap).map(b => ({
-      ...b,
-      totalResources: b.locations.reduce((sum, l) => sum + l.resources.length, 0),
-    }));
-  }, [data, locations, system]);
+  }, [data, bodies, system]);
 
-  const locationResources = useMemo(() => {
-    if (!selectedLocation) return null;
-    return data.filter(d => d.location === selectedLocation);
-  }, [data, selectedLocation]);
+  const bodyResources = useMemo(() => {
+    if (!selectedBody) return null;
+    return data.filter(d => d.parentBody === selectedBody);
+  }, [data, selectedBody]);
 
   const categorized = useMemo(() => {
-    if (!locationResources) return null;
+    if (!bodyResources) return null;
     return {
-      ship: locationResources.filter(d => d.methods?.includes('ship')),
-      vehicle: locationResources.filter(d => d.methods?.includes('vehicle')),
-      hand: locationResources.filter(d => d.methods?.includes('hand')),
+      ship: bodyResources.filter(d => d.methods?.includes('ship')),
+      vehicle: bodyResources.filter(d => d.methods?.includes('vehicle')),
+      hand: bodyResources.filter(d => d.methods?.includes('hand')),
     };
-  }, [locationResources]);
+  }, [bodyResources]);
 
   if (isLoading) {
     return <LoadingState message="Scanning Regional Intelligence" />;
   }
 
-  if (data.length === 0 && locations.length === 0) {
+  if (data.length === 0 && bodies.length === 0) {
     return (
       <div className="resources fade-in-up">
         <div className="empty-system-state">
@@ -117,59 +114,44 @@ export default function ResourceModule({ system }) {
         </div>
         <div className="resources-stats">
           <span className="stat-pill">{data.length} resources</span>
-          <span className="stat-pill">{grouped.reduce((s, b) => s + b.locations.length, 0)} bodies</span>
+          <span className="stat-pill">{grouped.length} bodies</span>
         </div>
       </div>
 
-      <div className="body-groups">
+      <div className="body-grid">
         {grouped.map((body, bi) => (
-          <section key={body.body} className="body-group" style={{ animationDelay: `${bi * 80}ms` }}>
-            <div className="body-header">
-              <div className="body-title-area">
-                <div className="body-indicator" style={{ background: BODY_META[body.body]?.color || 'var(--accent)' }} />
-                <div>
-                  <h2 className="body-name">{body.body}</h2>
-                  <p className="body-desc">{BODY_META[body.body]?.desc || ''}</p>
-                </div>
+          <button
+            key={body.name}
+            className="body-card"
+            onClick={() => setSelectedBody(body.name)}
+            style={{ animationDelay: `${bi * 50}ms` }}
+          >
+            <div className="body-indicator" style={{ background: BODY_META[body.name]?.color || 'var(--accent)' }} />
+            <div className="body-info">
+              <h2 className="body-name">{body.name}</h2>
+              <p className="body-desc">{BODY_META[body.name]?.desc || 'Planetary survey active'}</p>
+            </div>
+            <div className="body-meta">
+              <span className="res-count">{body.totalResources} materials</span>
+              <div className="res-preview">
+                {[...new Set(body.resources.map(r => r.name))].slice(0, 3).map(n => (
+                  <span key={n} className="res-tag">{n}</span>
+                ))}
               </div>
-              <span className="body-count">{body.totalResources} entries found</span>
             </div>
-
-            <div className="location-grid">
-              {body.locations.map((loc, li) => (
-                <button
-                  key={loc.name}
-                  className="location-card"
-                  onClick={() => setSelectedLocation(loc.name)}
-                  style={{ animationDelay: `${bi * 80 + li * 50}ms` }}
-                >
-                  <div className="lc-top">
-                    <h3 className="lc-name">{loc.name}</h3>
-                  </div>
-                  <div className="lc-resources">
-                    {[...new Set(loc.resources.map(r => r.name))].slice(0, 3).map(n => (
-                      <span key={n} className="lc-resource-tag">{n}</span>
-                    ))}
-                  </div>
-                  <div className="lc-bottom">
-                    <span className="lc-count">{loc.resources.length} materials</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
+          </button>
         ))}
       </div>
 
-      {selectedLocation && categorized && (
-        <div className="loc-overlay" onClick={() => setSelectedLocation(null)}>
+      {selectedBody && categorized && (
+        <div className="loc-overlay" onClick={() => setSelectedBody(null)}>
           <div className="loc-modal" onClick={e => e.stopPropagation()}>
             <div className="loc-modal-header">
               <div>
-                <span className="loc-modal-parent">{system} Hub // {selectedLocation}</span>
-                <h2 className="loc-modal-name">Intelligence Deployment</h2>
+                <span className="loc-modal-parent">{system} Intelligence</span>
+                <h2 className="loc-modal-name">{selectedBody} Deployment</h2>
               </div>
-              <button className="loc-modal-close" onClick={() => setSelectedLocation(null)}>✕</button>
+              <button className="loc-modal-close" onClick={() => setSelectedBody(null)}>✕</button>
             </div>
 
             <div className="loc-modal-body">
@@ -177,6 +159,9 @@ export default function ResourceModule({ system }) {
                 <ResourceCategory title="Ship Mineables" resources={categorized.ship} icon="⛏" />
                 <ResourceCategory title="Ground Vehicle Mineables" resources={categorized.vehicle} icon="🚜" />
                 <ResourceCategory title="Hand Mineables" resources={categorized.hand} icon="✋" />
+                {bodyResources.length === 0 && (
+                  <div className="noc-empty">No survey data found for this body.</div>
+                )}
               </div>
             </div>
           </div>

@@ -65,11 +65,9 @@ export function initDb() {
       system TEXT DEFAULT 'Stanton'
     );
 
-    CREATE TABLE IF NOT EXISTS resource_locations (
-      name TEXT,
-      parentBody TEXT,
-      system TEXT DEFAULT 'Stanton',
-      PRIMARY KEY (name, parentBody)
+    CREATE TABLE IF NOT EXISTS resource_bodies (
+      name TEXT PRIMARY KEY,
+      system TEXT DEFAULT 'Stanton'
     );
 
     CREATE TABLE IF NOT EXISTS resource_data (
@@ -127,10 +125,10 @@ export function initDb() {
     SELECT DISTINCT station, system FROM refinery_data WHERE station IS NOT NULL;
   `);
 
-  // Migrate existing distinct locations to the new table if not present
+  // Migrate existing distinct bodies to the new table if not present
   db.exec(`
-    INSERT OR IGNORE INTO resource_locations (name, parentBody, system)
-    SELECT DISTINCT location, parentBody, system FROM resource_data WHERE location IS NOT NULL;
+    INSERT OR IGNORE INTO resource_bodies (name, system)
+    SELECT DISTINCT parentBody, system FROM resource_data WHERE parentBody IS NOT NULL;
   `);
 
   // ── Seeding logic ──

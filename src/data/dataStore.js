@@ -95,16 +95,16 @@ export async function getResourceData(systemFilter = null) {
   }
 }
 
-// ── Resource Locations ──
-export async function getLocations() {
+// ── Resource Bodies ──
+export async function getBodies() {
   try {
-    const res = await fetch(`${BASE_URL}/locations`);
+    const res = await fetch(`${BASE_URL}/bodies`);
     return await res.json();
-  } catch (e) { console.error('Locations fetch error:', e); return []; }
+  } catch (e) { console.error('Bodies fetch error:', e); return []; }
 }
 
-export async function addLocation(data) {
-  const res = await fetch(`${BASE_URL}/locations`, {
+export async function addBody(data) {
+  const res = await fetch(`${BASE_URL}/bodies`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -112,8 +112,8 @@ export async function addLocation(data) {
   return await res.json();
 }
 
-export async function updateLocation(name, parentBody, data) {
-  const res = await fetch(`${BASE_URL}/locations/${encodeURIComponent(name)}/${encodeURIComponent(parentBody)}`, {
+export async function updateBody(name, data) {
+  const res = await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -121,8 +121,8 @@ export async function updateLocation(name, parentBody, data) {
   return await res.json();
 }
 
-export async function deleteLocation(name, parentBody) {
-  await fetch(`${BASE_URL}/locations/${encodeURIComponent(name)}/${encodeURIComponent(parentBody)}`, { method: 'DELETE' });
+export async function deleteBody(name) {
+  await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, { method: 'DELETE' });
 }
 
 export async function addResourceEntry(entry) {

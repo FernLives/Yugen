@@ -109,36 +109,34 @@ app.put('/api/refinery/:id', (req, res) => {
   res.json({ id, station, ore, modifier, system });
 });
 
-// 2a. Resource Locations
-app.get('/api/locations', (req, res) => {
-  const data = db.prepare('SELECT * FROM resource_locations').all();
+// 2a. Resource Bodies
+app.get('/api/bodies', (req, res) => {
+  const data = db.prepare('SELECT * FROM resource_bodies').all();
   res.json(data);
 });
 
-app.post('/api/locations', (req, res) => {
-  const { name, parentBody, system } = req.body;
-  db.prepare('INSERT OR IGNORE INTO resource_locations (name, parentBody, system) VALUES (?, ?, ?)').run(name, parentBody, system || 'Stanton');
-  res.status(201).json({ name, parentBody, system });
+app.post('/api/bodies', (req, res) => {
+  const { name, system } = req.body;
+  db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)').run(name, system || 'Stanton');
+  res.status(201).json({ name, system });
 });
 
-app.put('/api/locations/:name/:parentBody', (req, res) => {
-  const { name, parentBody } = req.params;
-  const { newName, newParentBody, system } = req.body;
-  db.prepare('UPDATE resource_locations SET name=?, parentBody=?, system=? WHERE name=? AND parentBody=?')
-    .run(newName || name, newParentBody || parentBody, system || 'Stanton', name, parentBody);
-  // Cascade update to resource_data
-  if (newName || newParentBody) {
-    db.prepare('UPDATE resource_data SET location=?, parentBody=? WHERE location=? AND parentBody=?')
-      .run(newName || name, newParentBody || parentBody, name, parentBody);
+app.put('/api/bodies/:name', (req, res) => {
+  const { name } = req.params;
+  const { newName, system } = req.body;
+  if (newName && newName !== name) {
+    db.prepare('UPDATE resource_data SET parentBody=? WHERE parentBody=?').run(newName, name);
+    db.prepare('UPDATE resource_bodies SET name=?, system=? WHERE name=?').run(newName, system || 'Stanton', name);
+  } else {
+    db.prepare('UPDATE resource_bodies SET system=? WHERE name=?').run(system || 'Stanton', name);
   }
-  res.json({ name: newName || name, parentBody: newParentBody || parentBody, system });
+  res.json({ name: newName || name, system });
 });
 
-app.delete('/api/locations/:name/:parentBody', (req, res) => {
-  const { name, parentBody } = req.params;
-  db.prepare('DELETE FROM resource_locations WHERE name = ? AND parentBody = ?').run(name, parentBody);
-  // Also delete resources at this location
-  db.prepare('DELETE FROM resource_data WHERE location = ? AND parentBody = ?').run(name, parentBody);
+app.delete('/api/bodies/:name', (req, res) => {
+  const { name } = req.params;
+  db.prepare('DELETE FROM resource_bodies WHERE name = ?').run(name);
+  db.prepare('DELETE FROM resource_data WHERE parentBody = ?').run(name);
   res.sendStatus(204);
 });
 
@@ -156,11 +154,11 @@ app.get('/api/resources', (req, res) => {
 });
 
 app.post('/api/resources', (req, res) => {
-  const { name, type, location, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
+  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
   const id = 'res-' + Date.now().toString(36);
-  const stmt = db.prepare('INSERT INTO resource_data (id, name, type, location, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-  stmt.run(id, name, type, location, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton');
-  res.status(201).json({ id, name, type, location, parentBody, methods, rarity, yield: y, description, tips, system });
+  const stmt = db.prepare('INSERT INTO resource_data (id, name, type, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  stmt.run(id, name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton');
+  res.status(201).json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
 });
 
 app.delete('/api/resources/:id', (req, res) => {
@@ -171,10 +169,10 @@ app.delete('/api/resources/:id', (req, res) => {
 
 app.put('/api/resources/:id', (req, res) => {
   const { id } = req.params;
-  const { name, type, location, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
-  db.prepare('UPDATE resource_data SET name=?, type=?, location=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
-    .run(name, type, location, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton', id);
-  res.json({ id, name, type, location, parentBody, methods, rarity, yield: y, description, tips, system });
+  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
+  db.prepare('UPDATE resource_data SET name=?, type=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
+    .run(name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton', id);
+  res.json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
 });
 
 // 3. Personnel Data
@@ -188,7 +186,7 @@ app.delete('/api/purge', (req, res) => {
   db.prepare('DELETE FROM refinery_data').run();
   db.prepare('DELETE FROM refinery_stations').run();
   db.prepare('DELETE FROM resource_data').run();
-  db.prepare('DELETE FROM resource_locations').run();
+  db.prepare('DELETE FROM resource_bodies').run();
   db.prepare('DELETE FROM personnel_data').run();
   // Mark DB as 'purged' so seeding never re-triggers on restart
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('seeded', 'purged');

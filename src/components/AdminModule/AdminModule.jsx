@@ -3,7 +3,7 @@ import {
   getRefineryData, addRefineryEntry, deleteRefineryEntry, updateRefineryEntry,
   getResourceData, addResourceEntry, deleteResourceEntry, updateResourceEntry,
   getStations, addStation, deleteStation, updateStation,
-  getLocations, addLocation, deleteLocation, updateLocation,
+  getBodies, addBody, deleteBody, updateBody,
   getAllUsers, updateUserRole, resetAllData,
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +18,7 @@ export default function AdminModule() {
   const [refData, setRefData] = useState([]);
   const [resData, setResData] = useState([]);
   const [stationsData, setStationsData] = useState([]);
-  const [locationsData, setLocationsData] = useState([]);
+  const [bodiesData, setBodiesData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({});
@@ -47,37 +47,37 @@ export default function AdminModule() {
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
   const reload = async () => {
-    const [refs, res, stats, locs, users] = await Promise.all([
+    const [refs, res, stats, bodies, users] = await Promise.all([
       getRefineryData(),
       getResourceData(),
       getStations(),
-      getLocations(),
+      getBodies(),
       getAllUsers()
     ]);
     setRefData(refs);
     setResData(res);
     setStationsData(stats);
-    setLocationsData(locs);
+    setBodiesData(bodies);
     setUsersData(users);
   };
 
-  // ── Location CRUD ──
-  const saveLocation = async () => {
-    if (!form.locationName || !form.parentBody) return flash('Field Error: Location Name & Parent Body required');
+  // ── Body CRUD ──
+  const saveBody = async () => {
+    if (!form.name) return flash('Field Error: Body Name required');
     if (editMode) {
-      await updateLocation(editMode.name, editMode.parentBody, { newName: form.locationName, newParentBody: form.parentBody, system: form.system || 'Stanton' });
-      flash('Location Updated');
+      await updateBody(editMode.name, { newName: form.name, system: form.system || 'Stanton' });
+      flash('Body Updated');
     } else {
-      await addLocation({ name: form.locationName, parentBody: form.parentBody, system: form.system || 'Stanton' });
-      flash('Location Synchronized');
+      await addBody({ name: form.name, system: form.system || 'Stanton' });
+      flash('Body Synchronized');
     }
     await reload(); closeForm();
   };
 
-  const delLoc = async (name, parentBody) => {
-    await deleteLocation(name, parentBody);
+  const delBody = async (name) => {
+    await deleteBody(name);
     await reload();
-    flash('Location Purged');
+    flash('Body Purged');
   };
   const saveStation = async () => {
     if (!form.name) return flash('Field Error: Name required');
@@ -120,7 +120,7 @@ export default function AdminModule() {
 
   // ── Resource CRUD ──
   const saveResource = async () => {
-    if (!form.name || !form.location) return flash('Field Error: Name & Location required');
+    if (!form.name || !form.parentBody) return flash('Field Error: Name & Body required');
     if (editMode) {
       await updateResourceEntry(editMode.id, form);
       flash('Resource Updated');
@@ -147,13 +147,13 @@ export default function AdminModule() {
       // Keep tab on 'stations' since materials are managed within station nodes
       setTab('stations');
       setForm({ ore: '', modifier: 0, station: parentContext || stationsData[0]?.name || '' });
-    } else if (type === 'location') {
-      setTab('location');
-      setForm({ locationName: '', parentBody: '', system: 'Stanton' });
+    } else if (type === 'body') {
+      setTab('resources');
+      setForm({ name: '', system: 'Stanton' });
     } else {
-      // 'resource' — sub-item inside an existing location
-      setTab('resource');
-      setForm({ name: '', type: 'Ship Mineable', location: parentContext?.location || '', parentBody: parentContext?.parentBody || '', system: parentContext?.system || 'Stanton', description: '', methods: ['ship'], tips: '' });
+      // 'resource' — sub-item inside an existing body
+      setTab('resources');
+      setForm({ name: '', type: 'Ship Mineable', parentBody: parentContext || bodiesData[0]?.name || '', system: 'Stanton', description: '', methods: ['ship'], tips: '' });
     }
   };
 
@@ -166,12 +166,12 @@ export default function AdminModule() {
     } else if (type === 'material') {
       setTab('stations');
       setForm({ ore: item.ore, modifier: item.modifier, station: item.station });
-    } else if (type === 'location') {
-      setTab('location');
-      setEditMode({ type: 'location', name: item.name, parentBody: item.parentBody });
-      setForm({ locationName: item.name, parentBody: item.parentBody, system: item.system });
+    } else if (type === 'body') {
+      setTab('resources');
+      setEditMode({ type: 'body', name: item.name });
+      setForm({ name: item.name, system: item.system });
     } else {
-      setTab('resource');
+      setTab('resources');
       setForm({ ...item });
     }
   };
@@ -216,29 +216,23 @@ export default function AdminModule() {
     filterSystem === 'All' ? resData : resData.filter(d => d.system === filterSystem)
   , [resData, filterSystem]);
 
-  const filteredLocations = useMemo(() =>
-    filterSystem === 'All' ? locationsData : locationsData.filter(l => l.system === filterSystem)
-  , [locationsData, filterSystem]);
+  const filteredBodies = useMemo(() =>
+    filterSystem === 'All' ? bodiesData : bodiesData.filter(b => b.system === filterSystem)
+  , [bodiesData, filterSystem]);
 
   const resourceTree = useMemo(() => {
-    // Group locations by parentBody
-    const bodyMap = {};
-    filteredLocations.forEach(loc => {
-      const body = loc.parentBody || 'Unknown';
-      if (!bodyMap[body]) bodyMap[body] = { body, system: loc.system, locations: [] };
-      // Attach resources that belong to this location
-      const locResources = filteredResData.filter(r => r.location === loc.name && r.parentBody === loc.parentBody);
-      bodyMap[body].locations.push({ name: loc.name, parentBody: loc.parentBody, system: loc.system, resources: locResources });
+    return filteredBodies.map(body => {
+      const bodyResources = filteredResData.filter(r => r.parentBody === body.name);
+      return {
+        ...body,
+        resources: bodyResources
+      };
     });
-    return Object.values(bodyMap).map(b => ({
-      ...b,
-      total: b.locations.reduce((s, l) => s + l.resources.length, 0),
-    }));
-  }, [filteredLocations, filteredResData]);
+  }, [filteredBodies, filteredResData]);
 
   // ── Determine save handler ──
-  const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'location' ? 'location' : 'resource') : null;
-  const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : currentSaveTab === 'location' ? saveLocation : saveResource;
+  const currentSaveTab = adding ? (tab === 'stations' ? 'station' : tab === 'material' ? 'material' : tab === 'resources' && !editMode?.type ? 'resource' : editMode?.type || 'resource') : null;
+  const saveFn = currentSaveTab === 'station' ? saveStation : currentSaveTab === 'material' ? saveMaterial : (currentSaveTab === 'body' || tab === 'bodies') ? saveBody : saveResource;
 
   if (isLoading) {
     return (
@@ -292,8 +286,8 @@ export default function AdminModule() {
               {tab === 'stations' && (
                 <button className="noc-btn add" onClick={() => startAdd('station')}>+ ADD STATION</button>
               )}
-              {['resources', 'location', 'resource'].includes(tab) && (
-                <button className="noc-btn add" onClick={() => startAdd('location')}>+ ADD LOCATION</button>
+              {tab === 'resources' && (
+                <button className="noc-btn add" onClick={() => startAdd('body')}>+ ADD BODY</button>
               )}
               <select className="noc-select system-filter" value={filterSystem} onChange={e => setFilterSystem(e.target.value)}>
                 <option value="All">ALL SYSTEMS</option>
@@ -304,7 +298,7 @@ export default function AdminModule() {
               <span className="entry-count">
                 {tab === 'stations'
                   ? `${filteredStations.length} STATIONS · ${refData.length} MATERIALS`
-                  : ['resources', 'location', 'resource'].includes(tab)
+                  : tab === 'resources'
                   ? `${resourceTree.length} BODIES · ${filteredResData.length} RESOURCES`
                   : ''
                 }
@@ -317,7 +311,7 @@ export default function AdminModule() {
             <div className="noc-form-overlay" onClick={closeForm}>
               <div className="noc-form fade-in" onClick={e => e.stopPropagation()}>
                 <div className="form-header">
-                  <h3>{editMode ? 'Edit' : 'New'} {currentSaveTab === 'station' ? 'Station' : currentSaveTab === 'material' ? 'Material' : tab === 'location' ? 'Location' : 'Resource'}</h3>
+                  <h3>{editMode ? 'Edit' : 'New'} {currentSaveTab === 'station' ? 'Station' : currentSaveTab === 'material' ? 'Material' : currentSaveTab === 'body' ? 'Body' : 'Resource'}</h3>
                   <button className="close-btn" onClick={closeForm}>✕</button>
                 </div>
                 <div className="form-grid">
@@ -332,17 +326,16 @@ export default function AdminModule() {
                       <Inp label="Material (Ore)" val={form.ore} set={v => setForm({...form, ore: v})} />
                       <Inp label="Yield Modifier" val={form.modifier} set={v => setForm({...form, modifier: v})} type="number" />
                     </>
-                  ) : tab === 'location' ? (
+                  ) : currentSaveTab === 'body' ? (
                     <>
-                      <Inp label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} />
-                      <Inp label="Location Name" val={form.locationName} set={v => setForm({...form, locationName: v})} />
+                      <Inp label="Body Name" val={form.name} set={v => setForm({...form, name: v})} />
                       <Sel label="System" val={form.system} set={v => setForm({...form, system: v})} opts={SYSTEMS} />
                     </>
                   ) : (
                     <>
+                      <Sel label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} opts={bodiesData.map(b => b.name)} />
                       <Inp label="Name" val={form.name} set={v => setForm({...form, name: v})} />
                       <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
-                      <Inp label="Description" val={form.description} set={v => setForm({...form, description: v})} />
                     </>
                   )}
                 </div>
@@ -422,67 +415,61 @@ export default function AdminModule() {
           )}
 
           {/* ══ RESOURCES TAB — Expandable tree by parent body ══ */}
-          {['resources', 'location', 'resource'].includes(tab) && (
+          {tab === 'resources' && (
             <div className="stations-tree">
               {resourceTree.length === 0 && (
-                <div className="noc-empty">No resources found. Add one to get started.</div>
+                <div className="noc-empty">No bodies registered. Add one to get started.</div>
               )}
               {resourceTree.map(body => {
-                const isOpen = expandedBodies[body.body];
+                const isOpen = expandedBodies[body.name];
                 return (
-                  <div key={body.body} className={`station-node ${isOpen ? 'open' : ''}`}>
+                  <div key={body.name} className={`station-node ${isOpen ? 'open' : ''}`}>
                     {/* Body row */}
-                    <div className="station-row" onClick={() => toggleBody(body.body)}>
+                    <div className="station-row" onClick={() => toggleBody(body.name)}>
                       <div className="station-row-left">
                         <span className={`expand-chevron ${isOpen ? 'rotated' : ''}`}>›</span>
-                        <span className="station-name">{body.body}</span>
+                        <span className="station-name">{body.name}</span>
                         <span className="sys-tag">{body.system}</span>
                       </div>
                       <div className="station-row-right">
-                        <span className="material-count">{body.total} resource{body.total !== 1 ? 's' : ''} · {body.locations.length} location{body.locations.length !== 1 ? 's' : ''}</span>
+                        <span className="material-count">{body.resources.length} material{body.resources.length !== 1 ? 's' : ''}</span>
+                        <button className="act-btn edit" onClick={e => { e.stopPropagation(); startEdit('body', body); }}>EDIT</button>
+                        <button className="act-btn del" onClick={e => { e.stopPropagation(); delBody(body.name); }}>PURGE</button>
                       </div>
                     </div>
 
-                    {/* Expanded locations + resources */}
+                    {/* Expanded resources */}
                     {isOpen && (
                       <div className="materials-nest">
-                        {body.locations.map(loc => (
-                          <div key={loc.name} className="res-loc-group">
-                            <div className="res-loc-header">
-                              <span className="res-loc-name">{loc.name}</span>
-                              <div className="res-loc-actions">
-                                <button className="act-btn add-sub" onClick={() => startAdd('resource', { location: loc.name, parentBody: body.body, system: body.system })}>+ ADD</button>
-                                <button className="act-btn edit" onClick={() => startEdit('location', loc)}>EDIT</button>
-                                <button className="act-btn del" onClick={() => delLoc(loc.name, loc.parentBody)}>DEL</button>
-                              </div>
-                            </div>
-                            {loc.resources.length === 0 ? (
-                              <div className="materials-empty">No resources registered at this location.</div>
-                            ) : (
-                            <table className="materials-table">
-                              <thead>
-                                <tr>
-                                  <th>NAME</th>
-                                  <th>TYPE</th>
-                                  <th>ACTIONS</th>
+                        <div className="materials-header">
+                          <span className="materials-label">SURVEY DATA</span>
+                          <button className="act-btn add-sub" onClick={() => startAdd('resource', body.name)}>+ ADD</button>
+                        </div>
+                        {body.resources.length === 0 ? (
+                          <div className="materials-empty">No survey data registered for this body.</div>
+                        ) : (
+                          <table className="materials-table">
+                            <thead>
+                              <tr>
+                                <th>NAME</th>
+                                <th>TYPE</th>
+                                <th>ACTIONS</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {body.resources.map(r => (
+                                <tr key={r.id}>
+                                  <td className="bold">{r.name}</td>
+                                  <td>{r.type}</td>
+                                  <td className="actions">
+                                    <button className="act-btn edit" onClick={() => startEdit('resource', r)}>EDIT</button>
+                                    <button className="act-btn del" onClick={() => delRes(r.id)}>DEL</button>
+                                  </td>
                                 </tr>
-                              </thead>
-                              <tbody>
-                                {loc.resources.map(r => (
-                                  <tr key={r.id}>
-                                    <td className="bold">{r.name}</td>
-                                    <td>{r.type}</td>
-                                    <td className="actions">
-                                      <button className="act-btn edit" onClick={() => startEdit('resource', r)}>EDIT</button>
-                                      <button className="act-btn del" onClick={() => delRes(r.id)}>DEL</button>
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                            )}
-                          </div>
-                        ))}
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
                       </div>
                     )}
                   </div>
