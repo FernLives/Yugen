@@ -6,8 +6,8 @@ import RefineryModule from './components/RefineryModule/RefineryModule';
 import ResourceModule from './components/ResourceModule/ResourceModule';
 
 import AdminModule from './components/AdminModule/AdminModule';
-import ProfilePage from './components/ProfilePage/ProfilePage';
 import BootSequence from './components/BootSequence/BootSequence';
+import InfoPage from './components/InfoPage/InfoPage';
 import Toast from './components/common/Toast';
 import { cleanLegacyStorage } from './data/dataStore';
 
@@ -46,10 +46,11 @@ function AppContent() {
           <Route path="/refinery" element={<RefineryModule system={activeSystem} />} />
           <Route path="/resources" element={<ResourceModule system={activeSystem} />} />
 
+          <Route path="/info" element={<InfoPage />} />
           <Route path="/admin" element={<AdminGuard />} />
           <Route path="/profile/:username" element={<ProfilePage />} />
-          <Route path="/" element={<Navigate to="/refinery" replace />} />
-          <Route path="*" element={<Navigate to="/refinery" replace />} />
+          <Route path="/" element={<Navigate to="/info" replace />} />
+          <Route path="*" element={<Navigate to="/info" replace />} />
         </Routes>
       </SystemShell>
       <Toast message={toastMessage} onClose={() => setToastMessage('')} duration={3500} />

@@ -24,6 +24,7 @@ export default function SystemShell({
 
   // Build modules dynamically based on role
   const modules = [
+    { id: 'info', label: 'Info', shortcut: '/info' },
     { id: 'refinery', label: 'Refinery', shortcut: '/refinery' },
     { id: 'resources', label: 'Resources', shortcut: '/resources' },
     ...(isAdmin ? [{ id: 'admin', label: 'Admin', shortcut: '/admin' }] : []),
