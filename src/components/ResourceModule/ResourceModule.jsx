@@ -5,13 +5,13 @@ import './ResourceModule.css';
 
 // ── Technical SVG Icons ──
 const ShipIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon ship">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon ship">
     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
   </svg>
 );
 
 const VehicleIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon vehicle">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon vehicle">
     <rect x="2" y="14" width="20" height="8" rx="2" />
     <path d="M7 14V8l5-5 5 5v6" />
     <circle cx="7" cy="18" r="2" />
@@ -20,7 +20,7 @@ const VehicleIcon = () => (
 );
 
 const HandIcon = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="vector-icon hand">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon hand">
     <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
     <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
     <path d="M10 10.5V3a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
@@ -31,6 +31,7 @@ const HandIcon = () => (
 export default function ResourceModule({ system }) {
   const [resData, setResData] = useState([]);
   const [bodies, setBodies] = useState([]);
+  const [selectedBody, setSelectedBody] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -40,104 +41,174 @@ export default function ResourceModule({ system }) {
         getResourceData(system),
         getBodies()
       ]);
+      const currentBodies = bods.filter(b => b.system === system);
       setResData(res);
-      setBodies(bods.filter(b => b.system === system));
+      setBodies(currentBodies);
+      if (currentBodies.length > 0) setSelectedBody(currentBodies[0].name);
       setIsLoading(false);
     };
     load();
   }, [system]);
 
-  // Calculate unique materials across all bodies in this system
-  const materials = useMemo(() => {
-    const unique = [...new Set(resData.map(r => r.name))].sort();
-    return unique;
-  }, [resData]);
-
-  // Build matrix: matrix[bodyName][materialName] = { ship, vehicle, hand }
-  const matrix = useMemo(() => {
-    const m = {};
-    resData.forEach(r => {
-      if (!m[r.parentBody]) m[r.parentBody] = {};
-      if (!m[r.parentBody][r.name]) m[r.parentBody][r.name] = { ship: false, vehicle: false, hand: false };
-      
-      const type = r.type?.toLowerCase() || '';
-      if (type.includes('ship')) m[r.parentBody][r.name].ship = true;
-      if (type.includes('vehicle') || type.includes('ground')) m[r.parentBody][r.name].vehicle = true;
-      if (type.includes('hand')) m[r.parentBody][r.name].hand = true;
-    });
-    return m;
-  }, [resData]);
+  const bodyIntelligence = useMemo(() => {
+    if (!selectedBody) return null;
+    const items = resData.filter(r => r.parentBody === selectedBody);
+    
+    // Categorize for the Hub display
+    return {
+      name: selectedBody,
+      total: items.length,
+      ship: items.filter(i => i.type.toLowerCase().includes('ship')),
+      vehicle: items.filter(i => i.type.toLowerCase().includes('vehicle') || i.type.toLowerCase().includes('ground')),
+      hand: items.filter(i => i.type.toLowerCase().includes('hand')),
+      all: items
+    };
+  }, [resData, selectedBody]);
 
   if (isLoading) {
-    return <LoadingState message="Synchronizing Survey Network" />;
+    return <LoadingState message="Establishing Planetary Link" />;
   }
 
-  if (resData.length === 0) {
+  if (bodies.length === 0) {
     return (
-      <div className="resource-matrix fade-in">
+      <div className="survey-terminal fade-in">
         <div className="empty-system-state">
           <div className="empty-icon">!</div>
-          <h2 className="empty-title">Deep Space Survey: {system}</h2>
-          <p className="empty-desc">No planetary survey data detected in this sector. Deploy survey teams via Admin Console.</p>
+          <h2 className="empty-title">Deep Space Sector: {system}</h2>
+          <p className="empty-desc">No planetary survey data detected. Deploy tactical units via Admin NOC.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="resource-matrix fade-in">
-      <div className="res-header">
-        <div>
-          <h1 className="page-title">{system} Survey Intelligence</h1>
-          <p className="page-desc">Extraction vector analysis across {bodies.length} bodies · {materials.length} unique resources identified</p>
+    <div className="survey-terminal fade-in">
+      {/* ── SIDEBAR SECTOR LIST ── */}
+      <div className="survey-sidebar">
+        <div className="sidebar-header">
+          <span className="sidebar-id">TERM-09 // SECTORS</span>
         </div>
-      </div>
-
-      <div className="matrix-scroll scroll-industrial">
-        <div className="matrix-grid" style={{ gridTemplateColumns: `180px repeat(${materials.length}, minmax(100px, 1fr))` }}>
-          {/* Header Row */}
-          <div className="grid-corner">PLANETARY BODY</div>
-          {materials.map(mat => (
-            <div key={mat} className="grid-ore-header" title={mat}>
-              <span className="ore-label">{mat}</span>
-            </div>
-          ))}
-
-          {/* Data Rows */}
+        <div className="body-list">
           {bodies.map(body => (
-            <div key={body.name} className="matrix-row-wrap">
-              <div className="grid-station">
-                <span className="station-name">{body.name}</span>
-                <span className="station-id">BOD-0{body.id || 'X'}</span>
+            <button 
+              key={body.name} 
+              className={`body-slot ${selectedBody === body.name ? 'active' : ''}`}
+              onClick={() => setSelectedBody(body.name)}
+            >
+              <div className="slot-indicator" />
+              <div className="slot-info">
+                <span className="slot-name">{body.name}</span>
+                <span className="slot-status">LINK ESTABLISHED</span>
               </div>
-              {materials.map(mat => {
-                const data = matrix[body.name]?.[mat];
-                return (
-                  <div key={`${body.name}-${mat}`} className={`grid-cell ${data ? 'active' : 'empty'}`}>
-                    {data ? (
-                      <div className="vector-group">
-                        {data.ship && <ShipIcon />}
-                        {data.vehicle && <VehicleIcon />}
-                        {data.hand && <HandIcon />}
-                      </div>
-                    ) : (
-                      <span className="cell-dash">—</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            </button>
           ))}
+        </div>
+        <div className="sidebar-footer">
+          <div className="uptime-pips">
+            <span className="p active"></span><span className="p active"></span><span className="p"></span>
+          </div>
+          <span className="sys-id">{system.toUpperCase()} DATA HUB</span>
         </div>
       </div>
 
-      <div className="matrix-footer">
-        <div className="legend">
-          <div className="legend-item"><ShipIcon /> Ship Mineable</div>
-          <div className="legend-item"><VehicleIcon /> Ground Mineable</div>
-          <div className="legend-item"><HandIcon /> Hand Mineable</div>
-        </div>
-        <p className="matrix-note">Vectors indicate confirmed extraction feasibility based on recent planetary survey data.</p>
+      {/* ── INTELLIGENCE READOUT ── */}
+      <div className="survey-main">
+        {bodyIntelligence ? (
+          <div className="intelligence-feed">
+            <header className="feed-header">
+              <div className="feed-title-wrap">
+                <span className="feed-meta">YŪGEN // FIELD INTEL // {system.toUpperCase()}</span>
+                <h1 className="feed-body-name">{bodyIntelligence.name}</h1>
+              </div>
+              <div className="feed-status">
+                <div className="pulse-success"></div>
+                <span className="status-label">DIAGNOSTICS CLEAR</span>
+              </div>
+            </header>
+
+            <div className="feed-content">
+              {/* Extraction Vectors Row */}
+              <div className="vector-diagnostic-row">
+                <VectorStat 
+                  icon={<ShipIcon />} 
+                  label="SHIP EXTRACTION" 
+                  count={bodyIntelligence.ship.length} 
+                  active={bodyIntelligence.ship.length > 0} 
+                />
+                <VectorStat 
+                  icon={<VehicleIcon />} 
+                  label="VEHICLE EXTRACTION" 
+                  count={bodyIntelligence.vehicle.length} 
+                  active={bodyIntelligence.vehicle.length > 0} 
+                />
+                <VectorStat 
+                  icon={<HandIcon />} 
+                  label="HAND EXTRACTION" 
+                  count={bodyIntelligence.hand.length} 
+                  active={bodyIntelligence.hand.length > 0} 
+                />
+              </div>
+
+              {/* Data Matrix List */}
+              <div className="intel-list-wrap scroll-industrial">
+                <table className="intel-table">
+                  <thead>
+                    <tr>
+                      <th>DATA-ID</th>
+                      <th>RESOURCE PROFILE</th>
+                      <th>EXT-VECTOR</th>
+                      <th>SURVEY NOTES</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bodyIntelligence.all.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="empty-row">NO REGISTERED MATERIALS DETECTED IN THIS SECTOR.</td>
+                      </tr>
+                    ) : (
+                      bodyIntelligence.all.map((item, idx) => (
+                        <tr key={item.id}>
+                          <td className="data-id">SRV-0{idx + 1}</td>
+                          <td className="resource-name">{item.name}</td>
+                          <td className="vector-type">
+                            <span className="vector-chip">{item.type.toUpperCase()}</span>
+                          </td>
+                          <td className="survey-desc">{item.description || 'Biological/Mineral signature confirmed.'}</td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <footer className="feed-footer">
+              <div className="footer-hardware">
+                <span className="h-pip"></span>
+                <span>YŪGEN INDUSTRIAL SCANNER v2.04</span>
+              </div>
+            </footer>
+          </div>
+        ) : (
+          <div className="terminal-standby">
+            <span className="standby-flicker">SELECT SECTOR FOR DATA UPLINK...</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function VectorStat({ icon, label, count, active }) {
+  return (
+    <div className={`vector-stat ${active ? 'active' : 'dim'}`}>
+      <div className="v-icon-wrap">{icon}</div>
+      <div className="v-info">
+        <span className="v-label">{label}</span>
+        <span className="v-value">{count} SIGNATURES</span>
+      </div>
+      <div className="v-bar">
+        <div className="v-fill" style={{ width: active ? '100%' : '0%' }}></div>
       </div>
     </div>
   );
