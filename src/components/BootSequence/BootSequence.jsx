@@ -21,15 +21,17 @@ export default function BootSequence({ onComplete }) {
 
   // Typewriter effect for subtitle
   useEffect(() => {
-    if (phase < 4 || (typed && typed.length === SUBTITLE.length)) return;
+    if (phase !== 4) return;
     let i = 0;
     const interval = setInterval(() => {
       i++;
       setTyped(SUBTITLE.slice(0, i));
-      if (i >= SUBTITLE.length) clearInterval(interval);
+      if (i >= SUBTITLE.length) {
+        clearInterval(interval);
+      }
     }, 40);
     return () => clearInterval(interval);
-  }, [phase, typed]);
+  }, [phase === 4]);
 
   const dismiss = useCallback(() => {
     if (fading) return;
