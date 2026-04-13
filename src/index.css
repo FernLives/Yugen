@@ -4,38 +4,38 @@
    ═══════════════════════════════════════════════════ */
 
 :root {
-  /* ── Backgrounds: The Gallery Palette ── */
-  --bg-deep: #f9f7f2;      /* Warm Parchment */
-  --bg-base: #ffffff;      /* Pure Studio White */
-  --bg-surface: #f2f0eb;   /* Light Linen */
-  --bg-elevated: #ebe9e4;  /* Neutral Stone */
-  --bg-hover: #e4e2dd;     /* Soft Shadow */
-  --bg-input: #ffffff;
+  /* ── Backgrounds: Obsidian Premium ── */
+  --bg-deep: #0a0b10;      /* Deep Obsidian */
+  --bg-base: #11131a;      /* Soft Charcoal */
+  --bg-surface: #181b26;   /* Elevated Card */
+  --bg-elevated: #222633;  /* Hover/Active */
+  --bg-hover: #292e3d;     /* Interaction */
+  --bg-input: #08090d;
 
-  /* ── Borders (Subtle line art style) ── */
-  --border-subtle: #eeedea;
-  --border-medium: #e0ddd7;
-  --border-focus: #c58f58;
+  /* ── Borders (Subtle dark lines) ── */
+  --border-subtle: #1e222e;
+  --border-medium: #2d3345;
+  --border-focus: #4a546d;
 
-  /* ── Accent: Aged Brass ── */
-  --accent: #c58f58;
-  --accent-muted: #d9bf9e;
-  --accent-dim: #f5ede4;
-  --accent-bright: #b07e4a;
-  --accent-bg: rgba(197, 143, 88, 0.08);
-  --accent-bg-hover: rgba(197, 143, 88, 0.12);
+  /* ── Accent: Silk Gold ── */
+  --accent: #d4af37;
+  --accent-muted: #9a8b4f;
+  --accent-dim: #706535;
+  --accent-bright: #e9cf7d;
+  --accent-bg: rgba(212, 175, 55, 0.08);
+  --accent-bg-hover: rgba(212, 175, 55, 0.12);
 
-  /* ── Accent: Dust Slate ── */
-  --cold: #8a94a6;
-  --cold-muted: #adb5bd;
-  --cold-dim: #e9ecef;
+  /* ── Accent: Cold Slate ── */
+  --cold: #7c869b;
+  --cold-muted: #5c6579;
+  --cold-dim: #434a59;
 
-  /* ── Text: Carbon Ink ── */
-  --text-bright: #121212;
-  --text-primary: #2d2d2d;
-  --text-secondary: #5e5e5e;
-  --text-dim: #8b8b8b;
-  --text-ghost: #b0aeaa;
+  /* ── Text: High Contrast Ink ── */
+  --text-bright: #ffffff;
+  --text-primary: #cbd5e1;
+  --text-secondary: #94a3b8;
+  --text-dim: #64748b;
+  --text-ghost: #334155;
 
   /* ── Semantic ── */
   --danger: #cf4a4a;
@@ -49,30 +49,30 @@
   --font-heading: 'Cormorant Garamond', serif;
   --font-data: 'Manrope', sans-serif;
 
-  /* ── Spacing ── */
+  /* ── Spacing (Scaled down for density) ── */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
-  --space-xl: 48px;
-  --space-2xl: 80px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
 
   /* ── Radius: Soft Architecture ── */
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 24px;
+  --radius-lg: 20px;
 
-  /* ── Shadows: Soft Depth ── */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.04);
-  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.08);
-  --shadow-glow: 0 0 25px rgba(197, 143, 88, 0.1);
+  /* ── Shadows: Soft Dark Depth ── */
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 25px rgba(212, 175, 55, 0.15);
 
   /* ── Transitions ── */
   --ease-out: cubic-bezier(0.25, 1, 0.5, 1);
   --duration-fast: 200ms;
-  --duration-normal: 450ms;
-  --duration-slow: 800ms;
+  --duration-normal: 400ms;
+  --duration-slow: 700ms;
 }
 
 /* ── RESET ── */
@@ -86,15 +86,15 @@ html, body, #root, .shell {
   height: 100%;
   overflow: hidden;
   background: var(--bg-deep) !important;
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 body {
   font-family: var(--font-body);
   background: var(--bg-deep);
   color: var(--text-primary);
-  font-size: 16px; 
-  line-height: 1.8;
+  font-size: 14px; /* Reduced for better density */
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
@@ -103,8 +103,8 @@ body {
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px; /* Thinner */
+  height: 4px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
@@ -130,7 +130,7 @@ body {
 }
 
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -140,7 +140,7 @@ body {
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateX(24px); }
+  from { opacity: 0; transform: translateX(20px); }
   to { opacity: 1; transform: translateX(0); }
 }
 

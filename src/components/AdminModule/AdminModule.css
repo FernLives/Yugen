@@ -14,11 +14,12 @@
 }
 
 .noc-login-terminal {
-  width: 480px;
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
+  width: 440px;
+  background: var(--bg-surface);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.6);
   overflow: hidden;
 }
 
@@ -50,12 +51,12 @@
 }
 
 .auth-code {
-  font-size: 32px;
-  letter-spacing: 0.4em;
+  font-size: 24px;
+  letter-spacing: 0.5em;
   text-align: center;
-  padding: 20px;
-  background: var(--bg-surface);
-  border-radius: var(--radius-md);
+  padding: 15px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: var(--radius-sm);
   color: var(--text-bright);
 }
 
@@ -86,51 +87,52 @@
 
 /* ── Main Layout ── */
 .noc-header {
-  padding: 24px var(--space-xl);
+  padding: 20px var(--space-xl);
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-base);
+  background: rgba(16, 18, 26, 0.5);
+  backdrop-filter: blur(12px);
 }
 
 .noc-title-area { display: flex; align-items: baseline; gap: 12px; }
-.noc-title { font-family: var(--font-heading); font-size: 28px; font-weight: 500; margin: 0; }
-.noc-tag { font-family: var(--font-body); font-size: 11px; color: var(--success); font-weight: 700; opacity: 0.8; }
+.noc-title { font-family: var(--font-heading); font-size: 24px; font-weight: 500; margin: 0; }
+.noc-tag { font-family: var(--font-body); font-size: 10px; color: var(--success); font-weight: 700; opacity: 0.8; }
 
 .noc-main {
   flex: 1;
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 240px 1fr;
   overflow: hidden;
 }
 
 .noc-sidebar {
   border-right: 1px solid var(--border-subtle);
-  background: var(--bg-deep);
-  padding: 32px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 40px;
+  gap: 30px;
 }
 
-.nav-group { display: flex; flex-direction: column; gap: 8px; }
-.group-label { font-size: 10px; color: var(--text-ghost); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+.nav-group { display: flex; flex-direction: column; gap: 4px; }
+.group-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 8px; }
 
 .nav-item {
   background: transparent;
   border: none;
   color: var(--text-secondary);
   text-align: left;
-  padding: 14px 20px;
-  font-size: 15px;
+  padding: 12px 16px;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   gap: 12px;
-  transition: all var(--duration-normal);
+  transition: all var(--duration-fast);
 }
 
 .nav-item:hover { background: var(--bg-hover); color: var(--text-primary); }
@@ -177,28 +179,28 @@
 
 .station-node {
   border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   overflow: hidden;
-  background: var(--bg-base);
-  transition: all var(--duration-normal);
+  background: transparent;
+  transition: all var(--duration-fast);
 }
 
 .station-node.open {
-  border-color: var(--accent-muted);
-  box-shadow: var(--shadow-md);
+  border-color: var(--border-focus);
 }
 
 .station-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 12px 20px;
   cursor: pointer;
+  background: var(--bg-surface);
   transition: background 0.15s;
 }
 
 .station-row:hover {
-  background: var(--bg-hover);
+  background: var(--bg-elevated);
 }
 
 .station-row-left {
@@ -250,10 +252,10 @@
 
 /* ── Nested materials ── */
 .materials-nest {
-  background: var(--bg-surface);
+  background: rgba(0,0,0,0.2);
   border-top: 1px solid var(--border-subtle);
-  padding: 24px 32px;
-  animation: nestSlide 0.4s var(--ease-out);
+  padding: 16px 24px;
+  animation: nestSlide 0.2s var(--ease-out);
 }
 
 @keyframes nestSlide {
@@ -457,20 +459,20 @@
 }
 
 .dict-item {
-  background: var(--bg-base);
-  border: 1px solid var(--border-subtle);
-  padding: 8px 16px;
+  background: rgba(212, 175, 55, 0.05);
+  border: 1px solid rgba(212, 175, 55, 0.2);
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   gap: 10px;
-  border-radius: 40px;
-  transition: all var(--duration-normal);
+  border-radius: 4px;
+  transition: all var(--duration-fast);
 }
 
 .dict-item:hover {
-  background: var(--accent-bg);
+  background: rgba(212, 175, 55, 0.1);
   border-color: var(--accent-muted);
-  transform: translateY(-1px);
+  box-shadow: var(--shadow-glow);
 }
 
 .dict-pip {

@@ -19,19 +19,20 @@
   inset: 0;
   background: radial-gradient(circle at 10% 10%, var(--accent-bg), transparent 60%);
   pointer-events: none;
-  opacity: 0.5;
+  opacity: 0.3; /* Diluted for dark mode */
   z-index: 1;
 }
 
 /* ── TOP NAVIGATION ── */
 .shell-nav {
-  height: 80px; 
-  min-height: 80px;
+  height: 64px; 
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--space-xl);
-  background: var(--bg-base);
+  background: rgba(16, 18, 26, 0.85); /* restored blur for dark mode */
+  backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border-subtle);
   position: relative;
   z-index: 100;
@@ -53,12 +54,12 @@
 
 .wordmark-symbol {
   color: var(--accent);
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .wordmark-text {
   font-family: var(--font-heading);
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--text-bright);
 }
@@ -123,13 +124,13 @@
   position: relative;
   background: none;
   border: none;
-  padding: 10px 24px;
+  padding: 8px 16px;
   font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
-  border-radius: 40px;
+  border-radius: 20px;
   transition: all var(--duration-normal) var(--ease-out);
 }
 

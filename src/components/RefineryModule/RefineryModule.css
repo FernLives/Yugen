@@ -33,11 +33,12 @@
   left: 0;
   top: 0;
   z-index: 30;
-  background: var(--bg-base);
+  background: var(--bg-surface);
   padding: 12px;
   font-family: var(--font-heading);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
   color: var(--accent);
   border-bottom: 1px solid var(--border-medium);
   border-right: 1px solid var(--border-medium);
@@ -51,19 +52,20 @@
   position: sticky;
   top: 0;
   z-index: 20;
-  background: var(--bg-base);
+  background: var(--bg-surface);
   padding: 10px 6px;
   font-family: var(--font-heading);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--text-primary);
   border-bottom: 1px solid var(--border-medium);
   border-right: 1px solid var(--border-subtle);
   overflow: hidden;
+  text-overflow: ellipsis;
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 56px;
+  min-height: 48px;
   line-height: 1.2;
 }
 
@@ -72,11 +74,11 @@
   position: sticky;
   left: 0;
   z-index: 10;
-  background: var(--bg-base);
-  padding: 12px 20px;
+  background: var(--bg-surface);
+  padding: 12px 16px;
   font-family: var(--font-heading);
-  font-size: 16px;
-  font-weight: 500;
+  font-size: 14px;
+  font-weight: 600;
   color: var(--text-bright);
   border-bottom: 1px solid var(--border-subtle);
   border-right: 1px solid var(--border-medium);
@@ -98,13 +100,13 @@
   align-items: center;
   justify-content: center;
   border-bottom: 1px solid var(--border-subtle);
-  border-right: 1px solid var(--border-subtle);
-  background: var(--bg-base);
-  transition: background var(--duration-fast);
+  border-right: 1px solid rgba(255, 255, 255, 0.02);
+  background: var(--bg-surface);
+  transition: background 0.1s;
 }
 
 .grid-cell:hover {
-  background: var(--bg-deep);
+  background: var(--bg-hover);
 }
 
 .cell-val {
@@ -147,8 +149,7 @@
 }
 
 .grid-cell.empty {
-  background: var(--bg-surface);
-  opacity: 0.5;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* ── Row hover — highlight entire row ── */

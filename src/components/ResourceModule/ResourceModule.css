@@ -96,9 +96,9 @@
 }
 
 .body-slot {
-  background: var(--bg-base);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  padding: 16px 20px;
+  padding: 12px 16px;
   display: flex;
   align-items: center;
   gap: 16px;
@@ -209,8 +209,8 @@
 
 .feed-body-name {
   font-family: var(--font-heading);
-  font-size: 56px;
-  font-weight: 400;
+  font-size: 40px;
+  font-weight: 500;
   color: var(--text-bright);
 }
 
@@ -252,7 +252,7 @@
 }
 
 .vector-stat {
-  padding: 24px;
+  padding: 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -329,9 +329,9 @@
   position: sticky;
   top: 0;
   background: var(--bg-surface);
-  padding: 16px 24px;
+  padding: 12px 16px;
   font-family: var(--font-body);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--text-dim);
   border-bottom: 2px solid var(--border-medium);
@@ -339,7 +339,7 @@
 }
 
 .intel-table td {
-  padding: 14px 20px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--border-subtle);
 }
 
