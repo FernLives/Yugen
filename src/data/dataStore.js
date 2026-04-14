@@ -5,9 +5,38 @@
 
 const BASE_URL = '/api';
 
+// ── Session & Auth Helpers ──
+export function getSession() {
+  try {
+    const raw = localStorage.getItem('yugen_session');
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+export function setSession(user) {
+  const current = getSession();
+  // Ensure we don't lose the token if the server response doesn't include it (e.g. on profile update)
+  const sessionData = { ...user };
+  if (!sessionData.token && current?.token) {
+    sessionData.token = current.token;
+  }
+  localStorage.setItem('yugen_session', JSON.stringify(sessionData));
+}
+
+export function clearSession() {
+  localStorage.removeItem('yugen_session');
+}
+
+function getAuthHeaders() {
+  const session = getSession();
+  const headers = { 'Content-Type': 'application/json' };
+  if (session?.token) {
+    headers['Authorization'] = `Bearer ${session.token}`;
+  }
+  return headers;
+}
+
 // ── Legacy Cleanup ──
-// Remove any leftover localStorage keys from the pre-SQLite era.
-// We do NOT push this data into the DB — if the user purged, it should stay purged.
 export function cleanLegacyStorage() {
   localStorage.removeItem('yugen_refinery_data');
   localStorage.removeItem('yugen_resource_data');
@@ -31,14 +60,17 @@ export async function getStations(systemFilter = null) {
 export async function addStation(entry) {
   const res = await fetch(`${BASE_URL}/stations`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
   return await res.json();
 }
 
 export async function deleteStation(name) {
-  await fetch(`${BASE_URL}/stations/${name}`, { method: 'DELETE' });
+  await fetch(`${BASE_URL}/stations/${name}`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
 }
 
 // ── Refinery Data ──
@@ -46,10 +78,8 @@ export async function getRefineryData(systemFilter = null) {
   try {
     let url = `${BASE_URL}/refinery`;
     if (systemFilter) url += `?system=${systemFilter}`;
-    
     const res = await fetch(url);
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (e) {
     console.error('Data Uplink Error:', e);
     return [];
@@ -59,14 +89,17 @@ export async function getRefineryData(systemFilter = null) {
 export async function addRefineryEntry(entry) {
   const res = await fetch(`${BASE_URL}/refinery`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
   return await res.json();
 }
 
 export async function deleteRefineryEntry(id) {
-  await fetch(`${BASE_URL}/refinery/${id}`, { method: 'DELETE' });
+  await fetch(`${BASE_URL}/refinery/${id}`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
 }
 
 // ── Personnel Data ──
@@ -85,10 +118,8 @@ export async function getResourceData(systemFilter = null) {
   try {
     let url = `${BASE_URL}/resources`;
     if (systemFilter) url += `?system=${systemFilter}`;
-    
     const res = await fetch(url);
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (e) {
     console.error('Data Uplink Error:', e);
     return [];
@@ -106,7 +137,7 @@ export async function getBodies() {
 export async function addBody(data) {
   const res = await fetch(`${BASE_URL}/bodies`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
@@ -115,34 +146,40 @@ export async function addBody(data) {
 export async function updateBody(name, data) {
   const res = await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
 }
 
 export async function deleteBody(name) {
-  await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, { method: 'DELETE' });
+  await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
 }
 
 export async function addResourceEntry(entry) {
   const res = await fetch(`${BASE_URL}/resources`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
   return await res.json();
 }
 
 export async function deleteResourceEntry(id) {
-  await fetch(`${BASE_URL}/resources/${id}`, { method: 'DELETE' });
+  await fetch(`${BASE_URL}/resources/${id}`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
 }
 
 // ── Update Functions ──
 export async function updateStation(name, data) {
   const res = await fetch(`${BASE_URL}/stations/${encodeURIComponent(name)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
@@ -151,7 +188,7 @@ export async function updateStation(name, data) {
 export async function updateRefineryEntry(id, data) {
   const res = await fetch(`${BASE_URL}/refinery/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
@@ -160,13 +197,12 @@ export async function updateRefineryEntry(id, data) {
 export async function updateResourceEntry(id, data) {
   const res = await fetch(`${BASE_URL}/resources/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
 }
 
-// ── Admin PIN ──
 // ── Network Status (NAC) ──
 export async function getNetworkStatus() {
   const res = await fetch(`${BASE_URL}/settings/network_status`);
@@ -181,7 +217,7 @@ export async function getNetworkStatus() {
 export async function updateNetworkStatus(statusObj) {
   await fetch(`${BASE_URL}/settings`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify({ key: 'network_status', value: JSON.stringify(statusObj) })
   });
 }
@@ -223,7 +259,7 @@ export async function getAllUsers() {
 export async function updateUserProfile(id, data) {
   const res = await fetch(`${BASE_URL}/users/${id}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   const result = await res.json();
@@ -234,31 +270,18 @@ export async function updateUserProfile(id, data) {
 export async function updateUserAdmin(id, data) {
   const res = await fetch(`${BASE_URL}/users/${id}/admin`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
   return await res.json();
 }
 
-// ── Session helpers ──
-export function getSession() {
-  try {
-    const raw = localStorage.getItem('yugen_session');
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-
-export function setSession(user) {
-  localStorage.setItem('yugen_session', JSON.stringify(user));
-}
-
-export function clearSession() {
-  localStorage.removeItem('yugen_session');
-}
-
 // ── Quality of Life Data Purge ──
 export async function resetAllData() {
-  await fetch(`${BASE_URL}/purge`, { method: 'DELETE' });
+  await fetch(`${BASE_URL}/purge`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
   window.location.reload();
 }
 

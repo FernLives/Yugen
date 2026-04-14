@@ -2,10 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import db, { initDb, dbPath } from './database.js';
 import fs from 'fs';
+import crypto from 'crypto';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,12 +16,35 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_not_for_production';
 
 app.use(cors());
 app.use(express.json());
 
 // Initialize Database
 initDb();
+
+// ── Authentication Middleware ──
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: 'Authentication required' });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: 'Invalid or expired session' });
+    req.user = user;
+    next();
+  });
+}
+
+function isAdmin(req, res, next) {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ error: 'Administrative privileges required' });
+  }
+}
 
 // ── Profanity filter (extreme only) ──
 const BLOCKED_WORDS = [
@@ -42,7 +67,7 @@ function sanitizeUser(user) {
 // ── API Endpoints ──
 
 // Admin: Download DB
-app.get('/api/admin/download-db', (req, res) => {
+app.get('/api/admin/download-db', authenticateToken, isAdmin, (req, res) => {
   res.download(dbPath, 'database.sqlite');
 });
 
@@ -56,25 +81,24 @@ app.get('/api/stations', (req, res) => {
   res.json(data);
 });
 
-app.post('/api/stations', (req, res) => {
+app.post('/api/stations', authenticateToken, isAdmin, (req, res) => {
   const { name, system } = req.body;
   const stmt = db.prepare('INSERT OR IGNORE INTO refinery_stations (name, system) VALUES (?, ?)');
   stmt.run(name, system || 'Stanton');
   res.status(201).json({ name, system });
 });
 
-app.delete('/api/stations/:name', (req, res) => {
+app.delete('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.params;
   db.prepare('DELETE FROM refinery_data WHERE station = ?').run(name);
   db.prepare('DELETE FROM refinery_stations WHERE name = ?').run(name);
   res.sendStatus(204);
 });
 
-app.put('/api/stations/:name', (req, res) => {
+app.put('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.params;
   const { newName, system } = req.body;
   if (newName && newName !== name) {
-    // Update FK references first
     db.prepare('UPDATE refinery_data SET station = ? WHERE station = ?').run(newName, name);
     db.prepare('UPDATE refinery_stations SET name = ?, system = ? WHERE name = ?').run(newName, system || 'Stanton', name);
   } else {
@@ -93,7 +117,7 @@ app.get('/api/refinery', (req, res) => {
   res.json(data);
 });
 
-app.post('/api/refinery', (req, res) => {
+app.post('/api/refinery', authenticateToken, isAdmin, (req, res) => {
   const { station, ore, modifier, system } = req.body;
   const id = 'ref-' + Date.now().toString(36);
   const stmt = db.prepare('INSERT INTO refinery_data (id, station, ore, modifier, system) VALUES (?, ?, ?, ?, ?)');
@@ -101,13 +125,13 @@ app.post('/api/refinery', (req, res) => {
   res.status(201).json({ id, station, ore, modifier, system });
 });
 
-app.delete('/api/refinery/:id', (req, res) => {
+app.delete('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM refinery_data WHERE id = ?').run(id);
   res.sendStatus(204);
 });
 
-app.put('/api/refinery/:id', (req, res) => {
+app.put('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
   const { id } = req.params;
   const { station, ore, modifier, system } = req.body;
   db.prepare('UPDATE refinery_data SET station = ?, ore = ?, modifier = ?, system = ? WHERE id = ?')
@@ -121,13 +145,13 @@ app.get('/api/bodies', (req, res) => {
   res.json(data);
 });
 
-app.post('/api/bodies', (req, res) => {
+app.post('/api/bodies', authenticateToken, isAdmin, (req, res) => {
   const { name, system } = req.body;
   db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)').run(name, system || 'Stanton');
   res.status(201).json({ name, system });
 });
 
-app.put('/api/bodies/:name', (req, res) => {
+app.put('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.params;
   const { newName, system } = req.body;
   if (newName && newName !== name) {
@@ -139,7 +163,7 @@ app.put('/api/bodies/:name', (req, res) => {
   res.json({ name: newName || name, system });
 });
 
-app.delete('/api/bodies/:name', (req, res) => {
+app.delete('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
   const { name } = req.params;
   db.prepare('DELETE FROM resource_bodies WHERE name = ?').run(name);
   db.prepare('DELETE FROM resource_data WHERE parentBody = ?').run(name);
@@ -159,7 +183,7 @@ app.get('/api/resources', (req, res) => {
   res.json(data);
 });
 
-app.post('/api/resources', (req, res) => {
+app.post('/api/resources', authenticateToken, isAdmin, (req, res) => {
   const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
   const id = 'res-' + Date.now().toString(36);
   const stmt = db.prepare('INSERT INTO resource_data (id, name, type, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
@@ -167,13 +191,13 @@ app.post('/api/resources', (req, res) => {
   res.status(201).json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
 });
 
-app.delete('/api/resources/:id', (req, res) => {
+app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
   const { id } = req.params;
   db.prepare('DELETE FROM resource_data WHERE id = ?').run(id);
   res.sendStatus(204);
 });
 
-app.put('/api/resources/:id', (req, res) => {
+app.put('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
   const { id } = req.params;
   const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
   db.prepare('UPDATE resource_data SET name=?, type=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
@@ -188,26 +212,25 @@ app.get('/api/personnel', (req, res) => {
 });
 
 // 5. Panic Purge
-app.delete('/api/purge', (req, res) => {
+app.delete('/api/purge', authenticateToken, isAdmin, (req, res) => {
   db.prepare('DELETE FROM refinery_data').run();
   db.prepare('DELETE FROM refinery_stations').run();
   db.prepare('DELETE FROM resource_data').run();
   db.prepare('DELETE FROM resource_bodies').run();
   db.prepare('DELETE FROM personnel_data').run();
-  // Mark DB as 'purged' so seeding never re-triggers on restart
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('seeded', 'purged');
   console.log('🔥 PANIC PURGE — All data cleared. Seed lock engaged.');
   res.sendStatus(204);
 });
 
-// 4. Settings (Admin PIN etc)
+// 4. Settings
 app.get('/api/settings/:key', (req, res) => {
   const { key } = req.params;
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
   res.json({ value: row ? row.value : null });
 });
 
-app.post('/api/settings', (req, res) => {
+app.post('/api/settings', authenticateToken, isAdmin, (req, res) => {
   const { key, value } = req.body;
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
   res.sendStatus(201);
@@ -224,7 +247,6 @@ app.post('/api/auth/register', (req, res) => {
   const existing = db.prepare('SELECT id FROM users WHERE username = ?').get(username.toLowerCase());
   if (existing) return res.status(409).json({ error: 'Username already taken' });
 
-  // First user automatically becomes admin
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   const role = userCount === 0 ? 'admin' : 'operator';
 
@@ -238,8 +260,10 @@ app.post('/api/auth/register', (req, res) => {
     .run(id, username.toLowerCase(), passwordHash, callsign, role, 'ASSOCIATE', avatarSeed, 'ACTIVE', '', now, now);
 
   const user = db.prepare('SELECT * FROM users WHERE id = ?').get(id);
+  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  
   console.log(`👤 New user registered: ${username} (${role})`);
-  res.status(201).json(sanitizeUser(user));
+  res.status(201).json({ ...sanitizeUser(user), token });
 });
 
 app.post('/api/auth/login', (req, res) => {
@@ -250,11 +274,12 @@ app.post('/api/auth/login', (req, res) => {
   if (!user) return res.status(401).json({ error: 'Invalid credentials' });
   if (!bcrypt.compareSync(password, user.passwordHash)) return res.status(401).json({ error: 'Invalid credentials' });
 
-  // Update last seen
   db.prepare('UPDATE users SET lastSeen = ? WHERE id = ?').run(new Date().toISOString(), user.id);
 
+  const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+  
   console.log(`🔓 User logged in: ${username}`);
-  res.json(sanitizeUser({ ...user, lastSeen: new Date().toISOString() }));
+  res.json({ ...sanitizeUser(user), lastSeen: new Date().toISOString(), token });
 });
 
 app.get('/api/users', (req, res) => {
@@ -268,10 +293,11 @@ app.get('/api/users/:username', (req, res) => {
   res.json(sanitizeUser(user));
 });
 
-app.put('/api/users/:id', (req, res) => {
+app.put('/api/users/:id', authenticateToken, (req, res) => {
   const { callsign, bio, password, status } = req.body;
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
-  if (!user) return res.status(404).json({ error: 'User not found' });
+  if (req.user.id !== req.params.id && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Not authorized to update this profile' });
+  }
 
   if (callsign && hasProfanity(callsign)) return res.status(400).json({ error: 'Callsign contains prohibited content' });
   if (bio && hasProfanity(bio)) return res.status(400).json({ error: 'Bio contains prohibited content' });
@@ -288,7 +314,7 @@ app.put('/api/users/:id', (req, res) => {
   res.json(sanitizeUser(updated));
 });
 
-app.put('/api/users/:id/admin', (req, res) => {
+app.put('/api/users/:id/admin', authenticateToken, isAdmin, (req, res) => {
   const { role, clearance } = req.body;
   if (role && !['operator', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
   
@@ -299,11 +325,7 @@ app.put('/api/users/:id/admin', (req, res) => {
   res.json(sanitizeUser(updated));
 });
 
-// Serve static files from the React app dist folder
 app.use(express.static(path.join(__dirname, '../dist')));
-
-// The "catchall" handler: for any request that doesn't
-// match one above, send back React's index.html file.
 app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
