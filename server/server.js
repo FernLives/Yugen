@@ -81,13 +81,36 @@ app.get('/api/stations', (req, res) => {
   res.json(data);
 });
 
-// 3. Personnel Data
-export const getPersonnel = () => db.prepare('SELECT * FROM personnel_data').all();
-app.get('/api/personnel', (req, res) => {
-  res.json(getPersonnel());
+// 2. Refinery Data
+app.get('/api/refinery', (req, res) => {
+  const { system } = req.query;
+  const stmt = system 
+    ? db.prepare('SELECT * FROM refinery_data WHERE system = ?')
+    : db.prepare('SELECT * FROM refinery_data');
+  const data = system ? stmt.all(system) : stmt.all();
+  res.json(data);
 });
 
-// 3. Personnel Data
+// 3. Resource Bodies
+app.get('/api/bodies', (req, res) => {
+  const data = db.prepare('SELECT * FROM resource_bodies').all();
+  res.json(data);
+});
+
+// 4. Resource Data
+app.get('/api/resources', (req, res) => {
+  const { system } = req.query;
+  const stmt = system 
+    ? db.prepare('SELECT * FROM resource_data WHERE system = ?')
+    : db.prepare('SELECT * FROM resource_data');
+  const data = (system ? stmt.all(system) : stmt.all()).map(d => ({
+    ...d,
+    methods: JSON.parse(d.methods)
+  }));
+  res.json(data);
+});
+
+// 5. Personnel Data
 app.get('/api/personnel', (req, res) => {
   const data = db.prepare('SELECT * FROM personnel_data').all();
   res.json(data);
