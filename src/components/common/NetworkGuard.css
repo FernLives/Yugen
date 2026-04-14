@@ -12,8 +12,8 @@
   position: absolute;
   inset: 0;
   z-index: 1000;
-  background: rgba(10, 11, 16, 0.82);
-  backdrop-filter: blur(32px);
+  background: rgba(10, 11, 16, 0.94);
+  backdrop-filter: blur(24px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -26,20 +26,20 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-medium);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg), 0 0 80px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--shadow-lg), 0 0 100px rgba(0, 0, 0, 0.8);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: advisoryEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: nacEntry 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-@keyframes advisoryEntry {
+@keyframes nacEntry {
   from { opacity: 0; transform: translateY(12px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 /* ── Header ── */
-.advisory-header {
+.nac-header {
   padding: 32px 32px 24px;
   display: flex;
   align-items: center;
@@ -47,7 +47,7 @@
   border-bottom: 1px solid var(--border-subtle);
 }
 
-.advisory-icon {
+.nac-icon-box {
   width: 56px;
   height: 56px;
   background: rgba(255, 255, 255, 0.03);
@@ -60,11 +60,11 @@
   color: var(--accent-muted);
 }
 
-.network-guard-container.maintenance .advisory-icon { color: var(--warning); border-color: rgba(204, 142, 53, 0.3); }
-.network-guard-container.restricted .advisory-icon { color: var(--danger); border-color: rgba(207, 74, 74, 0.3); }
-.network-guard-container.collecting .advisory-icon { color: var(--accent); border-color: rgba(212, 175, 55, 0.3); }
+.network-guard-container.maintenance .nac-icon-box { color: var(--warning); border-color: rgba(204, 142, 53, 0.3); }
+.network-guard-container.restricted .nac-icon-box { color: var(--danger); border-color: rgba(207, 74, 74, 0.3); }
+.network-guard-container.collecting .nac-icon-box { color: var(--accent); border-color: rgba(212, 175, 55, 0.3); }
 
-.advisory-title {
+.nac-title {
   font-family: var(--font-heading);
   font-size: 22px;
   font-weight: 500;
@@ -73,7 +73,7 @@
   letter-spacing: 0.02em;
 }
 
-.advisory-subtitle {
+.nac-subtitle {
   font-family: var(--font-body);
   font-size: 10px;
   color: var(--text-dim);
@@ -83,20 +83,20 @@
 }
 
 /* ── Body ── */
-.advisory-body {
+.nac-body {
   padding: 32px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px; /* Increased gap to prevent overlap */
 }
 
-.status-indicator {
+.nac-status-block {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
-.indicator-bar {
+.nac-indicator-track {
   width: 100%;
   height: 2px;
   background: var(--border-subtle);
@@ -105,22 +105,28 @@
   position: relative;
 }
 
-.indicator-progress {
+.nac-indicator-fill {
   position: absolute;
   top: 0;
   left: -100%;
   width: 100%;
   height: 100%;
   background: linear-gradient(90deg, transparent, var(--accent-muted), transparent);
-  animation: advisorySync 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  animation: nacSync 3s infinite cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@keyframes advisorySync {
+@keyframes nacSync {
   0% { left: -100%; }
   100% { left: 100%; }
 }
 
-.status-label {
+.nac-status-pair {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nac-label {
   font-family: var(--font-data);
   font-size: 10px;
   font-weight: 800;
@@ -128,18 +134,26 @@
   letter-spacing: 0.1em;
 }
 
-.advisory-message {
+.nac-value {
+  font-family: var(--font-data);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent); /* Better visibility */
+  letter-spacing: 0.05em;
+}
+
+.nac-message-wrap {
   line-height: 1.7;
 }
 
-.message-text {
+.nac-text {
   font-size: 13px;
   color: var(--text-secondary);
   margin: 0;
 }
 
 /* ── Actions ── */
-.advisory-actions {
+.nac-actions {
   padding: 24px 32px 32px;
   background: rgba(0, 0, 0, 0.15);
   display: flex;
@@ -168,7 +182,7 @@
 .noc-btn.primary { background: var(--accent); color: #000; border: none; }
 .noc-btn.primary:hover { box-shadow: var(--shadow-glow); }
 
-.advisory-note {
+.nac-note {
   font-family: var(--font-body);
   font-size: 10px;
   color: var(--text-dim);
@@ -177,17 +191,17 @@
   opacity: 0.8;
 }
 
-/* ── Legacy Background Shadow ── */
-.guard-background-dim {
+/* ── Background Shielding ── */
+.guard-background-shield {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
 }
 
-.dimmed-content-mask {
+.shield-content-mask {
   width: 100%;
   height: 100%;
-  opacity: 0.15;
-  filter: grayscale(1);
+  opacity: 0.05; /* Drastically reduced to prevent visual noise */
+  filter: grayscale(1) blur(4px);
 }

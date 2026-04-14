@@ -30,29 +30,32 @@ export default function NetworkGuard({ moduleId, children }) {
     <div className={`network-guard-container ${status.toLowerCase()}`}>
       <div className="guard-overlay">
         <div className="guard-advisory-card">
-          <div className="advisory-header">
-            <div className="advisory-icon">
-              {isRestricted && <span className="icon-sig">✧</span>}
-              {isMaintenance && <span className="icon-sig">⎔</span>}
-              {isCollecting && <span className="icon-sig">◈</span>}
+          <div className="nac-header">
+            <div className="nac-icon-box">
+              {isRestricted && <span className="nac-sig">✧</span>}
+              {isMaintenance && <span className="nac-sig">⎔</span>}
+              {isCollecting && <span className="nac-sig">◈</span>}
             </div>
-            <div className="advisory-title-group">
-              <h1 className="advisory-title">
+            <div className="nac-title-area">
+              <h1 className="nac-title">
                 {isRestricted && 'SYSTEM ADVISORY'}
                 {isMaintenance && 'SYNCHRONIZATION IN PROGRESS'}
                 {isCollecting && 'ACTIVE DATA HARVEST'}
               </h1>
-              <div className="advisory-subtitle">YŪGEN NETWORK // {moduleId.toUpperCase()} MODULE</div>
+              <div className="nac-subtitle">YŪGEN NETWORK // {moduleId.toUpperCase()} MODULE</div>
             </div>
           </div>
 
-          <div className="advisory-body">
-            <div className="status-indicator">
-              <div className="indicator-bar"><div className="indicator-progress"></div></div>
-              <span className="status-label">STATUS: {status}</span>
+          <div className="nac-body">
+            <div className="nac-status-block">
+              <div className="nac-indicator-track"><div className="nac-indicator-fill"></div></div>
+              <div className="nac-status-pair">
+                <span className="nac-label">NODE STATUS:</span>
+                <span className="nac-value">{status}</span>
+              </div>
             </div>
-            <div className="advisory-message">
-              <p className="message-text">
+            <div className="nac-message-wrap">
+              <p className="nac-text">
                 {isRestricted ? 'Uplink synchronization for this module has been suspended by localized security protocols. Please contact network administration for clearance inquiries.' :
                  isMaintenance ? 'System optimization is currently in progress. Access to peripheral modules is temporarily restricted to ensure database integrity.' :
                  'Passive data collection is currently active for this node. Direct interaction has been disabled to prioritize ingestion stability.'}
@@ -60,7 +63,7 @@ export default function NetworkGuard({ moduleId, children }) {
             </div>
           </div>
 
-          <div className="advisory-actions">
+          <div className="nac-actions">
             {isAdmin && (
               <button 
                 className="noc-btn primary" 
@@ -69,7 +72,7 @@ export default function NetworkGuard({ moduleId, children }) {
                 ADMIN OVERRIDE
               </button>
             )}
-            <p className="advisory-note">
+            <p className="nac-note">
               {isAdmin 
                 ? 'Administrative privileges detected. Override protocol available.' 
                 : 'Connection suspended. Please standby for synchronization.'}
@@ -78,8 +81,8 @@ export default function NetworkGuard({ moduleId, children }) {
         </div>
       </div>
       
-      <div className="guard-background-dim">
-        <div className="dimmed-content-mask">{children}</div>
+      <div className="guard-background-shield">
+        <div className="shield-content-mask">{children}</div>
       </div>
     </div>
   );
