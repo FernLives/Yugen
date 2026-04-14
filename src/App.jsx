@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import SystemShell from './components/SystemShell/SystemShell';
 import RefineryModule from './components/RefineryModule/RefineryModule';
 import ResourceModule from './components/ResourceModule/ResourceModule';
+import BulletinModule from './components/BulletinModule/BulletinModule';
 
 import AdminModule from './components/AdminModule/AdminModule';
 import ProfilePage from './components/ProfilePage/ProfilePage';
@@ -47,6 +48,7 @@ function AppContent() {
         <Routes>
           <Route path="/refinery" element={<NetworkGuard moduleId="refinery"><RefineryModule system={activeSystem} /></NetworkGuard>} />
           <Route path="/resources" element={<NetworkGuard moduleId="resources"><ResourceModule system={activeSystem} /></NetworkGuard>} />
+          <Route path="/bulletin" element={<NetworkGuard moduleId="bulletin"><BulletinModule /></NetworkGuard>} />
 
           <Route path="/info" element={<NetworkGuard moduleId="info"><InfoPage /></NetworkGuard>} />
           <Route path="/admin" element={<AdminGuard />} />

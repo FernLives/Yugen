@@ -280,6 +280,33 @@ export async function updateUserAdmin(id, data) {
   return await res.json();
 }
 
+// ── Bulletins & System Updates ──
+export async function getBulletins() {
+  try {
+    const res = await fetch(`${BASE_URL}/bulletins`);
+    return await res.json();
+  } catch (e) { console.error('Bulletin fetch error:', e); return []; }
+}
+
+export async function addBulletin(data) {
+  const res = await fetch(`${BASE_URL}/bulletins`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error || 'Failed to post bulletin');
+  }
+}
+
+export async function deleteBulletin(id) {
+  await fetch(`${BASE_URL}/bulletins/${id}`, { 
+    method: 'DELETE',
+    headers: getAuthHeaders()
+  });
+}
+
 // ── Quality of Life Data Purge ──
 export async function resetAllData() {
   await fetch(`${BASE_URL}/purge`, { 

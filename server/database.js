@@ -117,6 +117,15 @@ export function initDb() {
       createdAt TEXT,
       lastSeen TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS bulletins (
+      id TEXT PRIMARY KEY,
+      type TEXT, -- 'announcement', 'change'
+      category TEXT, -- 'refinery', 'resource', 'system', 'general'
+      content TEXT,
+      author TEXT,
+      timestamp TEXT
+    );
   `);
 
   // Migrate existing distinct stations to the new table if not present

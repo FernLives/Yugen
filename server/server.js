@@ -318,11 +318,119 @@ app.put('/api/users/:id/admin', authenticateToken, isAdmin, (req, res) => {
   const { role, clearance } = req.body;
   if (role && !['operator', 'admin'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
   
-  if (role) db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
+  const user = db.prepare('SELECT username FROM users WHERE id = ?').get(req.params.id);
+  if (role) {
+    db.prepare('UPDATE users SET role = ? WHERE id = ?').run(role, req.params.id);
+    logBulletin('system', 'general', `Operator @${user.username} role adjusted to ${role.toUpperCase()}`, req.user.username);
+  }
   if (clearance) db.prepare('UPDATE users SET clearance = ? WHERE id = ?').run(clearance, req.params.id);
   
   const updated = db.prepare('SELECT * FROM users WHERE id = ?').get(req.params.id);
   res.json(sanitizeUser(updated));
+});
+
+// ── 7. Bulletins & Automated Reports ──
+
+function logBulletin(type, category, content, author = 'SYSTEM') {
+  const id = 'bul-' + Date.now().toString(36) + crypto.randomBytes(2).toString('hex');
+  const timestamp = new Date().toISOString();
+  try {
+    db.prepare('INSERT INTO bulletins (id, type, category, content, author, timestamp) VALUES (?, ?, ?, ?, ?, ?)')
+      .run(id, type, category, content, author, timestamp);
+  } catch (err) {
+    console.error('Failed to log bulletin:', err);
+  }
+}
+
+app.get('/api/bulletins', (req, res) => {
+  const data = db.prepare('SELECT * FROM bulletins ORDER BY timestamp DESC LIMIT 100').all();
+  res.json(data);
+});
+
+app.post('/api/bulletins', authenticateToken, isAdmin, (req, res) => {
+  const { type, category, content } = req.body;
+  if (!content) return res.status(400).json({ error: 'Content required' });
+  logBulletin(type || 'announcement', category || 'general', content, req.user.username);
+  res.sendStatus(201);
+});
+
+app.delete('/api/bulletins/:id', authenticateToken, isAdmin, (req, res) => {
+  db.prepare('DELETE FROM bulletins WHERE id = ?').run(req.params.id);
+  res.sendStatus(204);
+});
+
+// Update previous endpoints to include automated logging
+app.post('/api/stations', authenticateToken, isAdmin, (req, res) => {
+  const { name, system } = req.body;
+  const stmt = db.prepare('INSERT OR IGNORE INTO refinery_stations (name, system) VALUES (?, ?)');
+  const result = stmt.run(name, system || 'Stanton');
+  if (result.changes > 0) {
+    logBulletin('change', 'refinery', `New refinery hub registered: ${name} (${system || 'Stanton'})`, req.user.username);
+  }
+  res.status(201).json({ name, system });
+});
+
+app.delete('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
+  const { name } = req.params;
+  db.prepare('DELETE FROM refinery_data WHERE station = ?').run(name);
+  db.prepare('DELETE FROM refinery_stations WHERE name = ?').run(name);
+  logBulletin('change', 'refinery', `Refinery hub decommissioned: ${name}`, req.user.username);
+  res.sendStatus(204);
+});
+
+app.post('/api/refinery', authenticateToken, isAdmin, (req, res) => {
+  const { station, ore, modifier, system } = req.body;
+  const id = 'ref-' + Date.now().toString(36);
+  const stmt = db.prepare('INSERT INTO refinery_data (id, station, ore, modifier, system) VALUES (?, ?, ?, ?, ?)');
+  stmt.run(id, station, ore, modifier, system || 'Stanton');
+  logBulletin('change', 'refinery', `Updated logistics for ${ore} at ${station}`, req.user.username);
+  res.status(201).json({ id, station, ore, modifier, system });
+});
+
+app.delete('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
+  const { id } = req.params;
+  const row = db.prepare('SELECT station, ore FROM refinery_data WHERE id = ?').get(id);
+  if (row) {
+    logBulletin('change', 'refinery', `Removed ${row.ore} records from ${row.station}`, req.user.username);
+  }
+  db.prepare('DELETE FROM refinery_data WHERE id = ?').run(id);
+  res.sendStatus(204);
+});
+
+app.post('/api/bodies', authenticateToken, isAdmin, (req, res) => {
+  const { name, system } = req.body;
+  const result = db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)').run(name, system || 'Stanton');
+  if (result.changes > 0) {
+    logBulletin('change', 'resource', `New planetary body surveyed: ${name} (${system || 'Stanton'})`, req.user.username);
+  }
+  res.status(201).json({ name, system });
+});
+
+app.delete('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
+  const { name } = req.params;
+  db.prepare('DELETE FROM resource_bodies WHERE name = ?').run(name);
+  db.prepare('DELETE FROM resource_data WHERE parentBody = ?').run(name);
+  logBulletin('change', 'resource', `Planetary signature removed from archives: ${name}`, req.user.username);
+  res.sendStatus(204);
+});
+
+app.post('/api/resources', authenticateToken, isAdmin, (req, res) => {
+  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
+  const id = 'res-' + Date.now().toString(36);
+  const stmt = db.prepare('INSERT INTO resource_data (id, name, type, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+  stmt.run(id, name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton');
+  logBulletin('change', 'resource', `New survey data published for ${name} at ${parentBody}`, req.user.username);
+  res.status(201).json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
+});
+
+app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
+  const { id } = req.params;
+  const row = db.prepare('SELECT name, parentBody FROM resource_data WHERE id = ?').get(id);
+  if (row) {
+    logBulletin('change', 'resource', `Retracted survey findings for ${row.name} at ${row.parentBody}`, req.user.username);
+  }
+  db.prepare('DELETE FROM resource_data WHERE id = ?').run(id);
+  res.sendStatus(204);
 });
 
 app.use(express.static(path.join(__dirname, '../dist')));

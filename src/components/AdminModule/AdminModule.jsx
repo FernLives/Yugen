@@ -5,7 +5,8 @@ import {
   getStations, addStation, deleteStation, updateStation,
   getBodies, addBody, deleteBody, updateBody,
   getAllUsers, updateUserAdmin, resetAllData,
-  getNetworkStatus, updateNetworkStatus
+  getNetworkStatus, updateNetworkStatus,
+  getBulletins, addBulletin, deleteBulletin
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
 import LoadingState from '../common/LoadingState';
@@ -23,6 +24,7 @@ export default function AdminModule() {
   const [stationsData, setStationsData] = useState([]);
   const [bodiesData, setBodiesData] = useState([]);
   const [usersData, setUsersData] = useState([]);
+  const [bulletinsData, setBulletinsData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({});
   const [addingType, setAddingType] = useState(null); // 'station', 'material', 'body', 'resource'
@@ -55,13 +57,14 @@ export default function AdminModule() {
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
   const reload = async () => {
-    const [refs, res, stats, bodies, users, net] = await Promise.all([
+    const [refs, res, stats, bodies, users, net, bul] = await Promise.all([
       getRefineryData(),
       getResourceData(),
       getStations(),
       getBodies(),
       getAllUsers(),
-      getNetworkStatus()
+      getNetworkStatus(),
+      getBulletins()
     ]);
     setRefData(refs);
     setResData(res);
@@ -69,6 +72,7 @@ export default function AdminModule() {
     setBodiesData(bodies);
     setUsersData(users);
     setNetworkStatus(net);
+    setBulletinsData(bul);
   };
 
   // ── Body CRUD ──
@@ -163,6 +167,27 @@ export default function AdminModule() {
     flash('Entry Purged');
   };
 
+  const saveBulletin = async () => {
+    if (!form.content) return flash('Field Error: Content required');
+    try {
+      await addBulletin({ 
+        type: 'announcement', 
+        category: form.category || 'general', 
+        content: form.content 
+      });
+      flash('Bulletin Published');
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
+    }
+  };
+
+  const delBul = async (id) => {
+    await deleteBulletin(id);
+    await reload();
+    flash('Bulletin Removed');
+  };
+
   const startAdd = (type, parentContext) => {
     setEditMode(null);
     setAddingType(type);
@@ -174,9 +199,10 @@ export default function AdminModule() {
       setForm({ ore: '', modifier: 0, station: parentContext || stationsData[0]?.name || '' });
     } else if (type === 'body') {
       setForm({ name: '', system: 'Stanton' });
-    } else {
-      // 'resource'
+    } else if (type === 'resource') {
       setForm({ name: '', type: 'Ship Mineable', parentBody: parentContext || (bodiesData.length > 0 ? bodiesData[0].name : ''), system: 'Stanton', methods: ['ship'] });
+    } else if (type === 'bulletin') {
+      setForm({ content: '', category: 'general' });
     }
   };
 
@@ -270,7 +296,10 @@ export default function AdminModule() {
   }, [refData, resData]);
 
   // ── Determine save handler ──
-  const saveFn = addingType === 'station' ? saveStation : addingType === 'material' ? saveMaterial : addingType === 'body' ? saveBody : saveResource;
+  const saveFn = addingType === 'station' ? saveStation : 
+                 addingType === 'material' ? saveMaterial : 
+                 addingType === 'body' ? saveBody : 
+                 addingType === 'bulletin' ? saveBulletin : saveResource;
 
   if (isLoading) {
     return (
@@ -320,6 +349,9 @@ export default function AdminModule() {
             <button className={`nav-item ${tab === 'network' ? 'active' : ''}`} onClick={() => setTab('network')}>
               <span className="nav-icon">⎔</span> Network
             </button>
+            <button className={`nav-item ${tab === 'bulletin' ? 'active' : ''}`} onClick={() => setTab('bulletin')}>
+              <span className="nav-icon">⚯</span> Bulletin
+            </button>
           </div>
         </aside>
 
@@ -339,6 +371,9 @@ export default function AdminModule() {
               )}
               {tab === 'resources' && (
                 <button className="noc-btn add" onClick={() => startAdd('body')}>+ ADD BODY</button>
+              )}
+              {tab === 'bulletin' && (
+                <button className="noc-btn add" onClick={() => startAdd('bulletin')}>+ NEW ANNOUNCEMENT</button>
               )}
               <CustomSelect 
                 label="System Filter" 
@@ -393,6 +428,21 @@ export default function AdminModule() {
                       <Sel label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} opts={bodiesData.map(b => b.name)} />
                       <Inp label="Resource Name" val={form.name} set={v => setForm({...form, name: v})} suggestions={knownMaterials} />
                       <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
+                    </>
+                  )}
+                  {addingType === 'bulletin' && (
+                    <>
+                      <Sel label="Category" val={form.category} set={v => setForm({...form, category: v})} opts={['general', 'refinery', 'resource', 'system']} />
+                      <div className="noc-field" style={{ gridColumn: 'span 2' }}>
+                        <label>Content</label>
+                        <textarea 
+                          className="noc-input" 
+                          rows="4"
+                          value={form.content || ''} 
+                          onChange={e => setForm({...form, content: e.target.value})}
+                          style={{ resize: 'vertical' }}
+                        />
+                      </div>
                     </>
                   )}
                 </div>
@@ -663,6 +713,42 @@ export default function AdminModule() {
               <div className="settings-card stats">
                 <h3>Global Traffic Isolation</h3>
                 <p>When a module is not 'ACTIVE', all non-admin traffic will be intercepted by the YŪGEN Security Layer. Admins maintain bypass capabilities via a Secure Terminal Override.</p>
+              </div>
+            </div>
+          )}
+
+          {/* ══ BULLETIN TAB ══ */}
+          {tab === 'bulletin' && (
+            <div className="noc-settings fade-in">
+              <div className="settings-card">
+                <h3>Studio Bulletin Management</h3>
+                <p className="card-desc">Review and manage announcements and automated system reports.</p>
+                <table className="materials-table">
+                  <thead>
+                    <tr>
+                      <th>TIMESTAMP</th>
+                      <th>TYPE</th>
+                      <th>CONTENT</th>
+                      <th>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {bulletinsData.map(bul => (
+                      <tr key={bul.id}>
+                        <td className="bold" style={{ whiteSpace: 'nowrap' }}>{new Date(bul.timestamp).toLocaleString()}</td>
+                        <td>
+                          <span className={`role-tag ${bul.type === 'change' ? 'operator' : 'admin'}`}>
+                            {bul.type.toUpperCase()}
+                          </span>
+                        </td>
+                        <td style={{ fontSize: '12px' }}>{bul.content}</td>
+                        <td className="actions">
+                          <button className="act-btn del" onClick={() => delBul(bul.id)}>REMOVE</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
