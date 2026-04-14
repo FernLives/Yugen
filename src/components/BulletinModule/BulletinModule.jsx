@@ -1,17 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getBulletins } from '../../data/dataStore';
+import { getBulletins, getRoadmap } from '../../data/dataStore';
 import LoadingState from '../common/LoadingState';
 import './BulletinModule.css';
 
 export default function BulletinModule() {
   const [bulletins, setBulletins] = useState([]);
+  const [roadmap, setRoadmap] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const load = async () => {
       setIsLoading(true);
-      const data = await getBulletins();
-      setBulletins(data);
+      const [bData, rData] = await Promise.all([getBulletins(), getRoadmap()]);
+      setBulletins(bData);
+      setRoadmap(rData);
       setIsLoading(false);
     };
     load();
@@ -135,6 +137,40 @@ export default function BulletinModule() {
               </div>
             </div>
           )}
+        </div>
+
+        {/* ── Development Roadmap (Vertical Timeline) ── */}
+        <div className="board-col col-roadmap">
+          <div className="data-panel roadmap-panel">
+            <div className="panel-header">
+              <span className="panel-idx">04</span>
+              <h2 className="panel-title">DEVELOPMENT ROADMAP</h2>
+              <span className="panel-hash">#FUTURE_GOALS</span>
+            </div>
+
+            <div className="timeline-container">
+              {roadmap.length === 0 && (
+                <div className="bulletin-empty">No roadmap goals defined.</div>
+              )}
+              <div className="timeline-track"></div>
+              {roadmap.map((goal, idx) => (
+                <div key={goal.id} className="timeline-item animate-slide-in" style={{ animationDelay: `${idx * 0.1}s` }}>
+                  <div className={`timeline-dot ${goal.status.toLowerCase().replace(' ', '-')}`}></div>
+                  <div className="timeline-content hardware-blade">
+                    <div className="blade-accent"></div>
+                    <div className="roadmap-meta">
+                      <span className="roadmap-cat">{goal.category?.toUpperCase()}</span>
+                      <span className={`roadmap-status status-${goal.status.toLowerCase().replace(' ', '-')}`}>
+                        {goal.status}
+                      </span>
+                    </div>
+                    <h3 className="roadmap-title">{goal.title}</h3>
+                    <p className="roadmap-desc">{goal.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 

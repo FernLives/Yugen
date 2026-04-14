@@ -6,7 +6,8 @@ import {
   getBodies, addBody, deleteBody, updateBody,
   getAllUsers, updateUserAdmin, resetAllData,
   getNetworkStatus, updateNetworkStatus,
-  getBulletins, addBulletin, deleteBulletin
+  getBulletins, addBulletin, deleteBulletin,
+  getRoadmap, addRoadmapItem, updateRoadmapItem, deleteRoadmapItem
 } from '../../data/dataStore';
 import { useAuth } from '../../context/AuthContext';
 import LoadingState from '../common/LoadingState';
@@ -25,6 +26,7 @@ export default function AdminModule() {
   const [bodiesData, setBodiesData] = useState([]);
   const [usersData, setUsersData] = useState([]);
   const [bulletinsData, setBulletinsData] = useState([]);
+  const [roadmapData, setRoadmapData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [form, setForm] = useState({});
   const [addingType, setAddingType] = useState(null); // 'station', 'material', 'body', 'resource'
@@ -57,14 +59,15 @@ export default function AdminModule() {
   const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
 
   const reload = async () => {
-    const [refs, res, stats, bodies, users, net, bul] = await Promise.all([
+    const [refs, res, stats, bodies, users, net, bul, rdm] = await Promise.all([
       getRefineryData(),
       getResourceData(),
       getStations(),
       getBodies(),
       getAllUsers(),
       getNetworkStatus(),
-      getBulletins()
+      getBulletins(),
+      getRoadmap()
     ]);
     setRefData(refs);
     setResData(res);
@@ -73,6 +76,7 @@ export default function AdminModule() {
     setUsersData(users);
     setNetworkStatus(net);
     setBulletinsData(bul);
+    setRoadmapData(rdm);
   };
 
   // ── Body CRUD ──
@@ -188,6 +192,28 @@ export default function AdminModule() {
     flash('Bulletin Removed');
   };
 
+  const saveRoadmap = async () => {
+    if (!form.title || !form.description) return flash('Field Error: Title & Description required');
+    try {
+      if (editMode) {
+        await updateRoadmapItem(editMode.id, form);
+        flash('Milestone Updated');
+      } else {
+        await addRoadmapItem(form);
+        flash('Milestone Registered');
+      }
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
+    }
+  };
+
+  const delRdm = async (id) => {
+    await deleteRoadmapItem(id);
+    await reload();
+    flash('Milestone Purged');
+  };
+
   const startAdd = (type, parentContext) => {
     setEditMode(null);
     setAddingType(type);
@@ -203,6 +229,8 @@ export default function AdminModule() {
       setForm({ name: '', type: 'Ship Mineable', parentBody: parentContext || (bodiesData.length > 0 ? bodiesData[0].name : ''), system: 'Stanton', methods: ['ship'] });
     } else if (type === 'bulletin') {
       setForm({ content: '', category: 'general' });
+    } else if (type === 'roadmap') {
+      setForm({ title: '', description: '', status: 'PLANNED', category: 'general' });
     }
   };
 
@@ -299,7 +327,8 @@ export default function AdminModule() {
   const saveFn = addingType === 'station' ? saveStation : 
                  addingType === 'material' ? saveMaterial : 
                  addingType === 'body' ? saveBody : 
-                 addingType === 'bulletin' ? saveBulletin : saveResource;
+                 addingType === 'bulletin' ? saveBulletin :
+                 addingType === 'roadmap' ? saveRoadmap : saveResource;
 
   if (isLoading) {
     return (
@@ -352,6 +381,9 @@ export default function AdminModule() {
             <button className={`nav-item ${tab === 'bulletin' ? 'active' : ''}`} onClick={() => setTab('bulletin')}>
               <span className="nav-icon">⚯</span> Bulletin
             </button>
+            <button className={`nav-item ${tab === 'roadmap' ? 'active' : ''}`} onClick={() => setTab('roadmap')}>
+              <span className="nav-icon">⎿</span> Roadmap
+            </button>
           </div>
         </aside>
 
@@ -374,6 +406,9 @@ export default function AdminModule() {
               )}
               {tab === 'bulletin' && (
                 <button className="noc-btn add" onClick={() => startAdd('bulletin')}>+ NEW ANNOUNCEMENT</button>
+              )}
+              {tab === 'roadmap' && (
+                <button className="noc-btn add" onClick={() => startAdd('roadmap')}>+ NEW MILESTONE</button>
               )}
               <CustomSelect 
                 label="System Filter" 
@@ -440,6 +475,23 @@ export default function AdminModule() {
                           rows="4"
                           value={form.content || ''} 
                           onChange={e => setForm({...form, content: e.target.value})}
+                          style={{ resize: 'vertical' }}
+                        />
+                      </div>
+                    </>
+                  )}
+                  {addingType === 'roadmap' && (
+                    <>
+                      <Inp label="Goal Title" val={form.title} set={v => setForm({...form, title: v})} />
+                      <Sel label="Category" val={form.category} set={v => setForm({...form, category: v})} opts={['general', 'refinery', 'resource', 'system', 'ui']} />
+                      <Sel label="Current Status" val={form.status} set={v => setForm({...form, status: v})} opts={['PLANNED', 'IN DEVELOPMENT', 'RELEASED']} />
+                      <div className="noc-field" style={{ gridColumn: 'span 2' }}>
+                        <label>Description</label>
+                        <textarea 
+                          className="noc-input" 
+                          rows="3"
+                          value={form.description || ''} 
+                          onChange={e => setForm({...form, description: e.target.value})}
                           style={{ resize: 'vertical' }}
                         />
                       </div>
@@ -744,6 +796,43 @@ export default function AdminModule() {
                         <td style={{ fontSize: '12px' }}>{bul.content}</td>
                         <td className="actions">
                           <button className="act-btn del" onClick={() => delBul(bul.id)}>REMOVE</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ══ ROADMAP TAB ══ */}
+          {tab === 'roadmap' && (
+            <div className="noc-settings fade-in">
+              <div className="settings-card">
+                <h3>Studio Development Roadmap</h3>
+                <p className="card-desc">Define and track the progress of studio-wide milestones.</p>
+                <table className="materials-table">
+                  <thead>
+                    <tr>
+                      <th>GOAL</th>
+                      <th>CATEGORY</th>
+                      <th>STATUS</th>
+                      <th>ACTIONS</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roadmapData.map(rdm => (
+                      <tr key={rdm.id}>
+                        <td className="bold">{rdm.title}</td>
+                        <td className="sys-tag">{rdm.category?.toUpperCase()}</td>
+                        <td>
+                          <span className={`role-tag ${rdm.status === 'RELEASED' ? 'admin' : rdm.status === 'IN DEVELOPMENT' ? 'operator' : 'inactive'}`}>
+                            {rdm.status}
+                          </span>
+                        </td>
+                        <td className="actions">
+                          <button className="act-btn edit" onClick={() => startEdit('roadmap', rdm)}>EDIT</button>
+                          <button className="act-btn del" onClick={() => delRdm(rdm.id)}>REMOVE</button>
                         </td>
                       </tr>
                     ))}

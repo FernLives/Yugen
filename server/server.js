@@ -101,8 +101,10 @@ app.put('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
   if (newName && newName !== name) {
     db.prepare('UPDATE refinery_data SET station = ? WHERE station = ?').run(newName, name);
     db.prepare('UPDATE refinery_stations SET name = ?, system = ? WHERE name = ?').run(newName, system || 'Stanton', name);
+    logBulletin('change', 'refinery', `Refinery hub signature updated: ${name} -> ${newName}`, req.user.username);
   } else {
     db.prepare('UPDATE refinery_stations SET system = ? WHERE name = ?').run(system || 'Stanton', name);
+    logBulletin('change', 'refinery', `Logistics protocol updated for ${name}`, req.user.username);
   }
   res.json({ name: newName || name, system });
 });
@@ -136,6 +138,7 @@ app.put('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
   const { station, ore, modifier, system } = req.body;
   db.prepare('UPDATE refinery_data SET station = ?, ore = ?, modifier = ?, system = ? WHERE id = ?')
     .run(station, ore, modifier, system || 'Stanton', id);
+  logBulletin('change', 'refinery', `Modified material yields for ${ore} at ${station}`, req.user.username);
   res.json({ id, station, ore, modifier, system });
 });
 
@@ -157,8 +160,10 @@ app.put('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
   if (newName && newName !== name) {
     db.prepare('UPDATE resource_data SET parentBody=? WHERE parentBody=?').run(newName, name);
     db.prepare('UPDATE resource_bodies SET name=?, system=? WHERE name=?').run(newName, system || 'Stanton', name);
+    logBulletin('change', 'resource', `Planetary body re-classified: ${name} -> ${newName}`, req.user.username);
   } else {
     db.prepare('UPDATE resource_bodies SET system=? WHERE name=?').run(system || 'Stanton', name);
+    logBulletin('change', 'resource', `Updated survey parameters for ${name}`, req.user.username);
   }
   res.json({ name: newName || name, system });
 });
@@ -202,6 +207,7 @@ app.put('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
   const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
   db.prepare('UPDATE resource_data SET name=?, type=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
     .run(name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton', id);
+  logBulletin('change', 'resource', `Updated intelligence report for ${name} at ${parentBody}`, req.user.username);
   res.json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
 });
 
@@ -430,6 +436,33 @@ app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
     logBulletin('change', 'resource', `Retracted survey findings for ${row.name} at ${row.parentBody}`, req.user.username);
   }
   db.prepare('DELETE FROM resource_data WHERE id = ?').run(id);
+  res.sendStatus(204);
+});
+
+// ── 8. Roadmap Endpoints ──
+
+app.get('/api/roadmap', (req, res) => {
+  const data = db.prepare('SELECT * FROM roadmap ORDER BY timestamp DESC').all();
+  res.json(data);
+});
+
+app.post('/api/roadmap', authenticateToken, isAdmin, (req, res) => {
+  const { title, description, status, category } = req.body;
+  const id = 'rdm-' + Date.now().toString(36);
+  db.prepare('INSERT INTO roadmap (id, title, description, status, category, timestamp) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(id, title, description, status || 'PLANNED', category || 'general', new Date().toISOString());
+  res.status(201).json({ id, title, description, status, category });
+});
+
+app.put('/api/roadmap/:id', authenticateToken, isAdmin, (req, res) => {
+  const { title, description, status, category } = req.body;
+  db.prepare('UPDATE roadmap SET title=?, description=?, status=?, category=? WHERE id=?')
+    .run(title, description, status, category, req.params.id);
+  res.json({ id: req.params.id, title, description, status, category });
+});
+
+app.delete('/api/roadmap/:id', authenticateToken, isAdmin, (req, res) => {
+  db.prepare('DELETE FROM roadmap WHERE id = ?').run(req.params.id);
   res.sendStatus(204);
 });
 

@@ -251,8 +251,33 @@ export async function loginUser(username, password) {
 
 export async function getUserProfile(username) {
   const res = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}`);
-  if (!res.ok) return null;
-  return await res.json();
+  if (res.status === 204) return true;
+  return res.json();
+}
+
+// ── 8. Roadmap ──
+export async function getRoadmap() {
+  return fetchApi('/api/roadmap');
+}
+
+export async function addRoadmapItem(item) {
+  return fetchApi('/api/roadmap', {
+    method: 'POST',
+    body: JSON.stringify(item)
+  });
+}
+
+export async function updateRoadmapItem(id, item) {
+  return fetchApi(`/api/roadmap/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(item)
+  });
+}
+
+export async function deleteRoadmapItem(id) {
+  return fetchApi(`/api/roadmap/${id}`, {
+    method: 'DELETE'
+  });
 }
 
 export async function getAllUsers() {

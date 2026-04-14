@@ -126,6 +126,15 @@ export function initDb() {
       author TEXT,
       timestamp TEXT
     );
+
+    CREATE TABLE IF NOT EXISTS roadmap (
+      id TEXT PRIMARY KEY,
+      title TEXT,
+      description TEXT,
+      status TEXT, -- 'PLANNED', 'IN DEVELOPMENT', 'RELEASED'
+      category TEXT,
+      timestamp TEXT
+    );
   `);
 
   // Migrate existing distinct stations to the new table if not present
