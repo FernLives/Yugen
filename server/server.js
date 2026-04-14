@@ -302,6 +302,15 @@ app.delete('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
   res.sendStatus(204);
 });
 
+app.put('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
+  const { id } = req.params;
+  const { station, ore, modifier, system } = req.body;
+  db.prepare('UPDATE refinery_data SET station = ?, ore = ?, modifier = ?, system = ? WHERE id = ?')
+    .run(station, ore, modifier, system || 'Stanton', id);
+  logBulletin('change', 'refinery', `Modified material yields for ${ore} at ${station}`, req.user.username);
+  res.json({ id, station, ore, modifier, system });
+});
+
 app.post('/api/bodies', authenticateToken, isAdmin, (req, res) => {
   const { name, system } = req.body;
   const result = db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)').run(name, system || 'Stanton');
@@ -336,6 +345,15 @@ app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
   }
   db.prepare('DELETE FROM resource_data WHERE id = ?').run(id);
   res.sendStatus(204);
+});
+
+app.put('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
+  const { id } = req.params;
+  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
+  db.prepare('UPDATE resource_data SET name=?, type=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
+    .run(name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton', id);
+  logBulletin('change', 'resource', `Updated intelligence report for ${name} at ${parentBody}`, req.user.username);
+  res.json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
 });
 
 app.put('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {

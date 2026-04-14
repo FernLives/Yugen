@@ -74,18 +74,15 @@ export async function getStations(systemFilter = null) {
 }
 
 export async function addStation(entry) {
-  const res = await fetch(`${BASE_URL}/stations`, {
+  return fetchApi('/stations', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
-  return await res.json();
 }
 
 export async function deleteStation(name) {
-  await fetch(`${BASE_URL}/stations/${name}`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  return fetchApi(`/stations/${encodeURIComponent(name)}`, { 
+    method: 'DELETE'
   });
 }
 
@@ -100,32 +97,24 @@ export async function getRefineryData(systemFilter = null) {
 }
 
 export async function addRefineryEntry(entry) {
-  const res = await fetch(`${BASE_URL}/refinery`, {
+  return fetchApi('/refinery', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Server rejected synchronization');
-  return data;
 }
 
 export async function deleteRefineryEntry(id) {
-  await fetch(`${BASE_URL}/refinery/${id}`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  return fetchApi(`/refinery/${id}`, { 
+    method: 'DELETE'
   });
 }
 
 // ── Personnel Data ──
 export async function getPersonnelData() {
-  try {
-    const res = await fetch(`${BASE_URL}/personnel`);
-    return await res.json();
-  } catch (e) {
-    console.error('Data Uplink Error:', e);
+  return fetchApi('/personnel').catch(e => {
+    console.error('Personnel fetch error:', e);
     return [];
-  }
+  });
 }
 
 // ── Resource Data ──
@@ -147,116 +136,91 @@ export async function getBodies() {
 }
 
 export async function addBody(data) {
-  const res = await fetch(`${BASE_URL}/bodies`, {
+  return fetchApi('/bodies', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 export async function updateBody(name, data) {
-  const res = await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, {
+  return fetchApi(`/bodies/${encodeURIComponent(name)}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 export async function deleteBody(name) {
-  await fetch(`${BASE_URL}/bodies/${encodeURIComponent(name)}`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  return fetchApi(`/bodies/${encodeURIComponent(name)}`, { 
+    method: 'DELETE'
   });
 }
 
 export async function addResourceEntry(entry) {
-  const res = await fetch(`${BASE_URL}/resources`, {
+  return fetchApi('/resources', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Server rejected synchronization');
-  return data;
 }
 
 export async function deleteResourceEntry(id) {
-  await fetch(`${BASE_URL}/resources/${id}`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  return fetchApi(`/resources/${id}`, { 
+    method: 'DELETE'
   });
 }
 
 // ── Update Functions ──
 export async function updateStation(name, data) {
-  const res = await fetch(`${BASE_URL}/stations/${encodeURIComponent(name)}`, {
+  return fetchApi(`/stations/${encodeURIComponent(name)}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 export async function updateRefineryEntry(id, data) {
-  const res = await fetch(`${BASE_URL}/refinery/${id}`, {
+  return fetchApi(`/refinery/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 export async function updateResourceEntry(id, data) {
-  const res = await fetch(`${BASE_URL}/resources/${id}`, {
+  return fetchApi(`/resources/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 // ── Network Status (NAC) ──
 export async function getNetworkStatus() {
-  const res = await fetch(`${BASE_URL}/settings/network_status`);
-  const data = await res.json();
-  try {
-    return data.value ? JSON.parse(data.value) : { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
-  } catch {
-    return { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
-  }
+  return fetchApi('/settings/network_status').then(data => {
+    try {
+      return data.value ? JSON.parse(data.value) : { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
+    } catch {
+      return { info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' };
+    }
+  }).catch(() => ({ info: 'ACTIVE', refinery: 'ACTIVE', resources: 'ACTIVE' }));
 }
 
 export async function updateNetworkStatus(statusObj) {
-  await fetch(`${BASE_URL}/settings`, {
+  return fetchApi('/settings', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify({ key: 'network_status', value: JSON.stringify(statusObj) })
   });
 }
 
 // ── User Authentication ──
 export async function registerUser(username, password, callsign) {
-  const res = await fetch(`${BASE_URL}/auth/register`, {
+  return fetchApi('/auth/register', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password, callsign })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Registration failed');
-  return data;
 }
 
 export async function loginUser(username, password) {
-  const res = await fetch(`${BASE_URL}/auth/login`, {
+  return fetchApi('/auth/login', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password })
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Login failed');
-  return data;
 }
 
 export async function getUserProfile(username) {
@@ -302,23 +266,17 @@ export async function getAllUsers() {
 }
 
 export async function updateUserProfile(id, data) {
-  const res = await fetch(`${BASE_URL}/users/${id}`, {
+  return fetchApi(`/users/${id}`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  const result = await res.json();
-  if (!res.ok) throw new Error(result.error || 'Update failed');
-  return result;
 }
 
 export async function updateUserAdmin(id, data) {
-  const res = await fetch(`${BASE_URL}/users/${id}/admin`, {
+  return fetchApi(`/users/${id}/admin`, {
     method: 'PUT',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  return await res.json();
 }
 
 // ── Bulletins & System Updates ──
@@ -330,29 +288,22 @@ export async function getBulletins() {
 }
 
 export async function addBulletin(data) {
-  const res = await fetch(`${BASE_URL}/bulletins`, {
+  return fetchApi('/bulletins', {
     method: 'POST',
-    headers: getAuthHeaders(),
     body: JSON.stringify(data)
   });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.error || 'Failed to post bulletin');
-  }
 }
 
 export async function deleteBulletin(id) {
-  await fetch(`${BASE_URL}/bulletins/${id}`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  return fetchApi(`/bulletins/${id}`, { 
+    method: 'DELETE'
   });
 }
 
 // ── Quality of Life Data Purge ──
 export async function resetAllData() {
-  await fetch(`${BASE_URL}/purge`, { 
-    method: 'DELETE',
-    headers: getAuthHeaders()
+  await fetchApi('/purge', { 
+    method: 'DELETE'
   });
   window.location.reload();
 }
