@@ -29,3 +29,4 @@ dist-ssr
 # server/auxnet.db
 backups/
 build_err.txt
+backup/

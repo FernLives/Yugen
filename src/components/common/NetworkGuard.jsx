@@ -6,7 +6,6 @@ import './NetworkGuard.css';
 export default function NetworkGuard({ moduleId, children }) {
   const { user, isAdmin } = useAuth();
   const [status, setStatus] = useState(null);
-  const [showBypass, setShowBypass] = useState(false);
   const [isBypassed, setIsBypassed] = useState(false);
 
   useEffect(() => {
@@ -15,7 +14,6 @@ export default function NetworkGuard({ moduleId, children }) {
       setStatus(netStatus[moduleId] || 'ACTIVE');
     };
     check();
-    // Poll every 30s for status updates
     const interval = setInterval(check, 30000);
     return () => clearInterval(interval);
   }, [moduleId]);
@@ -24,7 +22,6 @@ export default function NetworkGuard({ moduleId, children }) {
     return <>{children}</>;
   }
 
-  // If we are here, the page is not ACTIVE
   const isRestricted = status === 'RESTRICTED';
   const isMaintenance = status === 'MAINTENANCE';
   const isCollecting = status === 'COLLECTING';
@@ -32,64 +29,55 @@ export default function NetworkGuard({ moduleId, children }) {
   return (
     <div className={`network-guard-container ${status.toLowerCase()}`}>
       <div className="guard-overlay">
-        <div className="guard-scanlines"></div>
-        
-        <div className="guard-content">
-          <div className="guard-header">
-            <div className="guard-icon">
-              {isRestricted && <span className="icon-alert">≀ⴵ≀</span>}
-              {isMaintenance && <span className="icon-alert">⎔</span>}
-              {isCollecting && <span className="icon-alert">◬</span>}
+        <div className="guard-advisory-card">
+          <div className="advisory-header">
+            <div className="advisory-icon">
+              {isRestricted && <span className="icon-sig">✧</span>}
+              {isMaintenance && <span className="icon-sig">⎔</span>}
+              {isCollecting && <span className="icon-sig">◈</span>}
             </div>
-            <div className="guard-title-group">
-              <h1 className="guard-title">
-                {isRestricted && 'ACCESS RESTRICTED'}
-                {isMaintenance && 'MAINTENANCE IN PROGRESS'}
-                {isCollecting && 'DATA INGESTION MODE'}
+            <div className="advisory-title-group">
+              <h1 className="advisory-title">
+                {isRestricted && 'SYSTEM ADVISORY'}
+                {isMaintenance && 'SYNCHRONIZATION IN PROGRESS'}
+                {isCollecting && 'ACTIVE DATA HARVEST'}
               </h1>
-              <div className="guard-subtitle">YŪGEN NETWORK ACCESS CONTROL // MODULE: {moduleId.toUpperCase()}</div>
+              <div className="advisory-subtitle">YŪGEN NETWORK // {moduleId.toUpperCase()} MODULE</div>
             </div>
           </div>
 
-          <div className="guard-terminal">
-            <div className="terminal-header">
-              <span className="dot red"></span>
-              <span className="dot yellow"></span>
-              <span className="dot green"></span>
-              <span className="terminal-tag">NAC_LOG_ENTRY</span>
+          <div className="advisory-body">
+            <div className="status-indicator">
+              <div className="indicator-bar"><div className="indicator-progress"></div></div>
+              <span className="status-label">STATUS: {status}</span>
             </div>
-            <div className="terminal-body">
-              <p className="log-line">&gt; CHECKING PERMISSIONS... DONE</p>
-              <p className="log-line">&gt; STATUS: <span className="status-val">{status}</span></p>
-              <p className="log-line">&gt; LOCATION: Stanton // Sector 4 // Node {Math.floor(Math.random() * 888)}</p>
-              <p className="log-line">&gt; REASON: {
-                isRestricted ? 'Uplink synchronization suspended due to security protocol Alpha.' :
-                isMaintenance ? 'Core system optimization in progress. Peripheral modules offline.' :
-                'Passive data collection active. Direct interaction disabled for system stability.'
-              }</p>
-              <p className="log-line blinking">&gt; STANDBY FOR FURTHER INSTRUCTIONS...</p>
+            <div className="advisory-message">
+              <p className="message-text">
+                {isRestricted ? 'Uplink synchronization for this module has been suspended by localized security protocols. Please contact network administration for clearance inquiries.' :
+                 isMaintenance ? 'System optimization is currently in progress. Access to peripheral modules is temporarily restricted to ensure database integrity.' :
+                 'Passive data collection is currently active for this node. Direct interaction has been disabled to prioritize ingestion stability.'}
+              </p>
             </div>
           </div>
 
-          <div className="guard-actions">
+          <div className="advisory-actions">
             {isAdmin && (
               <button 
-                className="btn-bypass" 
+                className="noc-btn primary" 
                 onClick={() => setIsBypassed(true)}
               >
-                TACTICAL BYPASS
+                ADMIN OVERRIDE
               </button>
             )}
-            <p className="guard-note">
+            <p className="advisory-note">
               {isAdmin 
-                ? 'ADMIN PRIVILEGES DETECTED. BYPASS AUTHORIZED.' 
-                : 'UPLINK SUSPENDED. CONTACT NETWORK ADMINISTRATION IF THIS IS AN ERROR.'}
+                ? 'Administrative privileges detected. Override protocol available.' 
+                : 'Connection suspended. Please standby for synchronization.'}
             </p>
           </div>
         </div>
       </div>
       
-      {/* Dimmed background of the actual content for cool look */}
       <div className="guard-background-dim">
         <div className="dimmed-content-mask">{children}</div>
       </div>
