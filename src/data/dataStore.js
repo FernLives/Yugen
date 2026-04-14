@@ -46,7 +46,10 @@ export function cleanLegacyStorage() {
 
 // ── Internal Fetch Wrapper ──
 async function fetchApi(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+  // Ensure we don't double-prefix /api
+  const cleanPath = endpoint.startsWith(BASE_URL) ? endpoint.slice(BASE_URL.length) : endpoint;
+  const url = cleanPath.startsWith('http') ? cleanPath : `${BASE_URL}${cleanPath}`;
+  
   const res = await fetch(url, {
     ...options,
     headers: {
@@ -62,15 +65,12 @@ async function fetchApi(endpoint, options = {}) {
 
 // ── Stations Data ──
 export async function getStations(systemFilter = null) {
-  try {
-    let url = `${BASE_URL}/stations`;
-    if (systemFilter) url += `?system=${systemFilter}`;
-    const res = await fetch(url);
-    return await res.json();
-  } catch (e) {
-    console.error('Data Uplink Error:', e);
+  let url = '/stations';
+  if (systemFilter) url += `?system=${systemFilter}`;
+  return fetchApi(url).catch(e => {
+    console.error('Stations fetch error:', e);
     return [];
-  }
+  });
 }
 
 export async function addStation(entry) {
@@ -91,15 +91,12 @@ export async function deleteStation(name) {
 
 // ── Refinery Data ──
 export async function getRefineryData(systemFilter = null) {
-  try {
-    let url = `${BASE_URL}/refinery`;
-    if (systemFilter) url += `?system=${systemFilter}`;
-    const res = await fetch(url);
-    return await res.json();
-  } catch (e) {
-    console.error('Data Uplink Error:', e);
+  let url = '/refinery';
+  if (systemFilter) url += `?system=${systemFilter}`;
+  return fetchApi(url).catch(e => {
+    console.error('Refinery fetch error:', e);
     return [];
-  }
+  });
 }
 
 export async function addRefineryEntry(entry) {
@@ -133,23 +130,20 @@ export async function getPersonnelData() {
 
 // ── Resource Data ──
 export async function getResourceData(systemFilter = null) {
-  try {
-    let url = `${BASE_URL}/resources`;
-    if (systemFilter) url += `?system=${systemFilter}`;
-    const res = await fetch(url);
-    return await res.json();
-  } catch (e) {
-    console.error('Data Uplink Error:', e);
+  let url = '/resources';
+  if (systemFilter) url += `?system=${systemFilter}`;
+  return fetchApi(url).catch(e => {
+    console.error('Resources fetch error:', e);
     return [];
-  }
+  });
 }
 
 // ── Resource Bodies ──
 export async function getBodies() {
-  try {
-    const res = await fetch(`${BASE_URL}/bodies`);
-    return await res.json();
-  } catch (e) { console.error('Bodies fetch error:', e); return []; }
+  return fetchApi('/bodies').catch(e => {
+    console.error('Bodies fetch error:', e);
+    return [];
+  });
 }
 
 export async function addBody(data) {
@@ -266,39 +260,45 @@ export async function loginUser(username, password) {
 }
 
 export async function getUserProfile(username) {
-  const res = await fetch(`${BASE_URL}/users/${encodeURIComponent(username)}`);
-  if (res.status === 204) return true;
-  return res.json();
+  return fetchApi(`/users/${encodeURIComponent(username)}`).catch(e => {
+    console.error('Profile fetch error:', e);
+    return null;
+  });
 }
 
 // ── 8. Roadmap ──
 export async function getRoadmap() {
-  return fetchApi('/api/roadmap');
+  return fetchApi('/roadmap').catch(e => {
+    console.error('Roadmap fetch error:', e);
+    return [];
+  });
 }
 
 export async function addRoadmapItem(item) {
-  return fetchApi('/api/roadmap', {
+  return fetchApi('/roadmap', {
     method: 'POST',
     body: JSON.stringify(item)
   });
 }
 
 export async function updateRoadmapItem(id, item) {
-  return fetchApi(`/api/roadmap/${id}`, {
+  return fetchApi(`/roadmap/${id}`, {
     method: 'PUT',
     body: JSON.stringify(item)
   });
 }
 
 export async function deleteRoadmapItem(id) {
-  return fetchApi(`/api/roadmap/${id}`, {
+  return fetchApi(`/roadmap/${id}`, {
     method: 'DELETE'
   });
 }
 
 export async function getAllUsers() {
-  const res = await fetch(`${BASE_URL}/users`);
-  return await res.json();
+  return fetchApi('/users').catch(e => {
+    console.error('Users fetch error:', e);
+    return [];
+  });
 }
 
 export async function updateUserProfile(id, data) {
@@ -323,10 +323,10 @@ export async function updateUserAdmin(id, data) {
 
 // ── Bulletins & System Updates ──
 export async function getBulletins() {
-  try {
-    const res = await fetch(`${BASE_URL}/bulletins`);
-    return await res.json();
-  } catch (e) { console.error('Bulletin fetch error:', e); return []; }
+  return fetchApi('/bulletins').catch(e => {
+    console.error('Bulletin fetch error:', e);
+    return [];
+  });
 }
 
 export async function addBulletin(data) {
