@@ -36,6 +36,14 @@ function getAuthHeaders() {
   return headers;
 }
 
+// ── Legacy Cleanup ──
+export function cleanLegacyStorage() {
+  localStorage.removeItem('yugen_refinery_data');
+  localStorage.removeItem('yugen_resource_data');
+  localStorage.removeItem('yugen_stations_data');
+  localStorage.removeItem('yugen_personnel_data');
+}
+
 // ── Internal Fetch Wrapper ──
 async function fetchApi(endpoint, options = {}) {
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
