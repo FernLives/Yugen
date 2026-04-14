@@ -48,17 +48,23 @@ export default function BulletinModule() {
 
   return (
     <div className="bulletin-board fade-in">
+      <div className="scanning-line"></div>
+      
       <div className="board-header">
         <div className="board-header-left">
           <div className="board-tag">
-            <span className="blink-dot"></span> STUDIO BROADCAST
+            <span className="blink-dot"></span> SECURE BROADCAST UPLINK
+            <span className="tag-coord">// 34.098.AF.78</span>
           </div>
           <h1 className="board-title">Bulletin & Updates</h1>
+          <div className="board-system-status">
+            SYSTEM STATUS: <span className="status-val">NOMINAL</span> // ENCRYPTION: <span className="status-val">ACTIVE</span>
+          </div>
         </div>
         <div className="board-stats">
           <div className="board-stat">
             <span className="bs-val">{bulletins.length}</span>
-            <span className="bs-label">REPORTS</span>
+            <span className="bs-label">ARCHIVED_REPORTS</span>
           </div>
         </div>
       </div>
@@ -66,7 +72,12 @@ export default function BulletinModule() {
       <div className="board-grid">
         {/* ── Announcements (Priority) ── */}
         <div className="board-col col-main">
-          <div className="data-panel announcement-panel">
+          <div className="data-panel announcement-panel glass-pane">
+            <div className="panel-brackets">
+              <span className="br-tl"></span><span className="br-tr"></span>
+              <span className="br-bl"></span><span className="br-br"></span>
+            </div>
+            
             <div className="panel-header">
               <span className="panel-idx">01</span>
               <h2 className="panel-title">LATEST ANNOUNCEMENTS</h2>
@@ -75,7 +86,11 @@ export default function BulletinModule() {
             
             <div className="announcement-list">
               {categorized.announcements.length === 0 && (
-                <div className="bulletin-empty">No active announcements.</div>
+                <div className="premium-empty-state">
+                  <div className="empty-pips"><span></span><span></span><span></span></div>
+                  <div className="empty-msg">NO ANNOUNCEMENTS RETRIEVED</div>
+                  <div className="empty-code">STATUS_CODE: IDLE_001</div>
+                </div>
               )}
               {categorized.announcements.map((ann, idx) => (
                 <div key={ann.id} className="hardware-blade announcement-blade animate-slide-in" style={{ animationDelay: `${idx * 0.1}s` }}>
@@ -98,7 +113,12 @@ export default function BulletinModule() {
 
         {/* ── Change Logs (Automation) ── */}
         <div className="board-col col-side">
-          <div className="data-panel changes-panel">
+          <div className="data-panel changes-panel glass-pane">
+            <div className="panel-brackets">
+              <span className="br-tl"></span><span className="br-tr"></span>
+              <span className="br-bl"></span><span className="br-br"></span>
+            </div>
+            
             <div className="panel-header">
               <span className="panel-idx">02</span>
               <h2 className="panel-title">SYSTEM CHANGES</h2>
@@ -107,7 +127,11 @@ export default function BulletinModule() {
             
             <div className="changes-list">
               {categorized.changes.length === 0 && (
-                <div className="bulletin-empty">No recent data modifications.</div>
+                <div className="premium-empty-state">
+                  <div className="empty-pips"><span></span><span></span><span></span></div>
+                  <div className="empty-msg">NO DATABASE MODIFICATIONS</div>
+                  <div className="empty-code">STATUS_CODE: SYNC_002</div>
+                </div>
               )}
               {categorized.changes.map((log, idx) => (
                 <div key={log.id} className="change-item animate-slide-in" style={{ animationDelay: `${idx * 0.05}s` }}>
@@ -126,7 +150,11 @@ export default function BulletinModule() {
 
           {/* ── System Reports ── */}
           {categorized.systems.length > 0 && (
-            <div className="data-panel system-panel">
+            <div className="data-panel system-panel glass-pane">
+              <div className="panel-brackets">
+                <span className="br-tl"></span><span className="br-tr"></span>
+                <span className="br-bl"></span><span className="br-br"></span>
+              </div>
               <div className="panel-header">
                 <span className="panel-idx">03</span>
                 <h2 className="panel-title">NETWORK PROTOCOLS</h2>
@@ -146,16 +174,25 @@ export default function BulletinModule() {
 
         {/* ── Development Roadmap (Vertical Timeline) ── */}
         <div className="board-col col-roadmap">
-          <div className="data-panel roadmap-panel">
+          <div className="data-panel roadmap-panel glass-pane">
+            <div className="panel-brackets">
+              <span className="br-tl"></span><span className="br-tr"></span>
+              <span className="br-bl"></span><span className="br-br"></span>
+            </div>
+            
             <div className="panel-header">
               <span className="panel-idx">04</span>
-              <h2 className="panel-title">DEVELOPMENT ROADMAP</h2>
-              <span className="panel-hash">#FUTURE_GOALS</span>
+              <h2 className="panel-title">STUDIO ROADMAP</h2>
+              <span className="panel-hash">#STRATEGIC_GOALS</span>
             </div>
 
             <div className="timeline-container">
               {roadmap.length === 0 && (
-                <div className="bulletin-empty">No roadmap goals defined.</div>
+                <div className="premium-empty-state">
+                  <div className="empty-pips"><span></span><span></span><span></span></div>
+                  <div className="empty-msg">NO ROADMAP GOALS DEFINED</div>
+                  <div className="empty-code">STATUS_CODE: PLAN_003</div>
+                </div>
               )}
               <div className="timeline-track"></div>
               {roadmap.map((goal, idx) => (
@@ -180,7 +217,7 @@ export default function BulletinModule() {
       </div>
 
       <footer className="board-footer fade-in-up">
-        <div className="footer-code">AUTHENTICITY VERIFIED // STUDIO-LEVEL-CLEARANCE</div>
+        <div className="footer-code">YŪGEN INTELLIGENCE // AUTHENTICITY VERIFIED // {new Date().getFullYear() + 930}.0.0</div>
       </footer>
     </div>
   );
