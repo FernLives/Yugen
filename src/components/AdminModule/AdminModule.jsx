@@ -74,14 +74,18 @@ export default function AdminModule() {
   // ── Body CRUD ──
   const saveBody = async () => {
     if (!form.name) return flash('Field Error: Body Name required');
-    if (editMode) {
-      await updateBody(editMode.name, { newName: form.name, system: form.system || 'Stanton' });
-      flash('Body Updated');
-    } else {
-      await addBody({ name: form.name, system: form.system || 'Stanton' });
-      flash('Body Synchronized');
+    try {
+      if (editMode) {
+        await updateBody(editMode.name, { newName: form.name, system: form.system || 'Stanton' });
+        flash('Body Updated');
+      } else {
+        await addBody({ name: form.name, system: form.system || 'Stanton' });
+        flash('Body Synchronized');
+      }
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
     }
-    await reload(); closeForm();
   };
 
   const delBody = async (name) => {
@@ -91,14 +95,18 @@ export default function AdminModule() {
   };
   const saveStation = async () => {
     if (!form.name) return flash('Field Error: Name required');
-    if (editMode) {
-      await updateStation(editMode.id, { newName: form.name, system: form.system || 'Stanton' });
-      flash('Hub Updated');
-    } else {
-      await addStation({ name: form.name, system: form.system || 'Stanton' });
-      flash('Hub Synchronized');
+    try {
+      if (editMode) {
+        await updateStation(editMode.id, { newName: form.name, system: form.system || 'Stanton' });
+        flash('Hub Updated');
+      } else {
+        await addStation({ name: form.name, system: form.system || 'Stanton' });
+        flash('Hub Synchronized');
+      }
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
     }
-    await reload(); closeForm();
   };
 
   const delStat = async (name) => {
@@ -112,14 +120,18 @@ export default function AdminModule() {
     if (!form.ore || !form.station) return flash('Field Error: Ore & Station required');
     const parentStation = stationsData.find(s => s.name === form.station);
     const entry = { ...form, system: parentStation?.system || 'Stanton', modifier: Number(form.modifier) || 0 };
-    if (editMode) {
-      await updateRefineryEntry(editMode.id, entry);
-      flash('Material Updated');
-    } else {
-      await addRefineryEntry(entry);
-      flash('Material Synchronized');
+    try {
+      if (editMode) {
+        await updateRefineryEntry(editMode.id, entry);
+        flash('Material Updated');
+      } else {
+        await addRefineryEntry(entry);
+        flash('Material Synchronized');
+      }
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
     }
-    await reload(); closeForm();
   };
 
   const delRef = async (id) => {
@@ -131,14 +143,18 @@ export default function AdminModule() {
   // ── Resource CRUD ──
   const saveResource = async () => {
     if (!form.name || !form.parentBody) return flash('Field Error: Name & Body required');
-    if (editMode) {
-      await updateResourceEntry(editMode.id, form);
-      flash('Resource Updated');
-    } else {
-      await addResourceEntry(form);
-      flash('Resource Synchronized');
+    try {
+      if (editMode) {
+        await updateResourceEntry(editMode.id, form);
+        flash('Resource Updated');
+      } else {
+        await addResourceEntry(form);
+        flash('Resource Synchronized');
+      }
+      await reload(); closeForm();
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
     }
-    await reload(); closeForm();
   };
 
   const delRes = async (id) => {

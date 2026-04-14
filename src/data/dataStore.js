@@ -92,7 +92,9 @@ export async function addRefineryEntry(entry) {
     headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
-  return await res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Server rejected synchronization');
+  return data;
 }
 
 export async function deleteRefineryEntry(id) {
@@ -165,7 +167,9 @@ export async function addResourceEntry(entry) {
     headers: getAuthHeaders(),
     body: JSON.stringify(entry)
   });
-  return await res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Server rejected synchronization');
+  return data;
 }
 
 export async function deleteResourceEntry(id) {

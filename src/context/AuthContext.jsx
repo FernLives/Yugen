@@ -10,7 +10,16 @@ export function AuthProvider({ children }) {
   // Restore session on mount
   useEffect(() => {
     const saved = getSession();
-    if (saved) setUser(saved);
+    // 🛡️ SECURITY MIGRATION: If session exists but has no token, force re-login
+    if (saved) {
+      if (saved.token) {
+        setUser(saved);
+      } else {
+        console.warn('⚠️ Legacy session detected (no token). Clearing for security...');
+        clearSession();
+        setUser(null);
+      }
+    }
     setLoading(false);
   }, []);
 
