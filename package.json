@@ -1,8 +1,13 @@
 {
   "name": "untitiled",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FernLives/Yugen.git"
+  },
+  "homepage": "https://github.com/FernLives/Yugen#readme",
   "scripts": {
     "start": "node server/server.js",
     "dev": "vite",

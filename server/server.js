@@ -16,7 +16,11 @@ dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback_secret_not_for_production';
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error('❌ CRITICAL: JWT_SECRET environment variable is not defined.');
+  process.exit(1);
+}
 
 app.use(cors());
 app.use(express.json());

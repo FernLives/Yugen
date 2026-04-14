@@ -26,8 +26,11 @@ dist-ssr
 # Security and Database
 .env
 .env.*
-# server/auxnet.db
+server/auxnet.db
+*.db
+*.sqlite
 backups/
-build_err.txt
 backup/
+build_err.txt
 IDENTITY.md
+HOSTING.md
