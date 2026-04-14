@@ -49,9 +49,14 @@ export default function AdminModule() {
 
   useEffect(() => {
     const load = async () => {
-      setIsLoading(true);
-      await reload();
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        await reload();
+      } catch (err) {
+        console.error('NOC Sync Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, []);

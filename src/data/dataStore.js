@@ -36,12 +36,20 @@ function getAuthHeaders() {
   return headers;
 }
 
-// ── Legacy Cleanup ──
-export function cleanLegacyStorage() {
-  localStorage.removeItem('yugen_refinery_data');
-  localStorage.removeItem('yugen_resource_data');
-  localStorage.removeItem('yugen_stations_data');
-  localStorage.removeItem('yugen_personnel_data');
+// ── Internal Fetch Wrapper ──
+async function fetchApi(endpoint, options = {}) {
+  const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`;
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options.headers || {})
+    }
+  });
+  if (res.status === 204) return true;
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'Uplink synchronization failed');
+  return data;
 }
 
 // ── Stations Data ──

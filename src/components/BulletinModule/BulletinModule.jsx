@@ -10,11 +10,16 @@ export default function BulletinModule() {
 
   useEffect(() => {
     const load = async () => {
-      setIsLoading(true);
-      const [bData, rData] = await Promise.all([getBulletins(), getRoadmap()]);
-      setBulletins(bData);
-      setRoadmap(rData);
-      setIsLoading(false);
+      try {
+        setIsLoading(true);
+        const [bData, rData] = await Promise.all([getBulletins(), getRoadmap()]);
+        setBulletins(Array.isArray(bData) ? bData : []);
+        setRoadmap(Array.isArray(rData) ? rData : []);
+      } catch (err) {
+        console.error('Bulletin Sync Error:', err);
+      } finally {
+        setIsLoading(false);
+      }
     };
     load();
   }, []);
