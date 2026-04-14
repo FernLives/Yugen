@@ -81,134 +81,10 @@ app.get('/api/stations', (req, res) => {
   res.json(data);
 });
 
-app.post('/api/stations', authenticateToken, isAdmin, (req, res) => {
-  const { name, system } = req.body;
-  const stmt = db.prepare('INSERT OR IGNORE INTO refinery_stations (name, system) VALUES (?, ?)');
-  stmt.run(name, system || 'Stanton');
-  res.status(201).json({ name, system });
-});
-
-app.delete('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
-  const { name } = req.params;
-  db.prepare('DELETE FROM refinery_data WHERE station = ?').run(name);
-  db.prepare('DELETE FROM refinery_stations WHERE name = ?').run(name);
-  res.sendStatus(204);
-});
-
-app.put('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
-  const { name } = req.params;
-  const { newName, system } = req.body;
-  if (newName && newName !== name) {
-    db.prepare('UPDATE refinery_data SET station = ? WHERE station = ?').run(newName, name);
-    db.prepare('UPDATE refinery_stations SET name = ?, system = ? WHERE name = ?').run(newName, system || 'Stanton', name);
-    logBulletin('change', 'refinery', `Refinery hub signature updated: ${name} -> ${newName}`, req.user.username);
-  } else {
-    db.prepare('UPDATE refinery_stations SET system = ? WHERE name = ?').run(system || 'Stanton', name);
-    logBulletin('change', 'refinery', `Logistics protocol updated for ${name}`, req.user.username);
-  }
-  res.json({ name: newName || name, system });
-});
-
-// 2. Refinery Data
-app.get('/api/refinery', (req, res) => {
-  const { system } = req.query;
-  const stmt = system 
-    ? db.prepare('SELECT * FROM refinery_data WHERE system = ?')
-    : db.prepare('SELECT * FROM refinery_data');
-  const data = system ? stmt.all(system) : stmt.all();
-  res.json(data);
-});
-
-app.post('/api/refinery', authenticateToken, isAdmin, (req, res) => {
-  const { station, ore, modifier, system } = req.body;
-  const id = 'ref-' + Date.now().toString(36);
-  const stmt = db.prepare('INSERT INTO refinery_data (id, station, ore, modifier, system) VALUES (?, ?, ?, ?, ?)');
-  stmt.run(id, station, ore, modifier, system || 'Stanton');
-  res.status(201).json({ id, station, ore, modifier, system });
-});
-
-app.delete('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
-  const { id } = req.params;
-  db.prepare('DELETE FROM refinery_data WHERE id = ?').run(id);
-  res.sendStatus(204);
-});
-
-app.put('/api/refinery/:id', authenticateToken, isAdmin, (req, res) => {
-  const { id } = req.params;
-  const { station, ore, modifier, system } = req.body;
-  db.prepare('UPDATE refinery_data SET station = ?, ore = ?, modifier = ?, system = ? WHERE id = ?')
-    .run(station, ore, modifier, system || 'Stanton', id);
-  logBulletin('change', 'refinery', `Modified material yields for ${ore} at ${station}`, req.user.username);
-  res.json({ id, station, ore, modifier, system });
-});
-
-// 2a. Resource Bodies
-app.get('/api/bodies', (req, res) => {
-  const data = db.prepare('SELECT * FROM resource_bodies').all();
-  res.json(data);
-});
-
-app.post('/api/bodies', authenticateToken, isAdmin, (req, res) => {
-  const { name, system } = req.body;
-  db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)').run(name, system || 'Stanton');
-  res.status(201).json({ name, system });
-});
-
-app.put('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
-  const { name } = req.params;
-  const { newName, system } = req.body;
-  if (newName && newName !== name) {
-    db.prepare('UPDATE resource_data SET parentBody=? WHERE parentBody=?').run(newName, name);
-    db.prepare('UPDATE resource_bodies SET name=?, system=? WHERE name=?').run(newName, system || 'Stanton', name);
-    logBulletin('change', 'resource', `Planetary body re-classified: ${name} -> ${newName}`, req.user.username);
-  } else {
-    db.prepare('UPDATE resource_bodies SET system=? WHERE name=?').run(system || 'Stanton', name);
-    logBulletin('change', 'resource', `Updated survey parameters for ${name}`, req.user.username);
-  }
-  res.json({ name: newName || name, system });
-});
-
-app.delete('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
-  const { name } = req.params;
-  db.prepare('DELETE FROM resource_bodies WHERE name = ?').run(name);
-  db.prepare('DELETE FROM resource_data WHERE parentBody = ?').run(name);
-  res.sendStatus(204);
-});
-
-// 2b. Resource Data
-app.get('/api/resources', (req, res) => {
-  const { system } = req.query;
-  const stmt = system 
-    ? db.prepare('SELECT * FROM resource_data WHERE system = ?')
-    : db.prepare('SELECT * FROM resource_data');
-  const data = (system ? stmt.all(system) : stmt.all()).map(d => ({
-    ...d,
-    methods: JSON.parse(d.methods)
-  }));
-  res.json(data);
-});
-
-app.post('/api/resources', authenticateToken, isAdmin, (req, res) => {
-  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
-  const id = 'res-' + Date.now().toString(36);
-  const stmt = db.prepare('INSERT INTO resource_data (id, name, type, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-  stmt.run(id, name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton');
-  res.status(201).json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
-});
-
-app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
-  const { id } = req.params;
-  db.prepare('DELETE FROM resource_data WHERE id = ?').run(id);
-  res.sendStatus(204);
-});
-
-app.put('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
-  const { id } = req.params;
-  const { name, type, parentBody, methods, rarity, yield: y, description, tips, system } = req.body;
-  db.prepare('UPDATE resource_data SET name=?, type=?, parentBody=?, methods=?, rarity=?, yield=?, description=?, tips=?, system=? WHERE id=?')
-    .run(name, type, parentBody, JSON.stringify(methods), rarity, y, description, tips, system || 'Stanton', id);
-  logBulletin('change', 'resource', `Updated intelligence report for ${name} at ${parentBody}`, req.user.username);
-  res.json({ id, name, type, parentBody, methods, rarity, yield: y, description, tips, system });
+// 3. Personnel Data
+export const getPersonnel = () => db.prepare('SELECT * FROM personnel_data').all();
+app.get('/api/personnel', (req, res) => {
+  res.json(getPersonnel());
 });
 
 // 3. Personnel Data
@@ -439,6 +315,34 @@ app.delete('/api/resources/:id', authenticateToken, isAdmin, (req, res) => {
   res.sendStatus(204);
 });
 
+app.put('/api/stations/:name', authenticateToken, isAdmin, (req, res) => {
+  const { name } = req.params;
+  const { newName, system } = req.body;
+  if (newName && newName !== name) {
+    db.prepare('UPDATE refinery_data SET station = ? WHERE station = ?').run(newName, name);
+    db.prepare('UPDATE refinery_stations SET name = ?, system = ? WHERE name = ?').run(newName, system || 'Stanton', name);
+    logBulletin('change', 'refinery', `Refinery hub signature updated: ${name} -> ${newName}`, req.user.username);
+  } else {
+    db.prepare('UPDATE refinery_stations SET system = ? WHERE name = ?').run(system || 'Stanton', name);
+    logBulletin('change', 'refinery', `Logistics protocol updated for ${name}`, req.user.username);
+  }
+  res.json({ name: newName || name, system });
+});
+
+app.put('/api/bodies/:name', authenticateToken, isAdmin, (req, res) => {
+  const { name } = req.params;
+  const { newName, system } = req.body;
+  if (newName && newName !== name) {
+    db.prepare('UPDATE resource_data SET parentBody=? WHERE parentBody=?').run(newName, name);
+    db.prepare('UPDATE resource_bodies SET name=?, system=? WHERE name=?').run(newName, system || 'Stanton', name);
+    logBulletin('change', 'resource', `Planetary body re-classified: ${name} -> ${newName}`, req.user.username);
+  } else {
+    db.prepare('UPDATE resource_bodies SET system=? WHERE name=?').run(system || 'Stanton', name);
+    logBulletin('change', 'resource', `Updated survey parameters for ${name}`, req.user.username);
+  }
+  res.json({ name: newName || name, system });
+});
+
 // ── 8. Roadmap Endpoints ──
 
 app.get('/api/roadmap', (req, res) => {
@@ -451,6 +355,7 @@ app.post('/api/roadmap', authenticateToken, isAdmin, (req, res) => {
   const id = 'rdm-' + Date.now().toString(36);
   db.prepare('INSERT INTO roadmap (id, title, description, status, category, timestamp) VALUES (?, ?, ?, ?, ?, ?)')
     .run(id, title, description, status || 'PLANNED', category || 'general', new Date().toISOString());
+  logBulletin('change', 'system', `New studio milestone registered: ${title}`, req.user.username);
   res.status(201).json({ id, title, description, status, category });
 });
 
@@ -458,10 +363,15 @@ app.put('/api/roadmap/:id', authenticateToken, isAdmin, (req, res) => {
   const { title, description, status, category } = req.body;
   db.prepare('UPDATE roadmap SET title=?, description=?, status=?, category=? WHERE id=?')
     .run(title, description, status, category, req.params.id);
+  logBulletin('change', 'system', `Milestone updated: ${title} (${status})`, req.user.username);
   res.json({ id: req.params.id, title, description, status, category });
 });
 
 app.delete('/api/roadmap/:id', authenticateToken, isAdmin, (req, res) => {
+  const row = db.prepare('SELECT title FROM roadmap WHERE id = ?').get(req.params.id);
+  if (row) {
+    logBulletin('change', 'system', `Milestone retracted: ${row.title}`, req.user.username);
+  }
   db.prepare('DELETE FROM roadmap WHERE id = ?').run(req.params.id);
   res.sendStatus(204);
 });

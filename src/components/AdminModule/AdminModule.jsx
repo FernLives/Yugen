@@ -440,7 +440,13 @@ export default function AdminModule() {
             <div className="noc-form-overlay" onClick={closeForm}>
               <div className="noc-form fade-in" onClick={e => e.stopPropagation()}>
                 <div className="form-header">
-                  <h3>{editMode ? 'Edit' : 'New'} {addingType === 'station' ? 'Station' : addingType === 'material' ? 'Material' : addingType === 'body' ? 'Body' : 'Resource'}</h3>
+                  <h3>{editMode ? 'Edit' : 'New'} {
+                    addingType === 'station' ? 'Station' : 
+                    addingType === 'material' ? 'Material' : 
+                    addingType === 'body' ? 'Body' : 
+                    addingType === 'roadmap' ? 'Milestone' :
+                    addingType === 'bulletin' ? 'Announcement' : 'Resource'
+                  }</h3>
                   <button className="close-btn" onClick={closeForm}>✕</button>
                 </div>
                 <div className="form-grid">
