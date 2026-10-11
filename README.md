@@ -26,7 +26,7 @@ A community-focused broadcast hub. Live system logs, automated change reports, a
 ---
 
 ## ◈ TECHNOLOGY STACK
-*   **Frontend**: React + Vite (Custom Premium Design System)
+*   **Frontend**: React 19 + Vite, motion (animation), lucide-react (icons), self-hosted Geist / Geist Mono / Instrument Serif via Fontsource — a bespoke "Midnight Ink" design system (`src/index.css`) with glass surfaces, cursor spotlights, 3D tilt, an orbital hero, a ⌘K command palette and a staged boot sequence
 *   **Backend**: Node.js + Express (High-Performance REST Architecture)
 *   **Persistence**: SQLite (Local, Lightweight, and Portable)
 *   **Design**: Vanilla CSS with deep Glassmorphism and Silk-Gold accents.
@@ -51,14 +51,50 @@ cp .env.example .env
 
 ### 3. LAUNCH UPLINK
 ```bash
-# Start both Frontend & Backend concurrently
+# Start both Frontend (Vite, :5173) & Backend (Express, :3001) concurrently
 npm run dev:full
+```
+Vite proxies `/api` to the backend, so open http://localhost:5173.
+
+### 4. SHIP IT
+```bash
+npm run build   # bundles the frontend into dist/
+npm start       # Express serves the API *and* dist/ on $PORT
 ```
 
 ---
 
+## ◈ SCRIPTS
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Vite dev server only |
+| `npm run server` | API with auto-reload (nodemon) |
+| `npm run dev:full` | Both of the above |
+| `npm run build` | Production frontend build |
+| `npm start` | Production server (API + static frontend) |
+| `npm run lint` | ESLint |
+| `npm test` | API integration tests (boots the real server against a throw-away database) |
+| `npm run check` | lint + test + build — what CI runs |
+
+## ◈ CONFIGURATION
+All settings are environment variables — see [`.env.example`](.env.example).
+
+| Variable | Purpose |
+| --- | --- |
+| `JWT_SECRET` | **Required.** Signs login tokens |
+| `PORT` | Listen port (default `3001`) |
+| `DB_PATH` | SQLite file location — use a persistent volume in production |
+| `TRUST_PROXY` | Hop count when behind a proxy, so rate limits see real client IPs |
+| `CORS_ORIGIN` | Comma-separated cross-origin allow-list (unset = same-origin setup) |
+
+> **First administrator:** the very first account registered on an empty database becomes the admin. Register it yourself right after deploying a fresh instance.
+
+---
+
 ## ◈ SECURITY NOTICE
-The project uses JSON Web Tokens (JWT) and BCrypt for secure administrative operations. Ensure your `JWT_SECRET` is never shared and that your `auxnet.db` remains excluded from public version control.
+* Passwords are hashed with bcrypt; sessions are 7-day JWTs. Roles are re-checked against the database on every request, so demoting an account takes effect immediately.
+* Sign-in and registration are rate limited, every write endpoint validates its input, and the last administrator can't be demoted.
+* Keep `JWT_SECRET` private and keep your live `auxnet.db` out of public version control.
 
 ---
 

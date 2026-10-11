@@ -1,19 +1,23 @@
 import './LoadingState.css';
 
-export default function LoadingState({ message = "Establishing Data Uplink" }) {
+/** Elegant skeleton + caption. `variant` shapes the placeholder. */
+export default function LoadingState({ message = 'Establishing data uplink', variant = 'grid' }) {
   return (
-    <div className="loading-container fade-in">
-      <div className="uplink-animation">
-        <div className="uplink-bar" />
+    <div className="ls" role="status" aria-live="polite">
+      <div className="ls-head">
+        <div className="skeleton ls-eyebrow" />
+        <div className="skeleton ls-title" />
+        <div className="skeleton ls-sub" />
       </div>
-      <div className="uplink-status">
-        <span className="status-text">{message}</span>
-        <div className="scanning-indicator">
-          <div className="scan-dot" />
-          <div className="scan-dot" />
-          <div className="scan-dot" />
+      {variant === 'grid' && (
+        <div className="ls-grid">
+          {Array.from({ length: 8 }).map((_, i) => <div key={i} className="skeleton ls-cell" style={{ animationDelay: `${i * 90}ms` }} />)}
         </div>
-      </div>
+      )}
+      {variant === 'split' && (
+        <div className="ls-split"><div className="skeleton ls-side" /><div className="skeleton ls-main" /></div>
+      )}
+      <div className="ls-caption"><span className="live" /> {message}</div>
     </div>
   );
 }

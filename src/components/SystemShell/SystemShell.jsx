@@ -1,224 +1,199 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
+import { Compass, Newspaper, Flame, Orbit, ShieldCheck, Search, ChevronDown, UserRound, LogOut, Check, Command } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { getUniverseTime, generateSystemId } from '../../data/dataStore';
+import { useClock, useClickOutside } from '../../lib/hooks';
+import { universeClock } from '../../lib/format';
 import AuthModal from '../AuthModal/AuthModal';
+import Ambient from '../ui/Ambient';
+import Avatar from '../ui/Avatar';
+import Logo from '../ui/Logo';
+import CommandPalette from '../ui/CommandPalette';
 import './SystemShell.css';
 
-const systems = ['Stanton', 'Pyro', 'Nyx'];
+const SYSTEMS = ['Stanton', 'Pyro', 'Nyx'];
 
-export default function SystemShell({ 
-  activeModule, 
-  activeSystem, onSystemChange,
-  children 
-}) {
+// Route → ambient tint (RGB 0–1)
+const TINTS = {
+  info: [0.91, 0.77, 0.48],
+  bulletin: [0.57, 0.54, 0.97],
+  refinery: [0.94, 0.66, 0.34],
+  resources: [0.37, 0.84, 0.76],
+  admin: [0.42, 0.71, 1.0],
+  profile: [0.93, 0.48, 0.56],
+};
+
+const NAV_ICONS = { info: Compass, bulletin: Newspaper, refinery: Flame, resources: Orbit, admin: ShieldCheck };
+
+export default function SystemShell({ activeModule, activeSystem, onSystemChange, children }) {
   const navigate = useNavigate();
   const { user, isAdmin, logout } = useAuth();
-  const [time, setTime] = useState(getUniverseTime());
-  const [nodeId] = useState(() => generateSystemId());
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [cmdInput, setCmdInput] = useState('');
-  const [authOpen, setAuthOpen] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const avatarRef = useRef(null);
+  const now = useClock(1000);
+  const clock = universeClock(now);
 
-  // Build modules dynamically based on role
-  const modules = [
-    { id: 'info', label: 'Info', shortcut: '/info' },
+  const [cmdOpen, setCmdOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [userMenu, setUserMenu] = useState(false);
+  const [sysMenu, setSysMenu] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const userRef = useRef(null);
+  const sysRef = useRef(null);
+
+  useClickOutside(userRef, () => setUserMenu(false), userMenu);
+  useClickOutside(sysRef, () => setSysMenu(false), sysMenu);
+
+  const modules = useMemo(() => [
+    { id: 'info', label: 'Overview', shortcut: '/info' },
     { id: 'bulletin', label: 'Bulletin', shortcut: '/bulletin' },
     { id: 'refinery', label: 'Refinery', shortcut: '/refinery' },
     { id: 'resources', label: 'Resources', shortcut: '/resources' },
-    ...(isAdmin ? [{ id: 'admin', label: 'Admin', shortcut: '/admin' }] : []),
-  ];
+    ...(isAdmin ? [{ id: 'admin', label: 'Console', shortcut: '/admin' }] : []),
+  ], [isAdmin]);
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(getUniverseTime()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setCmdOpen(o => !o);
-      }
-      if (e.key === 'Escape') { setCmdOpen(false); setUserMenuOpen(false); }
+    const onKey = (e) => {
+      if ((e.key === 'k' || e.key === 'K') && (e.metaKey || e.ctrlKey)) { e.preventDefault(); setCmdOpen((o) => !o); }
+      else if (e.key === '/' && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) && !document.activeElement?.isContentEditable) { e.preventDefault(); setCmdOpen(true); }
+      else if (e.key === 'Escape') { setUserMenu(false); setSysMenu(false); }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
-  }, []);
-
-  // Draw mini avatar
-  const drawMiniAvatar = useCallback((canvas, seed) => {
-    if (!canvas || !seed) return;
-    const ctx = canvas.getContext('2d');
-    const size = 28;
-    canvas.width = size;
-    canvas.height = size;
-    const nums = [];
-    for (let i = 0; i < seed.length; i += 2) {
-      nums.push(parseInt(seed.substr(i, 2), 16) || 0);
-    }
-    const hue = nums[0] * 1.4;
-    const sat = 30 + (nums[1] % 30);
-    ctx.fillStyle = `hsl(${hue}, ${sat}%, 15%)`;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-    // Simple hex pattern
-    const cx = size / 2, cy = size / 2;
-    for (let r = -1; r <= 1; r++) {
-      for (let c = -1; c <= 1; c++) {
-        const idx = (Math.abs(r * 3 + c) + 2) % nums.length;
-        if (nums[idx] % 3 === 0) continue;
-        const x = cx + c * 7 + (r % 2 ? 3.5 : 0);
-        const y = cy + r * 6;
-        ctx.fillStyle = `hsla(${hue + (nums[idx] % 40) - 20}, ${sat + 10}%, ${45 + nums[idx] % 20}%, 0.5)`;
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = (Math.PI / 3) * i - Math.PI / 6;
-          const px = x + 3.5 * Math.cos(a);
-          const py = y + 3.5 * Math.sin(a);
-          i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
-        }
-        ctx.closePath();
-        ctx.fill();
-      }
-    }
-    ctx.strokeStyle = `hsla(${hue}, ${sat}%, 50%, 0.3)`;
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.arc(cx, cy, size / 2 - 1, 0, Math.PI * 2);
-    ctx.stroke();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   useEffect(() => {
-    if (user?.avatarSeed && avatarRef.current) {
-      drawMiniAvatar(avatarRef.current, user.avatarSeed);
-    }
-  }, [user, drawMiniAvatar]);
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
-  const handleCmd = (e) => {
-    if (e.key === 'Enter' && cmdInput.trim()) {
-      const cmd = cmdInput.trim().toLowerCase().replace('/', '');
-      const mod = modules.find(m => m.id === cmd);
-      if (mod) navigate(mod.shortcut);
-      setCmdInput('');
-      setCmdOpen(false);
-    }
-  };
+  const tint = TINTS[activeModule] || TINTS.info;
+  const showSystem = ['refinery', 'resources'].includes(activeModule);
 
   return (
     <div className="shell">
-      {/* ── Top Navigation ── */}
-      <header className="shell-nav">
-        <div className="nav-left">
-          <div className="nav-wordmark">
-            <span className="wordmark-symbol">◆</span>
-            <span className="wordmark-text">YŪGEN</span>
-          </div>
-          <span className="nav-divider" />
-          <div className="system-selector">
-            {systems.map(sys => (
-              <button
-                key={sys}
-                className={`system-link ${activeSystem === sys ? 'active' : ''}`}
-                onClick={() => onSystemChange(sys)}
-              >
-                {sys.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        </div>
+      <a className="skip-link" href="#main">Skip to content</a>
+      <Ambient tint={tint} />
+      <div className="grain" aria-hidden="true" />
 
-        <nav className="nav-modules">
-          {modules.map(mod => (
-            <button
-              key={mod.id}
-              className={`nav-module ${activeModule === mod.id ? 'active' : ''}`}
-              onClick={() => navigate(mod.shortcut)}
-            >
-              {mod.label}
-              {activeModule === mod.id && <span className="nav-module-indicator" />}
+      <header className={`topbar ${scrolled ? 'scrolled' : ''}`}>
+        <div className="topbar-inner">
+          <Link to="/info" className="brand" aria-label="Yūgen — home">
+            <span className="brand-mark"><Logo size={26} id="nav" /></span>
+            <span className="brand-word">Yūgen</span>
+          </Link>
+
+          <div className={`sys-switch ${showSystem ? '' : 'idle'}`} ref={sysRef}>
+            <button className="sys-trigger" onClick={() => setSysMenu((o) => !o)} aria-haspopup="listbox" aria-expanded={sysMenu} title="Change star system">
+              <span className="sys-dot" />
+              <span className="sys-name">{activeSystem}</span>
+              <ChevronDown size={14} className={sysMenu ? 'flip' : ''} />
             </button>
-          ))}
-        </nav>
-
-        <div className="nav-right">
-          <span className="nav-time">{time}</span>
-          <button className="nav-cmd-trigger" onClick={() => setCmdOpen(!cmdOpen)}>
-            <span className="cmd-key">⌘K</span>
-          </button>
-
-          {/* User area */}
-          {user ? (
-            <div className="nav-user-area">
-              <button className="nav-user-btn" onClick={() => setUserMenuOpen(!userMenuOpen)}>
-                <canvas ref={avatarRef} className="nav-avatar" />
-                <span className="nav-callsign">{user.callsign}</span>
-              </button>
-
-              {userMenuOpen && (
-                <div className="user-dropdown" onClick={() => setUserMenuOpen(false)}>
-                  <button className="dropdown-item" onClick={() => navigate(`/profile/${user.username}`)}>
-                    Profile
-                  </button>
-                  <button className="dropdown-item logout" onClick={logout}>
-                    Sign Out
-                  </button>
-                </div>
+            <AnimatePresence>
+              {sysMenu && (
+                <motion.ul
+                  className="menu glass"
+                  role="listbox"
+                  initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ type: 'spring', stiffness: 480, damping: 34 }}
+                >
+                  <li className="menu-label">Star system</li>
+                  {SYSTEMS.map((s, i) => (
+                    <li key={s}>
+                      <button role="option" aria-selected={s === activeSystem} className={`menu-item ${s === activeSystem ? 'on' : ''}`} onClick={() => { onSystemChange(s); setSysMenu(false); }}>
+                        <span className="menu-idx">0{i + 1}</span>
+                        <span>{s}</span>
+                        {s === activeSystem && <Check size={14} className="menu-check" />}
+                      </button>
+                    </li>
+                  ))}
+                </motion.ul>
               )}
+            </AnimatePresence>
+          </div>
+
+          <nav className="dock glass" aria-label="Primary">
+            {modules.map((m) => {
+              const Icon = NAV_ICONS[m.id];
+              const on = activeModule === m.id;
+              return (
+                <button key={m.id} className={`dock-item ${on ? 'on' : ''}`} onClick={() => navigate(m.shortcut)} aria-current={on ? 'page' : undefined}>
+                  {on && <motion.span layoutId="dock-pill" className="dock-pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                  <Icon size={16} className="dock-ico" />
+                  <span className="dock-label">{m.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+
+          <div className="topbar-right">
+            <div className="clock" title="Standard Earth Time, universe-adjusted" aria-label="Universe clock">
+              <span className="clock-date">{clock.date}</span>
+              <span className="clock-time num">{clock.time}</span>
             </div>
-          ) : (
-            <button className="nav-signin-btn" onClick={() => setAuthOpen(true)}>
-              SIGN IN
+
+            <button className="search-pill" onClick={() => setCmdOpen(true)} aria-label="Open command palette">
+              <Search size={15} />
+              <span className="search-text">Search</span>
+              <span className="kbd"><Command size={10} />K</span>
             </button>
-          )}
+
+            {user ? (
+              <div className="user-area" ref={userRef}>
+                <button className="user-btn" onClick={() => setUserMenu((o) => !o)} aria-haspopup="menu" aria-expanded={userMenu}>
+                  <Avatar seed={user.avatarSeed} size={30} title={user.callsign} />
+                  <span className="user-callsign">{user.callsign}</span>
+                  <ChevronDown size={13} className={`user-chev ${userMenu ? 'flip' : ''}`} />
+                </button>
+                <AnimatePresence>
+                  {userMenu && (
+                    <motion.div
+                      className="menu glass right" role="menu"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                      transition={{ type: 'spring', stiffness: 480, damping: 34 }}
+                    >
+                      <div className="menu-user">
+                        <b>{user.callsign}</b>
+                        <span>@{user.username}</span>
+                      </div>
+                      <button role="menuitem" className="menu-item" onClick={() => { navigate(`/profile/${user.username}`); setUserMenu(false); }}><UserRound size={15} /> Profile</button>
+                      <button role="menuitem" className="menu-item danger" onClick={() => { logout(); setUserMenu(false); }}><LogOut size={15} /> Sign out</button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <button className="btn primary sm signin" onClick={() => setAuthOpen(true)}>Sign in</button>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* ── Content ── */}
-      <main className="shell-content">
-        <div className="content-inner">
-          {children}
-        </div>
-      </main>
+      <main id="main" className="shell-main">{children}</main>
 
-      {/* ── Command Palette ── */}
-      {cmdOpen && (
-        <div className="cmd-overlay" onClick={() => setCmdOpen(false)}>
-          <div className="cmd-palette" onClick={e => e.stopPropagation()}>
-            <div className="cmd-input-wrapper">
-              <span className="cmd-chevron">›</span>
-              <input
-                type="text"
-                className="cmd-input"
-                value={cmdInput}
-                onChange={e => setCmdInput(e.target.value)}
-                onKeyDown={handleCmd}
-                placeholder="Navigate to module..."
-                autoFocus
-                spellCheck={false}
-              />
-            </div>
-            <div className="cmd-options">
-              {modules.map(mod => (
-                <button
-                  key={mod.id}
-                  className={`cmd-option ${activeModule === mod.id ? 'current' : ''}`}
-                  onClick={() => { navigate(mod.shortcut); setCmdOpen(false); }}
-                >
-                  <span className="cmd-option-label">{mod.label}</span>
-                  <span className="cmd-option-shortcut">{mod.shortcut}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+      <footer className="shell-foot">
+        <div className="shell-foot-inner">
+          <span className="foot-brand"><Logo size={16} id="ft" /> Yūgen Intelligence</span>
+          <span className="foot-mid">A civilian-first suite for the frontier. Built with care by FernLives.</span>
+          <span className="foot-end"><span className="live" /> All systems nominal</span>
         </div>
-      )}
+      </footer>
 
-      {/* ── Auth Modal ── */}
-      {authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}
+      <CommandPalette
+        open={cmdOpen}
+        onClose={() => setCmdOpen(false)}
+        modules={modules}
+        systems={SYSTEMS}
+        activeSystem={activeSystem}
+        onSystemChange={onSystemChange}
+        navigate={navigate}
+        user={user}
+        onSignIn={() => setAuthOpen(true)}
+        onSignOut={logout}
+      />
+
+      <AnimatePresence>{authOpen && <AuthModal onClose={() => setAuthOpen(false)} />}</AnimatePresence>
     </div>
   );
 }

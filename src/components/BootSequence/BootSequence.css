@@ -1,135 +1,16 @@
-/* ═══════════════════════════════════════════════════
-   BOOT INTRO — Cinematic minimal entrance
-   ═══════════════════════════════════════════════════ */
-
-.boot-intro {
-  position: fixed;
-  inset: 0;
-  background: var(--bg-deep);
-  z-index: 10000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-  overflow: hidden;
-  cursor: pointer;
+.boot { position: fixed; inset: 0; z-index: 500; display: grid; place-items: center; background: var(--ink-0); overflow: hidden; cursor: pointer; }
+.boot .ambient { z-index: 0; }
+.boot-rings { position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none; }
+.boot-ring { position: absolute; width: 360px; height: 360px; border-radius: 50%; border: 1px solid var(--gold-a3); }
+.boot-center { position: relative; z-index: 2; display: grid; justify-items: center; gap: 22px; padding: 24px; }
+.boot-logo { filter: drop-shadow(0 0 30px rgba(233, 196, 122, 0.35)); }
+.boot-word {
+  display: flex; font-family: var(--font-serif); font-weight: 400; font-size: clamp(56px, 11vw, 120px); line-height: 1; letter-spacing: -0.01em; color: var(--fg-0);
 }
-
-.boot-intro.boot-out {
-  opacity: 0;
-  transform: scale(1.01) translateY(-4px);
-}
-
-/* Elegant studio atmosphere */
-.boot-glow {
-  position: absolute;
-  width: 600px;
-  height: 600px;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--accent-bg) 0%, transparent 60%);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: 0.4;
-}
-
-/* ── Center stack ── */
-.boot-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-  z-index: 2;
-}
-
-.boot-symbol {
-  opacity: 0;
-  transform: scale(0.9) translateY(10px);
-  transition: opacity 1.2s var(--ease-out), transform 1.5s var(--ease-out);
-}
-
-.boot-symbol.visible {
-  opacity: 1;
-  transform: scale(1) translateY(0);
-}
-
-.boot-diamond {
-  width: 44px;
-  height: 44px;
-}
-
-.boot-diamond circle {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.2;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 0;
-}
-
-/* ── Wordmark ── */
-.boot-wordmark {
-  font-family: var(--font-heading);
-  font-size: 42px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  color: var(--text-bright);
-  opacity: 0;
-  transform: translateY(16px);
-  transition: opacity 1.2s var(--ease-out), transform 1.2s var(--ease-out);
-}
-
-.boot-wordmark.visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* ── Expanding line ── */
-.boot-line-expand {
-  width: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  transition: width 1.5s var(--ease-out);
-  opacity: 0.4;
-}
-
-.boot-line-expand.visible {
-  width: 300px;
-}
-
-/* ── Typed subtitle ── */
-.boot-subtitle {
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text-secondary);
-  min-height: 20px;
-  opacity: 0;
-  transition: opacity 0.8s var(--ease-out);
-}
-
-.boot-subtitle.visible {
-  opacity: 1;
-}
-
-/* Caret removed for cleaner architecture */
-
-/* ── Skip hint ── */
-.boot-skip {
-  position: absolute;
-  bottom: 80px;
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-ghost);
-  opacity: 0;
-  transition: opacity 1.5s var(--ease-out);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.boot-skip.visible {
-  opacity: 0.6;
-}
+.boot-word span { display: inline-block; }
+.boot-tag { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; color: var(--fg-3); text-align: center; }
+.boot-meter { width: min(320px, 74vw); margin-top: 26px; display: grid; gap: 12px; }
+.boot-bar { height: 2px; border-radius: 2px; background: var(--line-2); overflow: hidden; }
+.boot-bar span { display: block; height: 100%; width: 100%; transform-origin: left; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); box-shadow: 0 0 14px var(--gold); }
+.boot-status { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
+.boot-skip { position: absolute; bottom: 36px; z-index: 2; font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-4); }

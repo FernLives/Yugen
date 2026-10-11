@@ -1,88 +1,58 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'motion/react';
+import { ShieldAlert, Wrench, Radar, ArrowRight } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { getNetworkStatus } from '../../data/dataStore';
 import './NetworkGuard.css';
 
+const COPY = {
+  RESTRICTED: { icon: ShieldAlert, title: 'Access restricted', tone: 'neg', body: 'This module has been suspended by security protocol. Contact network administration for clearance.' },
+  MAINTENANCE: { icon: Wrench, title: 'Synchronisation in progress', tone: 'amber', body: 'We are optimising this module to keep the database consistent. It will be back shortly.' },
+  COLLECTING: { icon: Radar, title: 'Active data harvest', tone: 'teal', body: 'Passive data collection is running. Interaction is paused to protect ingestion stability.' },
+};
+
 export default function NetworkGuard({ moduleId, children }) {
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [status, setStatus] = useState(null);
-  const [isBypassed, setIsBypassed] = useState(false);
+  const [bypass, setBypass] = useState(false);
 
   useEffect(() => {
+    let live = true;
     const check = async () => {
-      const netStatus = await getNetworkStatus();
-      setStatus(netStatus[moduleId] || 'ACTIVE');
+      const net = await getNetworkStatus();
+      if (live) setStatus(net[moduleId] || 'ACTIVE');
     };
     check();
-    const interval = setInterval(check, 30000);
-    return () => clearInterval(interval);
+    const t = setInterval(check, 30000);
+    return () => { live = false; clearInterval(t); };
   }, [moduleId]);
 
-  if (!status || status === 'ACTIVE' || isBypassed) {
-    return <>{children}</>;
-  }
+  if (!status || status === 'ACTIVE' || bypass) return <>{children}</>;
 
-  const isRestricted = status === 'RESTRICTED';
-  const isMaintenance = status === 'MAINTENANCE';
-  const isCollecting = status === 'COLLECTING';
+  const c = COPY[status] || COPY.RESTRICTED;
+  const Icon = c.icon;
 
   return (
-    <div className={`network-guard-container ${status.toLowerCase()}`}>
-      <div className="guard-overlay">
-        <div className="guard-advisory-card">
-          <div className="nac-header">
-            <div className="nac-icon-box">
-              {isRestricted && <span className="nac-sig">✧</span>}
-              {isMaintenance && <span className="nac-sig">⎔</span>}
-              {isCollecting && <span className="nac-sig">◈</span>}
-            </div>
-            <div className="nac-title-area">
-              <h1 className="nac-title">
-                {isRestricted && 'SYSTEM ADVISORY'}
-                {isMaintenance && 'SYNCHRONIZATION IN PROGRESS'}
-                {isCollecting && 'ACTIVE DATA HARVEST'}
-              </h1>
-              <div className="nac-subtitle">YŪGEN NETWORK // {moduleId.toUpperCase()} MODULE</div>
-            </div>
-          </div>
-
-          <div className="nac-body">
-            <div className="nac-status-block">
-              <div className="nac-indicator-track"><div className="nac-indicator-fill"></div></div>
-              <div className="nac-status-pair">
-                <span className="nac-label">NODE STATUS:</span>
-                <span className="nac-value">{status}</span>
-              </div>
-            </div>
-            <div className="nac-message-wrap">
-              <p className="nac-text">
-                {isRestricted ? 'Uplink synchronization for this module has been suspended by localized security protocols. Please contact network administration for clearance inquiries.' :
-                 isMaintenance ? 'System optimization is currently in progress. Access to peripheral modules is temporarily restricted to ensure database integrity.' :
-                 'Passive data collection is currently active for this node. Direct interaction has been disabled to prioritize ingestion stability.'}
-              </p>
-            </div>
-          </div>
-
-          <div className="nac-actions">
-            {isAdmin && (
-              <button 
-                className="noc-btn primary" 
-                onClick={() => setIsBypassed(true)}
-              >
-                ADMIN OVERRIDE
-              </button>
-            )}
-            <p className="nac-note">
-              {isAdmin 
-                ? 'Administrative privileges detected. Override protocol available.' 
-                : 'Connection suspended. Please standby for synchronization.'}
-            </p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="guard-background-shield">
-        <div className="shield-content-mask">{children}</div>
+    <div className="ng">
+      <div className="ng-ghost" aria-hidden="true" inert>{children}</div>
+      <div className="ng-overlay">
+        <motion.div
+          className={`ng-card glass ${c.tone}`}
+          initial={{ opacity: 0, y: 24, scale: 0.97, filter: 'blur(8px)' }} animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          role="alert"
+        >
+          <div className="ng-icon"><Icon size={26} /></div>
+          <span className="eyebrow">Yūgen network · {moduleId} module</span>
+          <h1 className="serif">{c.title}</h1>
+          <p>{c.body}</p>
+          <div className="ng-status"><span className="live warn" /> Node status <b>{status}</b></div>
+          {isAdmin ? (
+            <button className="btn primary" onClick={() => setBypass(true)}>Admin override <ArrowRight /></button>
+          ) : (
+            <p className="ng-note">Please stand by — this page refreshes automatically.</p>
+          )}
+        </motion.div>
       </div>
     </div>
   );

@@ -1,96 +1,108 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
+import { motion } from 'motion/react';
+import Ambient from '../ui/Ambient';
+import Logo from '../ui/Logo';
 import './BootSequence.css';
 
-const SUBTITLE = 'ESTABLISHING CONNECTION...';
+const WORD = 'Yūgen'.split('');
+const STEPS = [
+  'Calibrating survey archive',
+  'Syncing refinery matrix',
+  'Verifying signal integrity',
+  'Uplink established',
+];
+const TOTAL_MS = 3200;
 
 export default function BootSequence({ onComplete }) {
-  const [phase, setPhase] = useState(0); // 0=hidden, 1=symbol, 2=wordmark, 3=line, 4=typing, 5=ready
-  const [typed, setTyped] = useState('');
-  const [fading, setFading] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [step, setStep] = useState(0);
+  const doneRef = useRef(false);
 
+  const finish = useCallback(() => {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    onComplete();
+  }, [onComplete]);
+
+  // Eased progress ticker
   useEffect(() => {
-    const timers = [
-      setTimeout(() => setPhase(1), 200),   // Symbol fades in
-      setTimeout(() => setPhase(2), 700),   // Wordmark appears
-      setTimeout(() => setPhase(3), 1200),  // Line expands
-      setTimeout(() => setPhase(4), 1600),  // Start typing subtitle
-      setTimeout(() => setPhase(5), 1600 + SUBTITLE.length * 40 + 400), // Ready
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  // Typewriter effect for subtitle
-  useEffect(() => {
-    if (phase !== 4) return;
-    let i = 0;
-    const interval = setInterval(() => {
-      i++;
-      setTyped(SUBTITLE.slice(0, i));
-      if (i >= SUBTITLE.length) {
-        clearInterval(interval);
-      }
-    }, 40);
-    return () => clearInterval(interval);
-  }, [phase === 4]);
-
-  const dismiss = useCallback(() => {
-    if (fading) return;
-    setFading(true);
-    setTimeout(() => onComplete(), 500);
-  }, [fading, onComplete]);
-
-  // Auto-dismiss after ready
-  useEffect(() => {
-    if (phase === 5) {
-      const t = setTimeout(dismiss, 1200);
-      return () => clearTimeout(t);
-    }
-  }, [phase, dismiss]);
-
-  // Click / key to skip
-  useEffect(() => {
-    const handler = () => dismiss();
-    window.addEventListener('keydown', handler);
-    window.addEventListener('click', handler);
-    return () => {
-      window.removeEventListener('keydown', handler);
-      window.removeEventListener('click', handler);
+    const start = performance.now();
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / TOTAL_MS);
+      const eased = 1 - Math.pow(1 - t, 2.2);
+      setProgress(eased);
+      setStep(Math.min(STEPS.length - 1, Math.floor(eased * STEPS.length * 0.999)));
+      if (t < 1) raf = requestAnimationFrame(tick);
+      else setTimeout(finish, 350);
     };
-  }, [dismiss]);
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [finish]);
+
+  // Any key / click skips
+  useEffect(() => {
+    const skip = () => finish();
+    window.addEventListener('keydown', skip);
+    window.addEventListener('pointerdown', skip);
+    return () => { window.removeEventListener('keydown', skip); window.removeEventListener('pointerdown', skip); };
+  }, [finish]);
 
   return (
-    <div className={`boot-intro ${fading ? 'boot-out' : ''}`}>
-      {/* Ambient glow */}
-      <div className="boot-glow" />
+    <motion.div
+      className="boot"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.06, filter: 'blur(14px)' }}
+      transition={{ duration: 0.7, ease: [0.65, 0, 0.35, 1] }}
+      role="status"
+      aria-live="polite"
+    >
+      <Ambient tint={[0.91, 0.77, 0.48]} />
+      <div className="boot-rings" aria-hidden="true">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="boot-ring"
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1 + i * 0.55, opacity: [0, 0.5 - i * 0.12, 0] }}
+            transition={{ duration: 3.4, delay: 0.5 + i * 0.5, ease: 'easeOut', repeat: Infinity }}
+          />
+        ))}
+      </div>
 
       <div className="boot-center">
-        {/* Diamond symbol */}
-        <div className={`boot-symbol ${phase >= 1 ? 'visible' : ''}`}>
-          <svg viewBox="0 0 40 40" className="boot-diamond">
-            <circle cx="20" cy="20" r="16" />
-            <circle cx="20" cy="20" r="8" opacity="0.5" />
-          </svg>
-        </div>
+        <div className="boot-logo"><Logo size={92} draw id="boot" /></div>
 
-        {/* Wordmark */}
-        <div className={`boot-wordmark ${phase >= 2 ? 'visible' : ''}`}>
-          YŪGEN
-        </div>
+        <h1 className="boot-word" aria-label="Yūgen">
+          {WORD.map((ch, i) => (
+            <motion.span
+              key={i}
+              aria-hidden="true"
+              initial={{ opacity: 0, y: 24, filter: 'blur(14px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ delay: 0.9 + i * 0.09, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {ch}
+            </motion.span>
+          ))}
+        </h1>
 
-        {/* Expanding line */}
-        <div className={`boot-line-expand ${phase >= 3 ? 'visible' : ''}`} />
+        <motion.p className="boot-tag" initial={{ opacity: 0, letterSpacing: '0.1em' }} animate={{ opacity: 1, letterSpacing: '0.34em' }} transition={{ delay: 1.5, duration: 1.4, ease: [0.22, 1, 0.36, 1] }}>
+          Unified intelligence · civilian frontier
+        </motion.p>
 
-        {/* Typed subtitle */}
-        <div className={`boot-subtitle ${phase >= 4 ? 'visible' : ''}`}>
-          {typed}
-          <span className="boot-caret">|</span>
-        </div>
+        <motion.div className="boot-meter" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.2 }}>
+          <div className="boot-bar"><span style={{ transform: `scaleX(${progress})` }} /></div>
+          <div className="boot-status">
+            <span>{STEPS[step]}</span>
+            <span className="num">{String(Math.round(progress * 100)).padStart(3, '0')}%</span>
+          </div>
+        </motion.div>
       </div>
 
-      {/* Skip hint */}
-      <div className={`boot-skip ${phase >= 5 ? 'visible' : ''}`}>
-        CLICK TO ENTER
-      </div>
-    </div>
+      <motion.div className="boot-skip" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 2 }}>
+        Press any key to skip
+      </motion.div>
+    </motion.div>
   );
 }

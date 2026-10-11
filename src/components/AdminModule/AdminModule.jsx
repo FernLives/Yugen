@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import {
   getRefineryData, addRefineryEntry, deleteRefineryEntry, updateRefineryEntry,
   getResourceData, addResourceEntry, deleteResourceEntry, updateResourceEntry,
@@ -13,6 +13,8 @@ import { useAuth } from '../../context/AuthContext';
 import LoadingState from '../common/LoadingState';
 import CustomSelect from '../common/CustomSelect';
 import CustomAutocomplete from '../common/CustomAutocomplete';
+import { Building2, Orbit, Gem, Users, Network, Megaphone, Milestone, DatabaseBackup, Plus, ChevronRight, TriangleAlert, X, ShieldCheck } from 'lucide-react';
+import { useScrollLock } from '../../lib/hooks';
 import './AdminModule.css';
 
 const SYSTEMS = ['Stanton', 'Pyro', 'Nyx'];
@@ -38,6 +40,7 @@ export default function AdminModule() {
 
   // Purge confirmation
   const [purgeConfirm, setPurgeConfirm] = useState(false);
+  const [confirmDlg, setConfirmDlg] = useState(null);
   const [purgeInput, setPurgeInput] = useState('');
 
   // NAC
@@ -61,7 +64,26 @@ export default function AdminModule() {
     load();
   }, []);
 
-  const flash = (msg) => { setStatus(msg); setTimeout(() => setStatus(''), 3000); };
+  const flashTimer = useRef(null);
+  useEffect(() => () => clearTimeout(flashTimer.current), []);
+  const flash = (msg) => {
+    clearTimeout(flashTimer.current);
+    setStatus(msg);
+    flashTimer.current = setTimeout(() => setStatus(''), 3500);
+  };
+
+  // Modal ergonomics: lock page scroll and let Escape dismiss whichever dialog is open.
+  useScrollLock(adding || purgeConfirm || !!confirmDlg);
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      setConfirmDlg(null);
+      setPurgeConfirm(false);
+      setAdding(false); setAddingType(null); setEditMode(null); setForm({});
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const reload = async () => {
     const [refs, res, stats, bodies, users, net, bul, rdm] = await Promise.all([
@@ -101,11 +123,23 @@ export default function AdminModule() {
     }
   };
 
-  const delBody = async (name) => {
-    await deleteBody(name);
-    await reload();
-    flash('Body Purged');
+  // Runs a mutation, refreshes data and surfaces failures instead of leaving the UI silently stale.
+  const guarded = async (fn, okMsg) => {
+    try {
+      await fn();
+      await reload();
+      if (okMsg) flash(okMsg);
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
+    }
   };
+  const ask = (title, body, action) => setConfirmDlg({ title, body, action });
+
+  const delBody = (name) => ask(
+    `Remove ${name}?`,
+    'This also deletes every resource surveyed on this body.',
+    () => guarded(() => deleteBody(name), 'Body Purged'),
+  );
   const saveStation = async () => {
     if (!form.name) return flash('Field Error: Name required');
     try {
@@ -122,11 +156,11 @@ export default function AdminModule() {
     }
   };
 
-  const delStat = async (name) => {
-    await deleteStation(name);
-    await reload();
-    flash('Hub Purged');
-  };
+  const delStat = (name) => ask(
+    `Remove ${name}?`,
+    'This also deletes every material row recorded for this station.',
+    () => guarded(() => deleteStation(name), 'Hub Purged'),
+  );
 
   // ── Refinery/Material CRUD ──
   const saveMaterial = async () => {
@@ -147,21 +181,18 @@ export default function AdminModule() {
     }
   };
 
-  const delRef = async (id) => {
-    await deleteRefineryEntry(id);
-    await reload();
-    flash('Entry Purged');
-  };
+  const delRef = (id) => guarded(() => deleteRefineryEntry(id), 'Entry Purged');
 
   // ── Resource CRUD ──
   const saveResource = async () => {
     if (!form.name || !form.parentBody) return flash('Field Error: Name & Body required');
+    const payload = { ...form, system: bodiesData.find(b => b.name === form.parentBody)?.system || form.system || 'Stanton', methods: form.methods || ['ship'] };
     try {
       if (editMode) {
-        await updateResourceEntry(editMode.id, form);
+        await updateResourceEntry(editMode.id, payload);
         flash('Resource Updated');
       } else {
-        await addResourceEntry(form);
+        await addResourceEntry(payload);
         flash('Resource Synchronized');
       }
       await reload(); closeForm();
@@ -170,11 +201,11 @@ export default function AdminModule() {
     }
   };
 
-  const delRes = async (id) => {
-    await deleteResourceEntry(id);
-    await reload();
-    flash('Entry Purged');
-  };
+  const delRes = (id) => ask(
+    'Delete this resource?',
+    'The survey entry will be removed from the public archive.',
+    () => guarded(() => deleteResourceEntry(id), 'Entry Purged'),
+  );
 
   const saveBulletin = async () => {
     if (!form.content) return flash('Field Error: Content required');
@@ -191,11 +222,7 @@ export default function AdminModule() {
     }
   };
 
-  const delBul = async (id) => {
-    await deleteBulletin(id);
-    await reload();
-    flash('Bulletin Removed');
-  };
+  const delBul = (id) => guarded(() => deleteBulletin(id), 'Bulletin Removed');
 
   const saveRoadmap = async () => {
     if (!form.title || !form.description) return flash('Field Error: Title & Description required');
@@ -213,11 +240,7 @@ export default function AdminModule() {
     }
   };
 
-  const delRdm = async (id) => {
-    await deleteRoadmapItem(id);
-    await reload();
-    flash('Milestone Purged');
-  };
+  const delRdm = (id) => guarded(() => deleteRoadmapItem(id), 'Milestone Purged');
 
   const startAdd = (type, parentContext) => {
     setEditMode(null);
@@ -267,26 +290,32 @@ export default function AdminModule() {
 
   const toggleUserRole = async (userId, currentRole) => {
     const newRole = currentRole === 'admin' ? 'operator' : 'admin';
-    await updateUserAdmin(userId, { role: newRole });
-    await reload();
-    flash(`Role updated to ${newRole.toUpperCase()}`);
+    await guarded(() => updateUserAdmin(userId, { role: newRole }), `Role updated to ${newRole.toUpperCase()}`);
   };
 
   const changeUserClearance = async (userId, clearance) => {
-    await updateUserAdmin(userId, { clearance });
-    await reload();
-    flash(`Tier updated to ${clearance}`);
+    await guarded(() => updateUserAdmin(userId, { clearance }), `Tier updated to ${clearance}`);
   };
 
   const handlePurge = async () => {
-    await resetAllData();
+    try {
+      await resetAllData();
+    } catch (err) {
+      setPurgeConfirm(false);
+      flash('Purge failed: ' + err.message);
+    }
   };
 
   const handleUpdateNAC = async () => {
     setStatusSaving(true);
-    await updateNetworkStatus(networkStatus);
-    setStatusSaving(false);
-    flash('Network Access Controls Synchronized');
+    try {
+      await updateNetworkStatus(networkStatus);
+      flash('Network Access Controls Synchronized');
+    } catch (err) {
+      flash('Sync Error: ' + err.message);
+    } finally {
+      setStatusSaving(false);
+    }
   };
 
   // ── Derived data ──
@@ -337,28 +366,22 @@ export default function AdminModule() {
 
   if (isLoading) {
     return (
-      <div className="admin-noc">
-        <header className="noc-header">
-          <div className="noc-title-area">
-            <h1 className="noc-title">Network Operations Center</h1>
-            <span className="noc-tag">ESTABLISHING CONNECTION</span>
-          </div>
-        </header>
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <LoadingState message="Synchronizing NOC Databases" />
-        </div>
-      </div>
+      <LoadingState message="Synchronising console databases" variant="split" />
     );
   }
 
   return (
-    <div className="admin-noc fade-in">
-      <header className="noc-header">
-        <div className="noc-title-area">
-          <h1 className="noc-title">Network Operations Center</h1>
-          <span className="noc-tag">SECURE CHANNEL</span>
+    <div className="page admin-noc">
+      <header className="page-head">
+        <div>
+          <span className="eyebrow"><span className="pip" style={{ background: 'var(--sky)', boxShadow: '0 0 12px var(--sky)' }} /> Operations console</span>
+          <h1 className="h-serif">Network <em>control</em></h1>
+          <p>Curate stations, survey data, bulletins and access. Every change is logged to the public bulletin.</p>
         </div>
-        {status && <div className="noc-toast">{status}</div>}
+        <div className="noc-head-right">
+          <span className="chip teal"><ShieldCheck size={12} /> Secure channel</span>
+          {status && <div className="noc-toast" role="status">{status}</div>}
+        </div>
       </header>
 
       <div className="noc-main">
@@ -366,28 +389,28 @@ export default function AdminModule() {
           <div className="nav-group">
             <div className="group-label">Intelligence</div>
             <button className={`nav-item ${tab === 'stations' ? 'active' : ''}`} onClick={() => setTab('stations')}>
-              <span className="nav-icon">⬡</span> Stations
+              <span className="nav-icon"><Building2 size={16} /></span> Stations
             </button>
             <button className={`nav-item ${['resources', 'location', 'resource'].includes(tab) ? 'active' : ''}`} onClick={() => setTab('resources')}>
-              <span className="nav-icon">◈</span> Resources
+              <span className="nav-icon"><Orbit size={16} /></span> Resources
             </button>
             <button className={`nav-item ${tab === 'materials_bank' ? 'active' : ''}`} onClick={() => setTab('materials_bank')}>
-              <span className="nav-icon">✧</span> Materials
+              <span className="nav-icon"><Gem size={16} /></span> Materials
             </button>
           </div>
           <div className="nav-group">
             <div className="group-label">System</div>
             <button className={`nav-item ${tab === 'users' ? 'active' : ''}`} onClick={() => setTab('users')}>
-              <span className="nav-icon">◉</span> Users
+              <span className="nav-icon"><Users size={16} /></span> Users
             </button>
             <button className={`nav-item ${tab === 'network' ? 'active' : ''}`} onClick={() => setTab('network')}>
-              <span className="nav-icon">⎔</span> Network
+              <span className="nav-icon"><Network size={16} /></span> Network
             </button>
             <button className={`nav-item ${tab === 'bulletin' ? 'active' : ''}`} onClick={() => setTab('bulletin')}>
-              <span className="nav-icon">⚯</span> Bulletin
+              <span className="nav-icon"><Megaphone size={16} /></span> Bulletin
             </button>
             <button className={`nav-item ${tab === 'roadmap' ? 'active' : ''}`} onClick={() => setTab('roadmap')}>
-              <span className="nav-icon">⎿</span> Roadmap
+              <span className="nav-icon"><Milestone size={16} /></span> Roadmap
             </button>
           </div>
         </aside>
@@ -401,19 +424,19 @@ export default function AdminModule() {
                 onClick={() => window.open('/api/admin/download-db', '_blank')}
                 title="Download the live database file (SQLite)"
               >
-                DATABASE BACKUP
+                <DatabaseBackup size={14} /> Backup database
               </button>
               {tab === 'stations' && (
-                <button className="noc-btn add" onClick={() => startAdd('station')}>+ ADD STATION</button>
+                <button className="noc-btn add" onClick={() => startAdd('station')}><Plus size={14} /> Station</button>
               )}
               {tab === 'resources' && (
-                <button className="noc-btn add" onClick={() => startAdd('body')}>+ ADD BODY</button>
+                <button className="noc-btn add" onClick={() => startAdd('body')}><Plus size={14} /> Body</button>
               )}
               {tab === 'bulletin' && (
-                <button className="noc-btn add" onClick={() => startAdd('bulletin')}>+ NEW ANNOUNCEMENT</button>
+                <button className="noc-btn add" onClick={() => startAdd('bulletin')}><Plus size={14} /> Announcement</button>
               )}
               {tab === 'roadmap' && (
-                <button className="noc-btn add" onClick={() => startAdd('roadmap')}>+ NEW MILESTONE</button>
+                <button className="noc-btn add" onClick={() => startAdd('roadmap')}><Plus size={14} /> Milestone</button>
               )}
               <CustomSelect 
                 label="System Filter" 
@@ -447,7 +470,7 @@ export default function AdminModule() {
                     addingType === 'roadmap' ? 'Milestone' :
                     addingType === 'bulletin' ? 'Announcement' : 'Resource'
                   }</h3>
-                  <button className="close-btn" onClick={closeForm}>✕</button>
+                  <button className="close-btn" onClick={closeForm} aria-label="Close"><X size={16} /></button>
                 </div>
                 <div className="form-grid">
                   {addingType === 'station' && (
@@ -474,6 +497,17 @@ export default function AdminModule() {
                       <Sel label="Parent Body" val={form.parentBody} set={v => setForm({...form, parentBody: v})} opts={bodiesData.map(b => b.name)} />
                       <Inp label="Resource Name" val={form.name} set={v => setForm({...form, name: v})} suggestions={knownMaterials} />
                       <Sel label="Type" val={form.type} set={v => setForm({...form, type: v})} opts={['Ship Mineable', 'Ground Vehicle Mineable', 'Hand Mineable']} />
+                      <Inp label="Location" val={form.location} set={v => setForm({...form, location: v})} />
+                      <Sel label="Rarity" val={form.rarity} set={v => setForm({...form, rarity: v})} opts={['Common', 'Uncommon', 'Rare', 'Epic']} />
+                      <Sel label="Yield" val={form.yield} set={v => setForm({...form, yield: v})} opts={['Low', 'Medium', 'High', 'Very High']} />
+                      <div className="noc-field" style={{ gridColumn: 'span 2' }}>
+                        <label>Description</label>
+                        <textarea className="input" rows="2" value={form.description || ''} onChange={e => setForm({...form, description: e.target.value})} />
+                      </div>
+                      <div className="noc-field" style={{ gridColumn: 'span 2' }}>
+                        <label>Field tips</label>
+                        <textarea className="input" rows="2" value={form.tips || ''} onChange={e => setForm({...form, tips: e.target.value})} />
+                      </div>
                     </>
                   )}
                   {addingType === 'bulletin' && (
@@ -482,7 +516,7 @@ export default function AdminModule() {
                       <div className="noc-field" style={{ gridColumn: 'span 2' }}>
                         <label>Content</label>
                         <textarea 
-                          className="noc-input" 
+                          className="input" 
                           rows="4"
                           value={form.content || ''} 
                           onChange={e => setForm({...form, content: e.target.value})}
@@ -499,7 +533,7 @@ export default function AdminModule() {
                       <div className="noc-field" style={{ gridColumn: 'span 2' }}>
                         <label>Description</label>
                         <textarea 
-                          className="noc-input" 
+                          className="input" 
                           rows="3"
                           value={form.description || ''} 
                           onChange={e => setForm({...form, description: e.target.value})}
@@ -511,9 +545,9 @@ export default function AdminModule() {
                 </div>
                 <div className="form-actions">
                   <button className="noc-btn primary" onClick={saveFn}>
-                    {editMode ? 'UPDATE' : 'SYNCHRONIZE'}
+                    {editMode ? 'Update' : 'Save'}
                   </button>
-                  <button className="noc-btn" onClick={closeForm}>CANCEL</button>
+                  <button className="noc-btn" onClick={closeForm}>Cancel</button>
                 </div>
               </div>
             </div>
@@ -533,14 +567,14 @@ export default function AdminModule() {
                     {/* Station row */}
                     <div className="station-row" onClick={() => toggleStation(station.name)}>
                       <div className="station-row-left">
-                        <span className={`expand-chevron ${isOpen ? 'rotated' : ''}`}>›</span>
+                        <span className={`expand-chevron ${isOpen ? 'rotated' : ''}`}><ChevronRight size={16} /></span>
                         <span className="station-name">{station.name}</span>
                         <span className="sys-tag">{station.system}</span>
                       </div>
                       <div className="station-row-right">
                         <span className="material-count">{materials.length} material{materials.length !== 1 ? 's' : ''}</span>
-                        <button className="act-btn edit" onClick={e => { e.stopPropagation(); startEdit('station', station); }}>EDIT</button>
-                        <button className="act-btn del" onClick={e => { e.stopPropagation(); delStat(station.name); }}>PURGE</button>
+                        <button className="act-btn edit" onClick={e => { e.stopPropagation(); startEdit('station', station); }}>Edit</button>
+                        <button className="act-btn del" onClick={e => { e.stopPropagation(); delStat(station.name); }}>Delete</button>
                       </div>
                     </div>
 
@@ -549,7 +583,7 @@ export default function AdminModule() {
                       <div className="materials-nest">
                         <div className="materials-header">
                           <span className="materials-label">MATERIALS</span>
-                          <button className="act-btn add-sub" onClick={() => startAdd('material', station.name)}>+ ADD</button>
+                          <button className="act-btn add-sub" onClick={() => startAdd('material', station.name)}>+ Add</button>
                         </div>
                         {materials.length === 0 ? (
                           <div className="materials-empty">No materials registered for this hub.</div>
@@ -568,8 +602,8 @@ export default function AdminModule() {
                                   <td className="bold">{m.ore}</td>
                                   <td className={m.modifier > 0 ? 'pos' : m.modifier < 0 ? 'neg' : ''}>{m.modifier > 0 ? '+' : ''}{m.modifier}</td>
                                   <td className="actions">
-                                    <button className="act-btn edit" onClick={() => startEdit('material', m)}>EDIT</button>
-                                    <button className="act-btn del" onClick={() => delRef(m.id)}>DEL</button>
+                                    <button className="act-btn edit" onClick={() => startEdit('material', m)}>Edit</button>
+                                    <button className="act-btn del" onClick={() => delRef(m.id)}>Delete</button>
                                   </td>
                                 </tr>
                               ))}
@@ -597,14 +631,14 @@ export default function AdminModule() {
                     {/* Body row */}
                     <div className="station-row" onClick={() => toggleBody(body.name)}>
                       <div className="station-row-left">
-                        <span className={`expand-chevron ${isOpen ? 'rotated' : ''}`}>›</span>
+                        <span className={`expand-chevron ${isOpen ? 'rotated' : ''}`}><ChevronRight size={16} /></span>
                         <span className="station-name">{body.name}</span>
                         <span className="sys-tag">{body.system}</span>
                       </div>
                       <div className="station-row-right">
                         <span className="material-count">{body.resources.length} material{body.resources.length !== 1 ? 's' : ''}</span>
-                        <button className="act-btn edit" onClick={e => { e.stopPropagation(); startEdit('body', body); }}>EDIT</button>
-                        <button className="act-btn del" onClick={e => { e.stopPropagation(); delBody(body.name); }}>PURGE</button>
+                        <button className="act-btn edit" onClick={e => { e.stopPropagation(); startEdit('body', body); }}>Edit</button>
+                        <button className="act-btn del" onClick={e => { e.stopPropagation(); delBody(body.name); }}>Delete</button>
                       </div>
                     </div>
 
@@ -613,7 +647,7 @@ export default function AdminModule() {
                       <div className="materials-nest">
                         <div className="materials-header">
                           <span className="materials-label">SURVEY DATA</span>
-                          <button className="act-btn add-sub" onClick={() => startAdd('resource', body.name)}>+ ADD</button>
+                          <button className="act-btn add-sub" onClick={() => startAdd('resource', body.name)}>+ Add</button>
                         </div>
                         {body.resources.length === 0 ? (
                           <div className="materials-empty">No survey data registered for this body.</div>
@@ -632,8 +666,8 @@ export default function AdminModule() {
                                   <td className="bold">{r.name}</td>
                                   <td>{r.type}</td>
                                   <td className="actions">
-                                    <button className="act-btn edit" onClick={() => startEdit('resource', r)}>EDIT</button>
-                                    <button className="act-btn del" onClick={() => delRes(r.id)}>DEL</button>
+                                    <button className="act-btn edit" onClick={() => startEdit('resource', r)}>Edit</button>
+                                    <button className="act-btn del" onClick={() => delRes(r.id)}>Delete</button>
                                   </td>
                                 </tr>
                               ))}
@@ -701,7 +735,7 @@ export default function AdminModule() {
                         </td>
                         <td>
                           <select 
-                            className="noc-input compact" 
+                            className="input compact" 
                             value={u.clearance || 'ASSOCIATE'} 
                             onChange={(e) => changeUserClearance(u.id, e.target.value)}
                             style={{ width: '120px', padding: '4px', fontSize: '12px' }}
@@ -721,7 +755,7 @@ export default function AdminModule() {
                               {u.role === 'admin' ? 'DEMOTE' : 'PROMOTE'}
                             </button>
                           )}
-                          {u.id === user?.id && <span style={{color: 'var(--text-dim)', fontSize: '10px'}}>YOU</span>}
+                          {u.id === user?.id && <span style={{color: 'var(--fg-4)', fontSize: '10px'}}>YOU</span>}
                         </td>
                       </tr>
                     ))}
@@ -731,7 +765,7 @@ export default function AdminModule() {
               <div className="settings-card danger">
                 <h3>Danger Zone</h3>
                 <p>Immediate purge of all localized intelligence data.</p>
-                <button className="noc-btn danger" onClick={() => { setPurgeConfirm(true); setPurgeInput(''); }}>PURGE ALL DATA</button>
+                <button className="noc-btn danger" onClick={() => { setPurgeConfirm(true); setPurgeInput(''); }}>Purge all data</button>
               </div>
             </div>
           )}
@@ -768,7 +802,7 @@ export default function AdminModule() {
 
                 <div className="nac-footer">
                   <button className="noc-btn primary" onClick={handleUpdateNAC} disabled={statusSaving}>
-                    {statusSaving ? 'SYNCHRONIZING...' : 'UPDATE ACCESS CONTROLS'}
+                    {statusSaving ? 'Saving…' : 'Update access controls'}
                   </button>
                 </div>
               </div>
@@ -806,7 +840,7 @@ export default function AdminModule() {
                         </td>
                         <td style={{ fontSize: '12px' }}>{bul.content}</td>
                         <td className="actions">
-                          <button className="act-btn del" onClick={() => delBul(bul.id)}>REMOVE</button>
+                          <button className="act-btn del" onClick={() => delBul(bul.id)}>Remove</button>
                         </td>
                       </tr>
                     ))}
@@ -842,8 +876,8 @@ export default function AdminModule() {
                           </span>
                         </td>
                         <td className="actions">
-                          <button className="act-btn edit" onClick={() => startEdit('roadmap', rdm)}>EDIT</button>
-                          <button className="act-btn del" onClick={() => delRdm(rdm.id)}>REMOVE</button>
+                          <button className="act-btn edit" onClick={() => startEdit('roadmap', rdm)}>Edit</button>
+                          <button className="act-btn del" onClick={() => delRdm(rdm.id)}>Remove</button>
                         </td>
                       </tr>
                     ))}
@@ -859,8 +893,8 @@ export default function AdminModule() {
       {purgeConfirm && (
         <div className="purge-overlay" onClick={() => setPurgeConfirm(false)}>
           <div className="purge-modal fade-in" onClick={e => e.stopPropagation()}>
-            <div className="purge-warning-icon">⚠</div>
-            <h2 className="purge-title">CONFIRM DATA PURGE</h2>
+            <div className="purge-warning-icon"><TriangleAlert size={26} /></div>
+            <h2 className="purge-title serif">Confirm data purge</h2>
             <p className="purge-desc">
               This will <strong>permanently destroy</strong> all stations, materials, resources, and personnel data. This action cannot be undone.
             </p>
@@ -868,7 +902,7 @@ export default function AdminModule() {
               <label>Type <strong>PURGE</strong> to confirm:</label>
               <input
                 type="text"
-                className="noc-input purge-input"
+                className="input purge-input"
                 value={purgeInput}
                 onChange={e => setPurgeInput(e.target.value.toUpperCase())}
                 placeholder="PURGE"
@@ -882,9 +916,29 @@ export default function AdminModule() {
                 disabled={purgeInput !== 'PURGE'}
                 onClick={handlePurge}
               >
-                EXECUTE PURGE
+                Execute purge
               </button>
-              <button className="noc-btn" onClick={() => setPurgeConfirm(false)}>CANCEL</button>
+              <button className="noc-btn" onClick={() => setPurgeConfirm(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDlg && (
+        <div className="purge-overlay" onClick={() => setConfirmDlg(null)}>
+          <div className="purge-modal fade-in" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" onClick={e => e.stopPropagation()}>
+            <div className="purge-warning-icon"><TriangleAlert size={26} /></div>
+            <h2 className="purge-title serif" id="confirm-title">{confirmDlg.title}</h2>
+            <p className="purge-desc">{confirmDlg.body}</p>
+            <div className="purge-actions">
+              <button
+                className="noc-btn danger"
+                autoFocus
+                onClick={() => { const run = confirmDlg.action; setConfirmDlg(null); run(); }}
+              >
+                Delete
+              </button>
+              <button className="noc-btn" onClick={() => setConfirmDlg(null)}>Cancel</button>
             </div>
           </div>
         </div>
@@ -910,7 +964,7 @@ function Inp({ label, val, set, type = 'text', suggestions = [] }) {
       <label>{label}</label>
       <input 
         type={type} 
-        className="noc-input" 
+        className="input" 
         value={val || ''} 
         onChange={e => set(e.target.value)} 
         spellCheck={false} 

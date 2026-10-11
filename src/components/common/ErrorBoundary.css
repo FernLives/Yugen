@@ -1,0 +1,6 @@
+.eb { max-width: 520px; margin: 18vh auto; padding: 0 var(--gutter); text-align: center; display: grid; gap: 16px; justify-items: center; }
+.eb-ico { width: 60px; height: 60px; display: grid; place-items: center; border-radius: 18px; color: var(--amber); background: rgba(239, 179, 95, 0.1); border: 1px solid rgba(239, 179, 95, 0.3); }
+.eb h2 { font-weight: 400; font-size: clamp(32px, 5vw, 44px); line-height: 1.05; }
+.eb h2 em { color: var(--gold); }
+.eb p { color: var(--fg-3); }
+.eb-actions { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
