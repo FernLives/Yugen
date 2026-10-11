@@ -1,26 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Sparkles } from 'lucide-react';
 import './Toast.css';
 
 export default function Toast({ message, onClose, duration = 3000 }) {
-  const [isVisible, setIsVisible] = useState(false);
-
   useEffect(() => {
-    if (message) {
-      setIsVisible(true);
-      const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onClose, 300); // Wait for fade out animation
-      }, duration);
-      return () => clearTimeout(timer);
-    }
+    if (!message) return;
+    const t = setTimeout(onClose, duration);
+    return () => clearTimeout(t);
   }, [message, duration, onClose]);
 
-  if (!message) return null;
-
   return (
-    <div className={`terminal-toast ${isVisible ? 'toast-visible' : 'toast-hidden'}`}>
-      <span className="toast-icon">»</span>
-      <span className="toast-message">{message}</span>
+    <div className="toast-region" aria-live="polite" aria-atomic="true">
+      <AnimatePresence mode="wait">
+        {message && (
+          <motion.div
+            key={message}
+            className="toast glass"
+            initial={{ opacity: 0, y: 24, scale: 0.94, filter: 'blur(6px)' }}
+            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, y: 12, scale: 0.97, filter: 'blur(4px)' }}
+            transition={{ type: 'spring', stiffness: 420, damping: 30 }}
+          >
+            <span className="toast-ico"><Sparkles size={14} /></span>
+            <span className="toast-msg">{message}</span>
+            <motion.span className="toast-timer" initial={{ scaleX: 1 }} animate={{ scaleX: 0 }} transition={{ duration: duration / 1000, ease: 'linear' }} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

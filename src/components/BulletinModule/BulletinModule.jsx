@@ -1,164 +1,192 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { Megaphone, GitCommitHorizontal, CircleDashed, Hammer, CheckCircle2, Newspaper, Sparkles } from 'lucide-react';
 import { getBulletins, getRoadmap } from '../../data/dataStore';
+import { shortDateTime, timeAgo } from '../../lib/format';
+import SpotCard from '../ui/SpotCard';
+import Reveal from '../ui/Reveal';
 import LoadingState from '../common/LoadingState';
 import './BulletinModule.css';
+
+const CAT_TONE = { refinery: 'gold', resource: 'teal', system: 'violet', general: '', ui: 'sky' };
+const COLUMNS = [
+  { id: 'PLANNED', label: 'Planned', icon: CircleDashed, tone: 'plain' },
+  { id: 'IN DEVELOPMENT', label: 'In development', icon: Hammer, tone: 'gold' },
+  { id: 'RELEASED', label: 'Released', icon: CheckCircle2, tone: 'done' },
+];
 
 export default function BulletinModule() {
   const [bulletins, setBulletins] = useState([]);
   const [roadmap, setRoadmap] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => {
-    const load = async () => {
+    let live = true;
+    (async () => {
       try {
-        setIsLoading(true);
-        const [bData, rData] = await Promise.all([getBulletins(), getRoadmap()]);
-        setBulletins(Array.isArray(bData) ? bData : []);
-        setRoadmap(Array.isArray(rData) ? rData : []);
+        const [b, r] = await Promise.all([getBulletins(), getRoadmap()]);
+        if (!live) return;
+        setBulletins(Array.isArray(b) ? b : []);
+        setRoadmap(Array.isArray(r) ? r : []);
       } catch (err) {
-        console.error('Bulletin Sync Error:', err);
+        console.error('Bulletin sync error:', err);
       } finally {
-        setIsLoading(false);
+        if (live) setLoading(false);
       }
-    };
-    load();
+    })();
+    return () => { live = false; };
   }, []);
 
-  const formatDate = (isoStr) => {
-    const date = new Date(isoStr);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-
-  const categorized = useMemo(() => {
-    const announcements = bulletins.filter(b => b.type === 'announcement');
-    const changes = bulletins.filter(b => b.type === 'change');
-    const systems = bulletins.filter(b => b.type === 'system');
-    return { announcements, changes, systems };
+  const { featured, announcements, changes, categories } = useMemo(() => {
+    const sorted = [...bulletins].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const ann = sorted.filter((b) => b.type === 'announcement');
+    return {
+      featured: ann[0] || null,
+      announcements: ann.slice(1),
+      changes: sorted.filter((b) => b.type === 'change' || b.type === 'system'),
+      categories: ['all', ...new Set(ann.slice(1).map((a) => a.category || 'general'))],
+    };
   }, [bulletins]);
 
-  if (isLoading) {
-    return <LoadingState message="Retrieving Studio Bulletins" />;
-  }
+  const visible = announcements.filter((a) => filter === 'all' || (a.category || 'general') === filter);
+  const byStatus = (s) => roadmap.filter((r) => (r.status || '').toUpperCase() === s);
+
+  if (loading) return <LoadingState message="Retrieving studio bulletins" variant="split" />;
 
   return (
-    <div className="bulletin-board fade-in">
-      <div className="board-header">
-        <div className="board-header-left">
-          <div className="board-tag">
-            <span className="dot"></span> SECURE INTELLIGENCE UPLINK
-          </div>
-          <h1 className="board-title">Bulletin & Roadmap</h1>
-          <div className="board-subtitle">
-            NETWORK STATUS: <span className="status-nominal">NOMINAL</span> // VERSION: <span className="status-val">2.0.4</span>
-          </div>
+    <div className="page bl">
+      <header className="page-head">
+        <div>
+          <span className="eyebrow"><span className="pip" style={{ background: 'var(--violet)', boxShadow: '0 0 12px var(--violet)' }} /> Studio bulletin</span>
+          <h1 className="h-serif">News &amp; <em>roadmap</em></h1>
+          <p>Announcements from the studio, a running log of system changes, and where the project is headed next.</p>
         </div>
-        <div className="board-stats">
-          <div className="board-stat">
-            <span className="bs-val">{bulletins.length}</span>
-            <span className="bs-label">ARCHIVED REPORTS</span>
-          </div>
+        <div className="bl-status">
+          <span className="chip pos"><span className="live" style={{ width: 6, height: 6 }} /> Network nominal</span>
+          <span className="chip">Build 3.0</span>
         </div>
+      </header>
+
+      <div className="bl-top">
+        {/* ── Featured + feed ── */}
+        <div className="bl-main">
+          {featured ? (
+            <Reveal>
+              <SpotCard className="bl-featured" spot="rgba(145,137,247,0.14)">
+                <div className="bl-feat-meta">
+                  <span className="chip violet"><Sparkles size={11} /> Latest</span>
+                  {featured.category && <span className={`chip ${CAT_TONE[featured.category] || ''}`}>{featured.category}</span>}
+                  <span className="bl-time">{timeAgo(featured.timestamp)}</span>
+                </div>
+                <p className="bl-feat-text serif">{featured.content}</p>
+                <div className="bl-by"><span className="bl-av">{(featured.author || '?')[0].toUpperCase()}</span> @{featured.author} <i>·</i> {shortDateTime(featured.timestamp)}</div>
+              </SpotCard>
+            </Reveal>
+          ) : (
+            <div className="empty-state glass" style={{ borderRadius: 'var(--r-xl)' }}>
+              <div className="icon-wrap"><Newspaper size={22} /></div>
+              <h2>All quiet</h2>
+              <p>No announcements have been published yet.</p>
+            </div>
+          )}
+
+          {announcements.length > 0 && (
+            <>
+              <div className="bl-filter">
+                <span className="section-label" style={{ margin: 0, flex: 'none' }}><span>Earlier</span></span>
+                <LayoutGroup id="bl-filter">
+                  <div className="bl-chips" role="tablist">
+                    {categories.map((c) => (
+                      <button key={c} role="tab" aria-selected={filter === c} className={`bl-chip ${filter === c ? 'on' : ''}`} onClick={() => setFilter(c)}>
+                        {filter === c && <motion.span layoutId="bl-chip-pill" className="bl-chip-pill" transition={{ type: 'spring', stiffness: 460, damping: 36 }} />}
+                        <span>{c}</span>
+                      </button>
+                    ))}
+                  </div>
+                </LayoutGroup>
+              </div>
+
+              <ul className="bl-feed">
+                <AnimatePresence mode="popLayout" initial={false}>
+                  {visible.map((a, i) => (
+                    <motion.li
+                      key={a.id} layout
+                      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }}
+                      transition={{ type: 'spring', stiffness: 380, damping: 38, delay: i * 0.03 }}
+                    >
+                      <SpotCard className="bl-item">
+                        <div className="bl-item-meta">
+                          <Megaphone size={13} />
+                          <span className={`chip ${CAT_TONE[a.category] || ''}`}>{a.category || 'general'}</span>
+                          <span className="bl-time">{timeAgo(a.timestamp)}</span>
+                        </div>
+                        <p>{a.content}</p>
+                        <span className="bl-author">@{a.author}</span>
+                      </SpotCard>
+                    </motion.li>
+                  ))}
+                </AnimatePresence>
+              </ul>
+            </>
+          )}
+        </div>
+
+        {/* ── Changelog ── */}
+        <aside className="bl-side">
+          <div className="section-label"><b><GitCommitHorizontal size={13} style={{ verticalAlign: '-2px' }} /></b><span>System intel</span></div>
+          <div className="bl-log glass">
+            {changes.length === 0 && <p className="bl-empty">System logs are clear.</p>}
+            <ol className="bl-timeline">
+              {changes.map((c, i) => (
+                <motion.li
+                  key={c.id}
+                  initial={{ opacity: 0, x: 14 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
+                  transition={{ delay: i * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                >
+                  <span className={`tl-dot ${CAT_TONE[c.category] || ''}`} />
+                  <div className="tl-meta"><span className={`chip ${CAT_TONE[c.category] || ''}`}>{c.category}</span><time>{shortDateTime(c.timestamp)}</time></div>
+                  <p>{c.content}</p>
+                </motion.li>
+              ))}
+            </ol>
+          </div>
+        </aside>
       </div>
 
-      <div className="studio-layout">
-        {/* ── Main Stream: Studio Updates ── */}
-        <div className="studio-col col-primary">
-          <div className="studio-pane primary-pane">
-            <div className="pane-header">
-              <h2 className="pane-title">Studio Updates</h2>
-            </div>
-            
-            <div className="announcement-list">
-              {categorized.announcements.length === 0 && (
-                <div className="studio-empty-state">
-                  <div className="empty-msg">NO RECENT UPDATES RETRIEVED</div>
+      {/* ── Roadmap ── */}
+      <Reveal className="section-label" y={12} style={{ marginTop: 'clamp(48px, 7vw, 88px)' }}><b>Roadmap</b><span>Where we are headed</span></Reveal>
+      {roadmap.length === 0 ? (
+        <div className="empty-state"><p>No milestones have been published.</p></div>
+      ) : (
+        <div className="rd-board">
+          {COLUMNS.map((col, ci) => {
+            const items = byStatus(col.id);
+            return (
+              <Reveal key={col.id} delay={ci * 0.08} className="rd-col">
+                <div className={`rd-col-head ${col.tone}`}>
+                  <col.icon size={15} />
+                  <span>{col.label}</span>
+                  <em className="num">{items.length}</em>
                 </div>
-              )}
-              {categorized.announcements.map((ann, idx) => (
-                <div key={ann.id} className="studio-blade announcement-blade animate-slide-in" style={{ animationDelay: `${idx * 0.1}s` }}>
-                  <div className="blade-content">
-                    <div className="blade-top">
-                      <span className="ann-author">@{ann.author}</span>
-                      <span className="ann-time">{formatDate(ann.timestamp)}</span>
-                    </div>
-                    <p className="ann-text">{ann.content}</p>
-                    <div className="blade-footer">
-                      <span className="ann-category">{ann.category || 'general'}</span>
-                    </div>
-                  </div>
+                <div className="rd-col-body">
+                  {items.length === 0 && <div className="rd-col-empty">Nothing here yet</div>}
+                  {items.map((g) => (
+                    <SpotCard key={g.id} className={`goal ${col.tone}`}>
+                      <div className="goal-top">
+                        <span className={`chip ${CAT_TONE[(g.category || '').toLowerCase()] || ''}`}>{g.category}</span>
+                      </div>
+                      <h3 className="serif">{g.title}</h3>
+                      {g.description && <p>{g.description}</p>}
+                      {col.id === 'IN DEVELOPMENT' && <div className="goal-progress" aria-label="In progress"><span /></div>}
+                    </SpotCard>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </div>
+              </Reveal>
+            );
+          })}
         </div>
-
-        {/* ── Sidebar: Intel & Roadmap ── */}
-        <div className="studio-col col-sidebar">
-          {/* Intelligence Live Feed */}
-          <div className="studio-pane sidebar-pane feed-pane">
-            <div className="pane-header">
-              <h2 className="pane-title">System Intel</h2>
-            </div>
-            
-            <div className="changes-list">
-              {categorized.changes.length === 0 && (
-                <div className="studio-empty-state mini">
-                  <div className="empty-msg">SYSTEM LOGS CLEAR</div>
-                </div>
-              )}
-              {categorized.changes.map((log, idx) => (
-                <div key={log.id} className="studio-change-item animate-slide-in" style={{ animationDelay: `${idx * 0.05}s` }}>
-                  <div className="change-meta">
-                    <span className="change-time">{formatDate(log.timestamp)}</span>
-                    <span className="change-cat">{log.category}</span>
-                  </div>
-                  <p className="change-content">{log.content}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Strategic Roadmap */}
-          <div className="studio-pane sidebar-pane roadmap-pane">
-            <div className="pane-header">
-              <h2 className="pane-title">Strategic Roadmap</h2>
-            </div>
-
-            <div className="studio-timeline">
-              {roadmap.length === 0 && (
-                <div className="studio-empty-state mini">
-                  <div className="empty-msg">NO PENDING MILESTONES</div>
-                </div>
-              )}
-              {roadmap.map((goal, idx) => (
-                <div key={goal.id} className="timeline-segment animate-slide-in" style={{ animationDelay: `${idx * 0.1}s` }}>
-                  <div className={`timeline-indicator ${goal.status.toLowerCase().replace(' ', '-')}`}></div>
-                  <div className="timeline-card">
-                    <div className="roadmap-meta">
-                      <span className="roadmap-cat">{goal.category}</span>
-                      <span className={`roadmap-status status-${goal.status.toLowerCase().replace(' ', '-')}`}>
-                        {goal.status}
-                      </span>
-                    </div>
-                    <h3 className="roadmap-title">{goal.title}</h3>
-                    <p className="roadmap-desc">{goal.description}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <footer className="board-footer">
-        <div className="footer-mark">YŪGEN INTELLIGENCE // COMMUNITY HUB // {new Date().getFullYear() + 930}</div>
-      </footer>
+      )}
     </div>
   );
 }

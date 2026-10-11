@@ -26,6 +26,7 @@ dist-ssr
 # Security and Database
 .env
 .env.*
+!.env.example
 server/auxnet.db
 *.db
 *.sqlite

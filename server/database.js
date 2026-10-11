@@ -3,13 +3,12 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const internalDbPath = path.join(__dirname, 'auxnet.db');
 export const dbPath = process.env.DB_PATH || internalDbPath;
 
 // 🚀 ROBUST MIGRATION: Ensure rich local data is moved to the persistent volume
-if (process.env.DB_PATH && fs.existsSync(internalDbPath)) {
+if (process.env.DB_PATH && !process.env.SKIP_DB_MIGRATION && fs.existsSync(internalDbPath)) {
   console.log('🔍 Checking database sync status...');
   
   try {
@@ -46,7 +45,9 @@ if (process.env.DB_PATH && fs.existsSync(internalDbPath)) {
   }
 }
 
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 const db = new Database(dbPath);
+db.pragma('busy_timeout = 5000');
 db.pragma('foreign_keys = ON');
 
 // ── Schema Initialization ──
@@ -162,17 +163,8 @@ export function initDb() {
   }
 }
 
-async function seedData() {
-  // We'll read the files directly since they are just exports
-  // Given we are in the server, we might need to be careful with paths
+function seedData() {
   try {
-    const refineryFile = path.join(__dirname, '../src/data/refineryData.js');
-    const resourceFile = path.join(__dirname, '../src/data/resourceData.js');
-
-    // Simple parser for the static data files to avoid complex imports in this environment
-    // OR we can just hardcode the initial seeding since we have the data
-    
-    // For this migration, I'll use the data I read earlier
     const defaultRefinery = [
       { station: 'ARC-L1', ore: 'Quantanium', modifier: -3.0 },
       { station: 'ARC-L1', ore: 'Agricium', modifier: 2.0 },
@@ -185,33 +177,17 @@ async function seedData() {
 
     const insertStation = db.prepare('INSERT OR IGNORE INTO refinery_stations (name, system) VALUES (?, ?)');
     const insertRefinery = db.prepare('INSERT OR IGNORE INTO refinery_data (id, station, ore, modifier, system) VALUES (?, ?, ?, ?, ?)');
-    defaultRefinery.forEach((d, i) => {
-      insertStation.run(d.station, 'Stanton');
-      insertRefinery.run(`ref-seed-${i}`, d.station, d.ore, d.modifier, 'Stanton');
-    });
-
-    const defaultResources = [
-      { id: 'res-001', name: 'Quantanium', type: 'Mineral', location: 'Arial', parentBody: 'Hurston', methods: ['ship'], rarity: 'Rare', yield: 'High', description: 'Extremely volatile.', tips: 'Use Prospector.' },
-    ];
-
     const insertResource = db.prepare('INSERT OR IGNORE INTO resource_data (id, name, type, location, parentBody, methods, rarity, yield, description, tips, system) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    defaultResources.forEach(d => {
-      insertResource.run(d.id, d.name, d.type, d.location, d.parentBody, JSON.stringify(d.methods), d.rarity, d.yield, d.description, d.tips, 'Stanton');
-    });
+    const insertBody = db.prepare('INSERT OR IGNORE INTO resource_bodies (name, system) VALUES (?, ?)');
 
-    const defaultPersonnel = [
-      {
-        id: 'per-001', name: '█████████', realName: 'FernLives', title: 'Founder / Apex Architect',
-        clearance: 'OMEGA', status: 'ACTIVE - ENCRYPTED', location: '██████, Stanton',
-        signal: '98.2%', ping: '12ms', relay: 'RSA-4096-A', signatureSeed: '0x884',
-        notes: 'Primary architect of the YŪGEN intelligence matrix.'
-      }
-    ];
-
-    const insertPersonnel = db.prepare('INSERT OR IGNORE INTO personnel_data (id, name, realName, title, clearance, status, location, signal, ping, relay, signatureSeed, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    defaultPersonnel.forEach(d => {
-      insertPersonnel.run(d.id, d.name, d.realName, d.title, d.clearance, d.status, d.location, d.signal, d.ping, d.relay, d.signatureSeed, d.notes);
-    });
+    db.transaction(() => {
+      defaultRefinery.forEach((d, i) => {
+        insertStation.run(d.station, 'Stanton');
+        insertRefinery.run(`ref-seed-${i}`, d.station, d.ore, d.modifier, 'Stanton');
+      });
+      insertBody.run('Hurston', 'Stanton');
+      insertResource.run('res-001', 'Quantanium', 'Ship Mineable', 'Arial', 'Hurston', JSON.stringify(['ship']), 'Rare', 'High', 'Extremely volatile.', 'Use Prospector.', 'Stanton');
+    })();
 
     console.log('✅ Seeding complete.');
   } catch (err) {

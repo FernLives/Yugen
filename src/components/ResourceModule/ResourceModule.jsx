@@ -1,258 +1,276 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AnimatePresence, LayoutGroup, motion } from 'motion/react';
+import { Search, X, Rocket, Truck, Hand, Orbit, Lightbulb, MapPin, ChevronDown, Telescope } from 'lucide-react';
 import { getResourceData, getBodies } from '../../data/dataStore';
+import { materialBase, materialQualifier } from '../../lib/format';
+import SpotCard from '../ui/SpotCard';
 import LoadingState from '../common/LoadingState';
 import './ResourceModule.css';
 
-// ── Technical SVG Icons ──
-const ShipIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon ship">
-    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-  </svg>
-);
+const VECTORS = [
+  { id: 'ship', label: 'Ship', icon: Rocket, match: (t) => t.includes('ship') },
+  { id: 'vehicle', label: 'Vehicle', icon: Truck, match: (t) => t.includes('vehicle') || t.includes('ground') },
+  { id: 'hand', label: 'Hand', icon: Hand, match: (t) => t.includes('hand') },
+];
+const vectorOf = (type = '') => VECTORS.find((v) => v.match(type.toLowerCase()))?.id || 'ship';
 
-const VehicleIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon vehicle">
-    <rect x="2" y="14" width="20" height="8" rx="2" />
-    <path d="M7 14V8l5-5 5 5v6" />
-    <circle cx="7" cy="18" r="2" />
-    <circle cx="17" cy="18" r="2" />
-  </svg>
-);
+const RARITY = { common: 'plain', uncommon: 'teal', rare: 'violet', epic: 'gold', legendary: 'gold' };
+const YIELD = { low: 1, medium: 2, moderate: 2, high: 3, 'very high': 4, extreme: 4 };
 
-const HandIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="diag-icon hand">
-    <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-    <path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-    <path d="M10 10.5V3a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0" />
-    <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
-  </svg>
-);
+/* ── Animated radial gauge ── */
+function Ring({ value, total, icon: Icon, label, active, onClick, color }) {
+  const R = 26;
+  const C = 2 * Math.PI * R;
+  const frac = total ? value / total : 0;
+  return (
+    <button className={`ring-stat ${active ? 'on' : ''} ${value ? '' : 'dim'}`} onClick={onClick} aria-pressed={active} style={{ '--c': color }}>
+      <svg viewBox="0 0 64 64" className="ring-svg" aria-hidden="true">
+        <circle cx="32" cy="32" r={R} className="ring-bg" />
+        <motion.circle
+          cx="32" cy="32" r={R} className="ring-fg"
+          strokeDasharray={C}
+          initial={{ strokeDashoffset: C }}
+          animate={{ strokeDashoffset: C * (1 - frac) }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+        />
+      </svg>
+      <Icon size={17} className="ring-icon" />
+      <span className="ring-meta"><b className="num">{value}</b><em>{label}</em></span>
+    </button>
+  );
+}
+
+function ResourceCard({ item, expanded, onToggle, isMatch }) {
+  const v = VECTORS.find((x) => x.id === vectorOf(item.type));
+  const rarityKey = (item.rarity || '').toLowerCase();
+  const pips = YIELD[(item.yield || '').toLowerCase()] || 0;
+  const q = materialQualifier(item.name);
+  const hasMore = Boolean(item.tips) || Boolean(item.description);
+
+  return (
+    <motion.article
+      layout
+      initial={{ opacity: 0, y: 18, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.96 }}
+      transition={{ type: 'spring', stiffness: 380, damping: 36 }}
+      className={`rc-wrap ${expanded ? 'open' : ''}`}
+    >
+      <SpotCard className={`rc ${isMatch ? 'match' : ''}`}>
+        <button className="rc-hit" onClick={onToggle} aria-expanded={expanded} disabled={!hasMore}>
+          <div className="rc-top">
+            <span className={`rc-vec ${v.id}`}><v.icon size={15} /></span>
+            <div className="rc-titles">
+              <h3 className="rc-name">{materialBase(item.name)}</h3>
+              <div className="rc-sub">
+                {q && <span>{q}</span>}
+                <span className="rc-type">{item.type}</span>
+              </div>
+            </div>
+            {hasMore && <ChevronDown size={16} className={`rc-chev ${expanded ? 'up' : ''}`} />}
+          </div>
+
+          <div className="rc-meta">
+            {item.location && <span className="rc-loc"><MapPin size={12} /> {item.location}</span>}
+            {item.rarity && <span className={`chip ${RARITY[rarityKey] === 'plain' ? '' : RARITY[rarityKey] || ''}`}>{item.rarity}</span>}
+            {item.yield && (
+              <span className="rc-yield" title={`Yield: ${item.yield}`}>
+                {[0, 1, 2, 3].map((i) => <i key={i} className={i < pips ? 'on' : ''} />)}
+                <em>{item.yield}</em>
+              </span>
+            )}
+          </div>
+
+          {item.description && <p className="rc-desc">{item.description}</p>}
+        </button>
+
+        <AnimatePresence initial={false}>
+          {expanded && item.tips && (
+            <motion.div
+              className="rc-tips"
+              initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.32, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div className="rc-tips-inner"><Lightbulb size={14} /><p>{item.tips}</p></div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </SpotCard>
+    </motion.article>
+  );
+}
 
 export default function ResourceModule({ system }) {
+  const [params, setParams] = useSearchParams();
   const [resData, setResData] = useState([]);
   const [bodies, setBodies] = useState([]);
-  const [selectedBody, setSelectedBody] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState(params.get('q') || '');
+  const [vector, setVector] = useState(null);
+  const [open, setOpen] = useState(null);
 
   useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      const [res, bods] = await Promise.all([
-        getResourceData(system),
-        getBodies()
-      ]);
-      const currentBodies = bods.filter(b => b.system === system);
+    let live = true;
+    (async () => {
+      setLoading(true);
+      const [res, bods] = await Promise.all([getResourceData(system), getBodies()]);
+      if (!live) return;
       setResData(res);
-      setBodies(currentBodies);
-      if (currentBodies.length > 0) setSelectedBody(currentBodies[0].name);
-      setIsLoading(false);
-    };
-    load();
+      setBodies(bods.filter((b) => b.system === system));
+      setLoading(false);
+    })();
+    return () => { live = false; };
   }, [system]);
 
-  const bodyIntelligence = useMemo(() => {
-    if (!selectedBody) return null;
-    const items = resData.filter(r => r.parentBody === selectedBody);
-    
-    // Categorize for the Hub display
-    return {
-      name: selectedBody,
-      total: items.length,
-      ship: items.filter(i => i.type.toLowerCase().includes('ship')),
-      vehicle: items.filter(i => i.type.toLowerCase().includes('vehicle') || i.type.toLowerCase().includes('ground')),
-      hand: items.filter(i => i.type.toLowerCase().includes('hand')),
-      all: items.map(i => ({
-        ...i,
-        isMatch: searchQuery && i.name.toLowerCase().includes(searchQuery.toLowerCase())
-      }))
-    };
-  }, [resData, selectedBody, searchQuery]);
-
-  const filteredBodies = useMemo(() => {
-    if (!searchQuery) return bodies;
-    const q = searchQuery.toLowerCase();
-    return bodies.filter(body => {
-      return resData.some(r => r.parentBody === body.name && r.name.toLowerCase().includes(q));
+  const q = query.trim().toLowerCase();
+  const countsByBody = useMemo(() => {
+    const m = {};
+    resData.forEach((r) => {
+      const matches = !q || r.name.toLowerCase().includes(q);
+      const e = (m[r.parentBody] ||= { total: 0, match: 0, ship: 0, vehicle: 0, hand: 0 });
+      e.total++; if (matches) e.match++;
+      e[vectorOf(r.type)]++;
     });
-  }, [bodies, resData, searchQuery]);
+    return m;
+  }, [resData, q]);
 
-  // Handle auto-selection when filtering
-  useEffect(() => {
-    if (searchQuery && filteredBodies.length > 0) {
-      const alreadyVisible = filteredBodies.some(b => b.name === selectedBody);
-      if (!alreadyVisible) setSelectedBody(filteredBodies[0].name);
-    }
-  }, [searchQuery, filteredBodies, selectedBody]);
+  const visibleBodies = useMemo(() => bodies.filter((b) => !q || (countsByBody[b.name]?.match || 0) > 0), [bodies, q, countsByBody]);
 
-  if (isLoading) {
-    return <LoadingState message="Establishing Planetary Link" />;
-  }
+  const paramBody = params.get('body');
+  const selected = (visibleBodies.find((b) => b.name === (paramBody || '')) || visibleBodies[0])?.name || null;
+
+  const selectBody = (name) => {
+    const p = new URLSearchParams(params);
+    p.set('body', name);
+    setParams(p, { replace: true });
+    setVector(null);
+    setOpen(null);
+  };
+
+  const items = useMemo(() => {
+    if (!selected) return [];
+    return resData
+      .filter((r) => r.parentBody === selected)
+      .filter((r) => !vector || vectorOf(r.type) === vector)
+      .filter((r) => !q || r.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [resData, selected, vector, q]);
+
+  const bodyCounts = countsByBody[selected] || { total: 0, ship: 0, vehicle: 0, hand: 0 };
+
+  if (loading) return <LoadingState message="Establishing planetary link" variant="split" />;
 
   if (bodies.length === 0) {
     return (
-      <div className="survey-terminal fade-in">
-        <div className="empty-system-state">
-          <div className="empty-icon">!</div>
-          <h2 className="empty-title">Deep Space Sector: {system}</h2>
-          <p className="empty-desc">No planetary survey data detected. Deploy tactical units via Admin NOC.</p>
+      <div className="page">
+        <div className="empty-state glass" style={{ borderRadius: 'var(--r-xl)' }}>
+          <div className="icon-wrap"><Telescope size={24} /></div>
+          <h2>Uncharted: {system}</h2>
+          <p>No planetary survey data has been recorded in this system. Add bodies and signatures from the admin console.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="survey-terminal fade-in">
-      {/* ── SIDEBAR SECTOR LIST ── */}
-      <div className="survey-sidebar">
-        <div className="sidebar-header">
-          <span className="sidebar-id">TERM-09 // SECTORS</span>
-          <div className="sidebar-search">
-            <input 
-              type="text" 
-              placeholder="DEEP SCAN SEARCH..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="terminal-search-input"
-            />
-            {searchQuery && (
-              <button className="clear-search" onClick={() => setSearchQuery('')}>×</button>
-            )}
-          </div>
+    <div className="page rs">
+      <header className="page-head">
+        <div>
+          <span className="eyebrow"><span className="pip" style={{ background: 'var(--teal)', boxShadow: '0 0 12px var(--teal)' }} /> Survey archive · {system}</span>
+          <h1 className="h-serif">Planetary <em>signatures</em></h1>
+          <p>{resData.length} surveyed signature{resData.length !== 1 ? 's' : ''} across {bodies.length} {bodies.length === 1 ? 'body' : 'bodies'}. Choose a sector, then filter by extraction vector.</p>
         </div>
-        <div className="body-list">
-          {filteredBodies.length === 0 ? (
-            <div className="no-matches">NO SIGNATURES DETECTED</div>
-          ) : (
-            filteredBodies.map(body => (
-              <button 
-                key={body.name} 
-                className={`body-slot ${selectedBody === body.name ? 'active' : ''}`}
-                onClick={() => setSelectedBody(body.name)}
+        <label className="rs-search">
+          <Search size={15} />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search signatures…" spellCheck={false} aria-label="Search signatures" />
+          {query && <button onClick={() => setQuery('')} aria-label="Clear search"><X size={14} /></button>}
+        </label>
+      </header>
+
+      <div className="rs-layout">
+        {/* ── Sector rail ── */}
+        <aside className="rs-rail" aria-label="Sectors">
+          <div className="rs-rail-head"><Orbit size={14} /> Sectors <span className="num">{visibleBodies.length}</span></div>
+          <LayoutGroup id="rs-bodies">
+            <ul className="rs-bodies">
+              {visibleBodies.length === 0 && <li className="rs-nomatch">No signatures match “{query}”.</li>}
+              {visibleBodies.map((b) => {
+                const c = countsByBody[b.name] || { total: 0, match: 0, ship: 0, vehicle: 0, hand: 0 };
+                const on = selected === b.name;
+                return (
+                  <li key={b.name}>
+                    <button className={`rs-body ${on ? 'on' : ''}`} onClick={() => selectBody(b.name)} aria-current={on}>
+                      {on && <motion.span layoutId="rs-body-pill" className="rs-body-pill" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
+                      <span className="rs-orb" style={{ '--h': (b.name.charCodeAt(0) * 17 + b.name.length * 31) % 360 }} />
+                      <span className="rs-body-name">{b.name}</span>
+                      <span className="rs-body-n num">{q ? c.match : c.total}</span>
+                      <span className="rs-body-bar" aria-hidden="true">
+                        {['ship', 'vehicle', 'hand'].map((k) => c[k] > 0 && <i key={k} className={k} style={{ flex: c[k] }} />)}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </LayoutGroup>
+        </aside>
+
+        {/* ── Main ── */}
+        <section className="rs-main">
+          <AnimatePresence mode="wait">
+            {selected && (
+              <motion.div
+                key={selected}
+                initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
               >
-              <div className="slot-indicator" />
-              <div className="slot-info">
-                <span className="slot-name">{body.name}</span>
-                <span className="slot-status">LINK ESTABLISHED</span>
-              </div>
-            </button>
-          )))}
-        </div>
-        <div className="sidebar-footer">
-          <div className="uptime-pips">
-            <span className="p active"></span><span className="p active"></span><span className="p"></span>
-          </div>
-          <span className="sys-id">{system.toUpperCase()} DATA HUB</span>
-        </div>
-      </div>
+                <SpotCard className="rs-hero">
+                  <div className="rs-hero-copy">
+                    <span className="eyebrow">Sector</span>
+                    <h2 className="rs-hero-name serif">{selected}</h2>
+                    <div className="rs-hero-meta">
+                      <span className="chip teal"><span className="live" /> Link established</span>
+                      <span className="chip">{bodyCounts.total} signature{bodyCounts.total !== 1 ? 's' : ''}</span>
+                    </div>
+                  </div>
+                  <div className="rs-rings">
+                    <Ring value={bodyCounts.ship} total={bodyCounts.total} icon={Rocket} label="Ship" color="var(--gold)" active={vector === 'ship'} onClick={() => setVector(vector === 'ship' ? null : 'ship')} />
+                    <Ring value={bodyCounts.vehicle} total={bodyCounts.total} icon={Truck} label="Vehicle" color="var(--teal)" active={vector === 'vehicle'} onClick={() => setVector(vector === 'vehicle' ? null : 'vehicle')} />
+                    <Ring value={bodyCounts.hand} total={bodyCounts.total} icon={Hand} label="Hand" color="var(--violet)" active={vector === 'hand'} onClick={() => setVector(vector === 'hand' ? null : 'hand')} />
+                  </div>
+                </SpotCard>
 
-      {/* ── INTELLIGENCE READOUT ── */}
-      <div className="survey-main">
-        {bodyIntelligence ? (
-          <div className="intelligence-feed">
-            <header className="feed-header">
-              <div className="feed-title-wrap">
-                <span className="feed-meta">YŪGEN // FIELD INTEL // {system.toUpperCase()}</span>
-                <h1 className="feed-body-name">{bodyIntelligence.name}</h1>
-              </div>
-              <div className="feed-status">
-                <div className="pulse-success"></div>
-                <span className="status-label">DIAGNOSTICS CLEAR</span>
-              </div>
-            </header>
+                <div className="rs-filter-row">
+                  <span className="section-label" style={{ flex: 1, margin: 0 }}><span>{items.length} result{items.length !== 1 ? 's' : ''}{vector ? ` · ${vector}` : ''}</span></span>
+                  {vector && <button className="btn ghost sm" onClick={() => setVector(null)}><X /> Clear filter</button>}
+                </div>
 
-            <div className="feed-content">
-              {/* Extraction Vectors Row */}
-              <div className="vector-diagnostic-row">
-                <VectorStat 
-                  icon={<ShipIcon />} 
-                  label="SHIP EXTRACTION" 
-                  count={bodyIntelligence.ship.length} 
-                  active={bodyIntelligence.ship.length > 0} 
-                />
-                <VectorStat 
-                  icon={<VehicleIcon />} 
-                  label="VEHICLE EXTRACTION" 
-                  count={bodyIntelligence.vehicle.length} 
-                  active={bodyIntelligence.vehicle.length > 0} 
-                />
-                <VectorStat 
-                  icon={<HandIcon />} 
-                  label="HAND EXTRACTION" 
-                  count={bodyIntelligence.hand.length} 
-                  active={bodyIntelligence.hand.length > 0} 
-                />
-              </div>
+                <div className="rs-grid">
+                  <AnimatePresence mode="popLayout">
+                    {items.map((it) => (
+                      <ResourceCard
+                        key={it.id}
+                        item={it}
+                        isMatch={Boolean(q)}
+                        expanded={open === it.id}
+                        onToggle={() => setOpen(open === it.id ? null : it.id)}
+                      />
+                    ))}
+                  </AnimatePresence>
+                </div>
 
-              {/* Data Matrix List */}
-              <div className="intel-list-wrap scroll-industrial">
-                <table className="intel-table">
-                  <thead>
-                    <tr>
-                      <th>DATA-ID</th>
-                      <th>RESOURCE PROFILE</th>
-                      <th>EXT-VECTOR</th>
-                      <th>SURVEY NOTES</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {bodyIntelligence.all.length === 0 ? (
-                      <tr>
-                        <td colSpan="4" className="empty-row">NO REGISTERED MATERIALS DETECTED IN THIS SECTOR.</td>
-                      </tr>
-                    ) : (
-                      bodyIntelligence.all.map((item, idx) => (
-                        <tr key={item.id} className={item.isMatch ? 'row-match' : ''}>
-                          <td className="data-id">
-                            {item.isMatch && <div className="match-bracket top-left"></div>}
-                            SRV-0{idx + 1}
-                          </td>
-                          <td className="resource-name">
-                            {item.name}
-                            {item.isMatch && <span className="match-tag">SIGNAL SYNC</span>}
-                          </td>
-                          <td className="vector-type">
-                            <span className="vector-chip">{item.type.toUpperCase()}</span>
-                          </td>
-                          <td className="survey-desc">
-                            {item.description || 'Biological/Mineral signature confirmed.'}
-                            {item.isMatch && <div className="match-bracket bottom-right"></div>}
-                          </td>
-                        </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            <footer className="feed-footer">
-              <div className="footer-hardware">
-                <span className="h-pip"></span>
-                <span>YŪGEN INDUSTRIAL SCANNER v2.04</span>
-              </div>
-            </footer>
-          </div>
-        ) : (
-          <div className="terminal-standby">
-            <span className="standby-flicker">SELECT SECTOR FOR DATA UPLINK...</span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function VectorStat({ icon, label, count, active }) {
-  return (
-    <div className={`vector-stat ${active ? 'active' : 'dim'}`}>
-      <div className="v-icon-wrap">{icon}</div>
-      <div className="v-info">
-        <span className="v-label">{label}</span>
-        <span className="v-value">{count} SIGNATURES</span>
-      </div>
-      <div className="v-bar">
-        <div className="v-fill" style={{ width: active ? '100%' : '0%' }}></div>
+                {items.length === 0 && (
+                  <div className="empty-state">
+                    <div className="icon-wrap"><Telescope size={22} /></div>
+                    <h2>Nothing detected</h2>
+                    <p>No signatures in this sector match the current filters.</p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
       </div>
     </div>
   );

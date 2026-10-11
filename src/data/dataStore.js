@@ -44,30 +44,63 @@ export function cleanLegacyStorage() {
   localStorage.removeItem('yugen_personnel_data');
 }
 
+// ── Uplink status (lets the shell show an offline banner) ──
+let uplinkOnline = true;
+const uplinkListeners = new Set();
+function setUplink(online) {
+  if (online === uplinkOnline) return;
+  uplinkOnline = online;
+  uplinkListeners.forEach((fn) => fn(online));
+}
+export function subscribeUplink(fn) {
+  uplinkListeners.add(fn);
+  return () => uplinkListeners.delete(fn);
+}
+export const getUplinkStatus = () => uplinkOnline;
+
+export const SESSION_EXPIRED_EVENT = 'yugen:session-expired';
+
 // ── Internal Fetch Wrapper ──
 async function fetchApi(endpoint, options = {}) {
   // Ensure we don't double-prefix /api
   const cleanPath = endpoint.startsWith(BASE_URL) ? endpoint.slice(BASE_URL.length) : endpoint;
   const url = cleanPath.startsWith('http') ? cleanPath : `${BASE_URL}${cleanPath}`;
-  
-  const res = await fetch(url, {
-    ...options,
-    headers: {
-      ...getAuthHeaders(),
-      ...(options.headers || {})
-    }
-  });
+
+  let res;
+  try {
+    res = await fetch(url, {
+      ...options,
+      headers: {
+        ...getAuthHeaders(),
+        ...(options.headers || {})
+      }
+    });
+  } catch {
+    setUplink(false);
+    throw new Error('Cannot reach the server. Check your connection and try again.');
+  }
+  setUplink(true);
+
   if (res.status === 204) return true;
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Uplink synchronization failed');
+  let data = null;
+  try { data = await res.json(); } catch { /* non-JSON body (proxy error page, etc.) */ }
+
+  if (!res.ok) {
+    // A rejected token on an authenticated request means the session is stale → sign the user out.
+    if (res.status === 403 && getSession()?.token && /session/i.test(data?.error || '')) {
+      clearSession();
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    }
+    throw new Error(data?.error || (res.status >= 500 ? 'The server hit a problem. Please try again.' : 'Request failed'));
+  }
   return data;
 }
 
+const withSystem = (path, system) => (system ? `${path}?system=${encodeURIComponent(system)}` : path);
+
 // ── Stations Data ──
 export async function getStations(systemFilter = null) {
-  let url = '/stations';
-  if (systemFilter) url += `?system=${systemFilter}`;
-  return fetchApi(url).catch(e => {
+  return fetchApi(withSystem('/stations', systemFilter)).catch(e => {
     console.error('Stations fetch error:', e);
     return [];
   });
@@ -88,9 +121,7 @@ export async function deleteStation(name) {
 
 // ── Refinery Data ──
 export async function getRefineryData(systemFilter = null) {
-  let url = '/refinery';
-  if (systemFilter) url += `?system=${systemFilter}`;
-  return fetchApi(url).catch(e => {
+  return fetchApi(withSystem('/refinery', systemFilter)).catch(e => {
     console.error('Refinery fetch error:', e);
     return [];
   });
@@ -109,19 +140,9 @@ export async function deleteRefineryEntry(id) {
   });
 }
 
-// ── Personnel Data ──
-export async function getPersonnelData() {
-  return fetchApi('/personnel').catch(e => {
-    console.error('Personnel fetch error:', e);
-    return [];
-  });
-}
-
 // ── Resource Data ──
 export async function getResourceData(systemFilter = null) {
-  let url = '/resources';
-  if (systemFilter) url += `?system=${systemFilter}`;
-  return fetchApi(url).catch(e => {
+  return fetchApi(withSystem('/resources', systemFilter)).catch(e => {
     console.error('Resources fetch error:', e);
     return [];
   });
@@ -223,6 +244,11 @@ export async function loginUser(username, password) {
   });
 }
 
+/** Like getUserProfile but throws, so callers can tell "deleted" (404) from "offline". */
+export async function fetchUserProfileStrict(username) {
+  return fetchApi(`/users/${encodeURIComponent(username)}`);
+}
+
 export async function getUserProfile(username) {
   return fetchApi(`/users/${encodeURIComponent(username)}`).catch(e => {
     console.error('Profile fetch error:', e);
@@ -302,31 +328,6 @@ export async function deleteBulletin(id) {
 
 // ── Quality of Life Data Purge ──
 export async function resetAllData() {
-  await fetchApi('/purge', { 
-    method: 'DELETE'
-  });
+  await fetchApi('/purge', { method: 'DELETE' });
   window.location.reload();
-}
-
-// ── Utility: Generate system ID ──
-export function generateSystemId() {
-  const chars = '0123456789ABCDEF';
-  let id = '';
-  for (let i = 0; i < 12; i++) {
-    id += chars[Math.floor(Math.random() * 16)];
-    if (i === 3 || i === 7) id += '-';
-  }
-  return id;
-}
-
-// ── Utility: In-universe timestamp ──
-export function getUniverseTime() {
-  const now = new Date();
-  const year = now.getFullYear() + 930;
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const h = String(now.getHours()).padStart(2, '0');
-  const m = String(now.getMinutes()).padStart(2, '0');
-  const s = String(now.getSeconds()).padStart(2, '0');
-  return `${year}.${month}.${day} // ${h}:${m}:${s} SET`;
 }

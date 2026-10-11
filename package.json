@@ -1,5 +1,5 @@
 {
-  "name": "untitiled",
+  "name": "yugen",
   "private": true,
   "version": "1.0.0",
   "type": "module",
@@ -15,15 +15,22 @@
     "server": "nodemon server/server.js",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "node --test server/test/api.test.js",
+    "check": "npm run lint && npm test && npm run build"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "^5.3.0",
+    "@fontsource-variable/geist-mono": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^12.8.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^1.55.0",
+    "motion": "^14.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.14.0"
@@ -42,5 +49,8 @@
     "globals": "^17.4.0",
     "nodemon": "^3.1.14",
     "vite": "^8.0.4"
+  },
+  "engines": {
+    "node": ">=20.19.0"
   }
 }
